@@ -1,0 +1,19 @@
+.yokoi-sidebar__loading {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	align-items: flex-start;
+}
+
+.yokoi-sidebar__footer {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-top: 1.5rem;
+}
+
+.yokoi-sidebar__empty {
+	color: #50575e;
+	font-size: 13px;
+	margin-top: 0;
+}
