@@ -46,6 +46,13 @@ class Plugin {
 	private ?Block_Registry $block_registry = null;
 
 	/**
+	 * Block catalog REST controller.
+	 *
+	 * @var Block_Catalog_API|null
+	 */
+	private ?Block_Catalog_API $block_catalog_api = null;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -61,9 +68,11 @@ class Plugin {
 	private function load_dependencies(): void {
 		require_once YOKOI_PLUGIN_DIR . 'includes/class-settings-api.php';
 		require_once YOKOI_PLUGIN_DIR . 'includes/class-block-registry.php';
+		require_once YOKOI_PLUGIN_DIR . 'includes/class-block-catalog-api.php';
 
-		$this->settings_api   = new Settings_API();
-		$this->block_registry = new Block_Registry( $this->settings_api );
+		$this->settings_api       = new Settings_API();
+		$this->block_registry     = new Block_Registry( $this->settings_api );
+		$this->block_catalog_api  = new Block_Catalog_API();
 	}
 
 	/**
@@ -80,6 +89,10 @@ class Plugin {
 
 		if ( $this->block_registry instanceof Block_Registry ) {
 			$this->block_registry->register();
+		}
+
+		if ( $this->block_catalog_api instanceof Block_Catalog_API ) {
+			$this->block_catalog_api->register();
 		}
 
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_editor_assets' ), 5 );
@@ -120,7 +133,13 @@ class Plugin {
 
 		$asset        = include $asset_path;
 		$dependencies = $asset['dependencies'] ?? array();
+		$script_file  = YOKOI_PLUGIN_DIR . 'build/sidebar.js';
+		$style_file   = YOKOI_PLUGIN_DIR . 'build/style-sidebar.css';
 		$version      = $asset['version'] ?? YOKOI_VERSION;
+
+		if ( file_exists( $script_file ) ) {
+			$version .= '.' . filemtime( $script_file );
+		}
 
 		wp_register_script(
 			'yokoi-sidebar',
@@ -132,14 +151,20 @@ class Plugin {
 
 		wp_enqueue_script( 'yokoi-sidebar' );
 
-		$style_path = YOKOI_PLUGIN_DIR . 'build/style-sidebar.css';
+		$style_path = $style_file;
 
 		if ( file_exists( $style_path ) ) {
+			$style_version = $version;
+
+			if ( file_exists( $style_path ) ) {
+				$style_version .= '.' . filemtime( $style_path );
+			}
+
 			wp_enqueue_style(
 				'yokoi-sidebar',
 				YOKOI_PLUGIN_URL . 'build/style-sidebar.css',
 				array(),
-				$version
+				$style_version
 			);
 		}
 	}
@@ -181,14 +206,11 @@ class Plugin {
 
 		$blocks = array();
 
-		if ( $this->block_registry instanceof Block_Registry ) {
-			$blocks = $this->block_registry->get_block_catalog();
-		}
-
 		return array(
 			'settings'     => $settings,
-			'blocks'       => $blocks,
+			'blocks'       => array(),
 			'restEndpoint' => rest_url( Settings_API::REST_NAMESPACE . '/settings' ),
+			'blocksEndpoint' => rest_url( Settings_API::REST_NAMESPACE . '/blocks' ),
 			'nonce'        => wp_create_nonce( 'wp_rest' ),
 			'capabilities' => array(
 				'canManage' => current_user_can( 'manage_options' ),

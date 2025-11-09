@@ -7,6 +7,8 @@
 
 namespace Yokoi;
 
+require_once YOKOI_PLUGIN_DIR . 'includes/block-utils.php';
+
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -47,9 +49,7 @@ class Settings_API {
 	 */
 	public static function get_default_settings(): array {
 		return array(
-			'blocks_enabled'      => array(
-				'yokoi/poppit' => true,
-			),
+			'blocks_enabled'      => get_block_default_states(),
 			'default_configs'     => array(),
 			'visibility_controls' => array(),
 		);

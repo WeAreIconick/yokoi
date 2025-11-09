@@ -1,6 +1,38 @@
 <?php
 // This file is generated. Do not modify it manually.
 return array(
+	'cozy-mode' => array(
+		'$schema' => 'https://schemas.wp.org/trunk/block.json',
+		'apiVersion' => 3,
+		'name' => 'yokoi/cozy-mode',
+		'version' => '0.1.0',
+		'title' => 'Cozy Mode',
+		'category' => 'yokoi',
+		'icon' => 'book-alt',
+		'description' => 'Add a distraction-free reading toggle powered by Cozy Mode.',
+		'attributes' => array(
+			'buttonLabel' => array(
+				'type' => 'string',
+				'default' => 'Read in Cozy Mode'
+			),
+			'showHelperText' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'helperText' => array(
+				'type' => 'string',
+				'default' => 'Opens a focused reading interface with clean typography.'
+			)
+		),
+		'supports' => array(
+			'html' => false
+		),
+		'textdomain' => 'yokoi',
+		'editorScript' => 'file:./index.js',
+		'editorStyle' => 'file:./editor.css',
+		'style' => 'file:./style-index.css',
+		'render' => 'file:./render.php'
+	),
 	'poppit' => array(
 		'$schema' => 'https://schemas.wp.org/trunk/block.json',
 		'apiVersion' => 3,

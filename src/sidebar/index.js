@@ -1,7 +1,6 @@
 import './style.scss';
 
 import { registerPlugin } from '@wordpress/plugins';
-import { PluginSidebar, PluginSidebarMoreMenuItem } from '@wordpress/edit-post';
 import { Button, Notice, Spinner } from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
@@ -12,53 +11,56 @@ import {
 	useMemo,
 	useState,
 } from '@wordpress/element';
+import domReady from '@wordpress/dom-ready';
 
 import BlockTogglePanel from './components/BlockTogglePanel';
 
 const bootstrap = window.yokoiSettings || {};
-const blockList = Array.isArray( bootstrap.blocks ) ? bootstrap.blocks : [];
-const blockDefinitions = blockList.reduce( ( acc, block ) => {
-	if ( block?.name ) {
-		acc[ block.name ] = block;
-	}
-	return acc;
-}, {} );
-const defaultBlockStates = Object.fromEntries(
-	Object.keys( blockDefinitions ).map( ( name ) => [ name, true ] )
-);
-const DEFAULT_SETTINGS = {
-	blocks_enabled: defaultBlockStates,
+const initialBlockList = Array.isArray( bootstrap.blocks ) ? bootstrap.blocks : [];
+
+const toDefinitionMap = ( list = [] ) =>
+	list.reduce( ( acc, block ) => {
+		if ( block?.name ) {
+			acc[ block.name ] = block;
+		}
+		return acc;
+	}, {} );
+
+const buildDefaultSettings = ( definitions = {} ) => ( {
+	blocks_enabled: Object.fromEntries(
+		Object.keys( definitions ).map( ( name ) => [ name, true ] )
+	),
 	default_configs: {},
 	visibility_controls: {},
-};
+} );
 
-const sanitizeSettingsShape = ( value ) => {
+const sanitizeSettingsWithDefinitions = ( value, definitions ) => {
+	const defaults = buildDefaultSettings( definitions );
 	const output = {
-		...DEFAULT_SETTINGS,
+		...defaults,
 		...( value || {} ),
 	};
 
 	output.blocks_enabled = {
-		...DEFAULT_SETTINGS.blocks_enabled,
+		...defaults.blocks_enabled,
 		...( value?.blocks_enabled || {} ),
 	};
 
-	// Ensure all known blocks have explicit values.
-	Object.keys( blockDefinitions ).forEach( ( blockName ) => {
+	Object.keys( definitions ).forEach( ( blockName ) => {
 		if ( typeof output.blocks_enabled[ blockName ] !== 'boolean' ) {
 			output.blocks_enabled[ blockName ] = Boolean(
-				DEFAULT_SETTINGS.blocks_enabled[ blockName ]
+				defaults.blocks_enabled[ blockName ]
 			);
 		}
 	} );
 
 	output.default_configs = {
-		...DEFAULT_SETTINGS.default_configs,
+		...defaults.default_configs,
 		...( value?.default_configs || {} ),
 	};
 
 	output.visibility_controls = {
-		...DEFAULT_SETTINGS.visibility_controls,
+		...defaults.visibility_controls,
 		...( value?.visibility_controls || {} ),
 	};
 
@@ -68,6 +70,38 @@ const sanitizeSettingsShape = ( value ) => {
 if ( bootstrap?.nonce ) {
 	apiFetch.use( apiFetch.createNonceMiddleware( bootstrap.nonce ) );
 }
+
+let SitePluginSidebar = null;
+let SitePluginSidebarMoreMenuItem = null;
+
+const YokoiSidebarIcon = () => (
+	<svg
+		className="yokoi-sidebar__icon"
+		width="20"
+		height="20"
+		viewBox="0 0 163.3 163.3"
+		xmlns="http://www.w3.org/2000/svg"
+		aria-hidden="true"
+		focusable="false"
+	>
+		<path
+			d="M145.1,38.5c0-1.2-.9-2.1-2.1-2.1H20.3c-1.2,0-2.1.9-2.1,2.1v104.4c0,1.2.9,2.1,2.1,2.1h122.7c1.2,0,2.1-.9,2.1-2.1V38.5ZM0,161.9V1.5C.6.5,1.8,0,3.5,0,51.6,0,98.1,0,143.1,0c1.2,0,2.1.9,2.1,2.1v13.9c0,1.2.9,2.1,2.1,2.2.6,0,5.2,0,13.9,0,1.4,0,2.1.8,2.1,2.4,0,3.5,0,50,0,139.5,0,2.2-.6,3.1-2.8,3.1-53,0-105.9,0-158.9,0,0,0-.2,0-.2,0l-1.4-1.3"
+			fill="#231f20"
+		/>
+		<path
+			d="M75.2,86.9c0,1.2-.9,2.1-2.1,2.1h-8.8c-1.2,0-2.1-1-2.1-2.1v-18.2c0-1.2,1-2.1,2.1-2.1h8.8c1.2,0,2.1,1,2.1,2.1v18.2Z"
+			fill="#231f20"
+		/>
+		<path
+			d="M101.1,86.9c0,1.2-.9,2.1-2.1,2.1h-8.8c-1.2,0-2.1-.9-2.1-2.1v-18.2c0-1.2.9-2.1,2.1-2.1h8.8c1.2,0,2.1.9,2.1,2.1v18.2Z"
+			fill="#231f20"
+		/>
+		<path
+			d="M81.6,101.8c19.6,0,29.5,0,29.7,0,1.1,0,1.9-.9,1.9-2v-8.1c0-1.1.9-2,2-2h9c1.1,0,2,.9,2,2v8.9c0,1.1-.9,2.1-2.1,2.1h-8.2c-1.1,0-1.9.8-1.9,1.9v8.1c0,1.1-.9,1.9-1.9,2,0,0-10.2,0-30.5,0-20.3,0-30.5,0-30.5,0-1.1,0-1.9-1-1.9-2v-8.1c0-1-.9-1.9-2-1.9h-8.2c-1.1,0-2.1-.9-2.1-2.1v-8.9c0-1.1.9-2,2-2h9c1.1,0,2,.9,2,2v8.1c0,1.1.9,1.9,1.9,2,.2,0,10,0,29.7,0Z"
+			fill="#231f20"
+		/>
+	</svg>
+);
 
 const getErrorMessage = ( error ) => {
 	if ( ! error ) {
@@ -86,8 +120,28 @@ const getErrorMessage = ( error ) => {
 };
 
 const YokoiSidebar = () => {
+	if ( ! SitePluginSidebar || ! SitePluginSidebarMoreMenuItem ) {
+		return null;
+	}
+
+	const [ blockDefinitions, setBlockDefinitions ] = useState( () =>
+		toDefinitionMap( initialBlockList )
+	);
+	const [ isBlockCatalogLoading, setIsBlockCatalogLoading ] = useState( false );
+	const [ blockCatalogError, setBlockCatalogError ] = useState( null );
+	const [ searchTerm, setSearchTerm ] = useState( '' );
+
+	const sanitizeSettings = useCallback(
+		( value, definitions = blockDefinitions ) =>
+			sanitizeSettingsWithDefinitions( value, definitions ),
+		[ blockDefinitions ]
+	);
+
 	const [ settings, setSettings ] = useState(
-		sanitizeSettingsShape( bootstrap.settings )
+		sanitizeSettingsWithDefinitions(
+			bootstrap.settings,
+			blockDefinitions
+		)
 	);
 	const [ isLoading, setIsLoading ] = useState( ! bootstrap.settings );
 	const [ isSaving, setIsSaving ] = useState( false );
@@ -97,10 +151,12 @@ const YokoiSidebar = () => {
 
 	const canManage = bootstrap?.capabilities?.canManage !== false;
 	const restEndpoint = bootstrap?.restEndpoint;
+	const blocksEndpoint = bootstrap?.blocksEndpoint;
 
 	const ensureSettings = useCallback(
-		( value ) => sanitizeSettingsShape( value ),
-		[]
+		( value, definitions = blockDefinitions ) =>
+			sanitizeSettings( value, definitions ),
+		[ sanitizeSettings, blockDefinitions ]
 	);
 
 	const fetchLatestSettings = useCallback( () => {
@@ -132,6 +188,48 @@ const YokoiSidebar = () => {
 			fetchLatestSettings();
 		}
 	}, [ fetchLatestSettings ] );
+
+	useEffect( () => {
+		if ( ! blocksEndpoint ) {
+			return;
+		}
+
+		let isMounted = true;
+
+		setIsBlockCatalogLoading( true );
+		setBlockCatalogError( null );
+
+		apiFetch( { url: blocksEndpoint, method: 'GET' } )
+			.then( ( response ) => {
+				if ( ! isMounted ) {
+					return;
+				}
+
+				const definitions = toDefinitionMap(
+					Array.isArray( response ) ? response : []
+				);
+				setBlockDefinitions( definitions );
+				setSettings( ( current ) =>
+					sanitizeSettingsWithDefinitions( current, definitions )
+				);
+			} )
+			.catch( ( err ) => {
+				if ( ! isMounted ) {
+					return;
+				}
+
+				setBlockCatalogError( err );
+			} )
+			.finally( () => {
+				if ( isMounted ) {
+					setIsBlockCatalogLoading( false );
+				}
+			} );
+
+		return () => {
+			isMounted = false;
+		};
+	}, [ blocksEndpoint ] );
 
 	const blocksEnabled = useMemo(
 		() => settings?.blocks_enabled || {},
@@ -214,16 +312,16 @@ const YokoiSidebar = () => {
 
 	return (
 		<Fragment>
-			<PluginSidebarMoreMenuItem
+			<SitePluginSidebarMoreMenuItem
 				target="yokoi-settings-sidebar"
-				icon="admin-settings"
+				icon={ <YokoiSidebarIcon /> }
 			>
 				{ __( 'Yokoi Settings', 'yokoi' ) }
-			</PluginSidebarMoreMenuItem>
-			<PluginSidebar
+			</SitePluginSidebarMoreMenuItem>
+			<SitePluginSidebar
 				name="yokoi-settings-sidebar"
 				title={ __( 'Yokoi Settings', 'yokoi' ) }
-				icon="admin-settings"
+				icon={ <YokoiSidebarIcon /> }
 			>
 				{ isLoading && (
 					<div className="yokoi-sidebar__loading">
@@ -245,6 +343,10 @@ const YokoiSidebar = () => {
 				) }
 
 				<BlockTogglePanel
+			isLoading={ isBlockCatalogLoading }
+			error={ blockCatalogError }
+			searchValue={ searchTerm }
+			onSearchChange={ setSearchTerm }
 					blocksEnabled={ blocksEnabled }
 					blockDefinitions={ blockDefinitions }
 					onToggle={ toggleBlock }
@@ -270,12 +372,38 @@ const YokoiSidebar = () => {
 							: __( 'Save Settings', 'yokoi' ) }
 					</Button>
 				</div>
-			</PluginSidebar>
+			</SitePluginSidebar>
 		</Fragment>
 	);
 };
 
-registerPlugin( 'yokoi-settings-sidebar', {
-	render: YokoiSidebar,
-	icon: 'admin-settings',
+domReady( () => {
+	const editorPackage = window?.wp?.editor;
+	const editSite = window?.wp?.editSite;
+	const bodyHasSiteEditorClass =
+		document?.body?.classList?.contains( 'site-editor-php' ) ||
+		document?.body?.classList?.contains( 'edit-site' );
+
+	if ( ! editSite || ! bodyHasSiteEditorClass ) {
+		return;
+	}
+
+	const source =
+		editorPackage?.PluginSidebar && editorPackage?.PluginSidebarMoreMenuItem
+			? editorPackage
+			: editSite;
+
+	const { PluginSidebar, PluginSidebarMoreMenuItem } = source || {};
+
+	if ( ! PluginSidebar || ! PluginSidebarMoreMenuItem ) {
+		return;
+	}
+
+	SitePluginSidebar = PluginSidebar;
+	SitePluginSidebarMoreMenuItem = PluginSidebarMoreMenuItem;
+
+	registerPlugin( 'yokoi-settings-sidebar', {
+		render: YokoiSidebar,
+		icon: YokoiSidebarIcon,
+	} );
 } );

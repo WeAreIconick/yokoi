@@ -1,0 +1,19 @@
+{
+  "description": "Auto-run build after code modifications",
+  "trigger": {
+    "events": [
+      "afterEdit"
+    ],
+    "paths": [
+      "src/**/*",
+      "includes/**/*",
+      "assets/**/*",
+      "tests/**/*"
+    ]
+  },
+  "action": {
+    "type": "shell",
+    "command": "cd /Users/nick/Documents/GitHub/yokoi && npm run build"
+  }
+}
+

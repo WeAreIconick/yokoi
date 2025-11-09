@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yokoi/cozy-mode",
+  "version": "0.1.0",
+  "title": "Cozy Mode",
+  "category": "yokoi",
+  "icon": "book-alt",
+  "description": "Add a distraction-free reading toggle powered by Cozy Mode.",
+  "attributes": {
+    "buttonLabel": {
+      "type": "string",
+      "default": "Read in Cozy Mode"
+    },
+    "showHelperText": {
+      "type": "boolean",
+      "default": true
+    },
+    "helperText": {
+      "type": "string",
+      "default": "Opens a focused reading interface with clean typography."
+    }
+  },
+  "supports": {
+    "html": false
+  },
+  "textdomain": "yokoi",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./editor.css",
+  "style": "file:./style-index.css",
+  "render": "file:./render.php"
+}

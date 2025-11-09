@@ -7,13 +7,30 @@
 
 .yokoi-sidebar__footer {
 	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
+	flex-direction: row;
+	justify-content: flex-end;
+	gap: 0.75rem;
 	margin-top: 1.5rem;
+	padding: 1rem;
+	border-top: 1px solid #dcdcde;
 }
 
 .yokoi-sidebar__empty {
 	color: #50575e;
 	font-size: 13px;
 	margin-top: 0;
+}
+
+.yokoi-sidebar__panel-row {
+	align-items: center;
+}
+
+.yokoi-sidebar__loading-message,
+.yokoi-sidebar__error {
+	font-size: 13px;
+	margin: 0;
+}
+
+.yokoi-sidebar__error {
+	color: #b32d2e;
 }

@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: Yokoi
- * Plugin URI: https://example.com/yokoi
+ * Plugin URI: https://iconick.io/yokoi
  * Description: Modular block suite with PluginSidebar settings for WordPress.
  * Version: 0.1.0
  * Author: Yokoi Team
- * Author URI: https://example.com
+ * Author URI: https://iconick.io
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: yokoi

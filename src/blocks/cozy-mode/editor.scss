@@ -1,0 +1,28 @@
+.yokoi-cozy-mode-block {
+	.yokoi-cozy-mode-editor-card {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 16px;
+		border: 1px solid #dcdcde;
+		border-radius: 8px;
+		background: #f6f7f7;
+	}
+
+	.yokoi-cozy-mode-editor-icon {
+		font-size: 24px;
+	}
+
+	.yokoi-cozy-mode-editor-label {
+		font-weight: 600;
+		font-size: 14px;
+	}
+
+	.yokoi-cozy-mode-editor-helper {
+		margin-top: 4px;
+		color: #50575e;
+		font-size: 12px;
+		line-height: 1.4;
+	}
+}
+

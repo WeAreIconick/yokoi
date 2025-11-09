@@ -7,6 +7,8 @@
 
 namespace Yokoi;
 
+require_once YOKOI_PLUGIN_DIR . 'includes/block-utils.php';
+
 use function __;
 use function add_action;
 use function array_map;
@@ -53,13 +55,7 @@ class Block_Registry {
 	 * @return array<string,array<string,string>>
 	 */
 	public function get_block_definitions(): array {
-		return array(
-			'yokoi/poppit' => array(
-				'path'        => YOKOI_PLUGIN_DIR . 'build/blocks/poppit',
-				'title'       => __( 'Poppit', 'yokoi' ),
-				'description' => __( 'Build pop-ups that feel like helpful suggestions, not annoying interruptions.', 'yokoi' ),
-			),
-		);
+		return get_block_definitions_map();
 	}
 
 	/**
