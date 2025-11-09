@@ -1,4 +1,4 @@
-import { PanelBody, ToggleControl } from '@wordpress/components';
+import { Panel, PanelBody, PanelRow, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
 const BlockTogglePanel = ( {
@@ -15,34 +15,39 @@ const BlockTogglePanel = ( {
 	] );
 
 	return (
-		<PanelBody
-			title={ __( 'Enable/Disable Blocks', 'yokoi' ) }
-			initialOpen={ true }
-		>
-			{ entries.length === 0 && (
-				<p className="yokoi-sidebar__empty">
-					{ __(
-						'No blocks registered yet. Blocks will appear here once available.',
-						'yokoi'
-					) }
-				</p>
-			) }
+		<Panel>
+			<PanelBody
+				title={ __( 'Enable/Disable Blocks', 'yokoi' ) }
+				initialOpen={ true }
+			>
+				{ entries.length === 0 && (
+					<PanelRow className="yokoi-sidebar__panel-row yokoi-sidebar__panel-row--empty">
+						<p className="yokoi-sidebar__empty">
+							{ __(
+								'No blocks registered yet. Blocks will appear here once available.',
+								'yokoi'
+							) }
+						</p>
+					</PanelRow>
+				) }
 
-			{ entries.map( ( [ blockName, enabled ] ) => {
-				const label = blockDefinitions[ blockName ]?.title || blockName;
-				const description = blockDefinitions[ blockName ]?.description;
+				{ entries.map( ( [ blockName, enabled ] ) => {
+					const label = blockDefinitions[ blockName ]?.title || blockName;
+					const description = blockDefinitions[ blockName ]?.description;
 
-				return (
-					<ToggleControl
-						key={ blockName }
-						label={ label }
-						checked={ Boolean( enabled ) }
-						onChange={ () => onToggle( blockName ) }
-						help={ description }
-					/>
-				);
-			} ) }
-		</PanelBody>
+					return (
+						<PanelRow key={ blockName } className="yokoi-sidebar__panel-row">
+							<ToggleControl
+								label={ label }
+								checked={ Boolean( enabled ) }
+								onChange={ () => onToggle( blockName ) }
+								help={ description }
+							/>
+						</PanelRow>
+					);
+				} ) }
+			</PanelBody>
+		</Panel>
 	);
 };
 

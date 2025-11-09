@@ -1,4 +1,4 @@
-# Yokoi Blocks
+# Yokoi
 
 Yokoi is a modular Gutenberg block suite for WordPress featuring site-wide settings managed from a dedicated PluginSidebar panel. The roadmap follows modern WordPress development practices, including per-block asset loading, REST-powered configuration, and scalable PHP architecture inspired by Kadence Blocks.
 

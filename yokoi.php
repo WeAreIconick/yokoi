@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Yokoi Blocks
+ * Plugin Name: Yokoi
  * Plugin URI: https://example.com/yokoi
  * Description: Modular block suite with PluginSidebar settings for WordPress.
  * Version: 0.1.0
