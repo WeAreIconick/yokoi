@@ -28,7 +28,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const YOKOI_BLOCK_MANIFEST = 'build/yokoi-blocks-manifest.json';
+const YOKOI_BLOCK_MANIFEST     = 'build/yokoi-blocks-manifest.json';
 const YOKOI_BLOCK_CACHE_OPTION = 'yokoi_block_metadata_cache';
 
 /**
@@ -56,7 +56,7 @@ function yokoi_get_block_signature(): string {
 		}
 	}
 
-	$parts = array();
+	$parts        = array();
 	$default_dirs = yokoi_get_discovery_directories();
 
 	foreach ( $default_dirs as $dir ) {
@@ -104,7 +104,7 @@ function yokoi_load_manifest_blocks(): array {
 		return array();
 	}
 
-	$raw = file_get_contents( $manifest_path ); // phpcs:ignore WordPressVIPMinimum.Performance.FetchingRemoteData.FileGetContentsUnknown
+	$raw = file_get_contents( $manifest_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents,WordPressVIPMinimum.Performance.FetchingRemoteData.FileGetContentsUnknown
 
 	if ( false === $raw ) {
 		return array();
@@ -116,7 +116,7 @@ function yokoi_load_manifest_blocks(): array {
 		return array();
 	}
 
-	$blocks = array();
+	$blocks  = array();
 	$entries = array();
 
 	if ( isset( $data['blocks'] ) && is_array( $data['blocks'] ) ) {
@@ -246,7 +246,7 @@ if ( ! function_exists( __NAMESPACE__ . '\\get_all_blocks_metadata' ) ) {
 					continue;
 				}
 
-				$raw = file_get_contents( $block_json ); // phpcs:ignore WordPressVIPMinimum.Performance.FetchingRemoteData.FileGetContentsUnknown
+				$raw = file_get_contents( $block_json ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents,WordPressVIPMinimum.Performance.FetchingRemoteData.FileGetContentsUnknown
 				if ( false === $raw ) {
 					continue;
 				}
@@ -263,21 +263,21 @@ if ( ! function_exists( __NAMESPACE__ . '\\get_all_blocks_metadata' ) ) {
 					continue;
 				}
 
-				$label = isset( $data['title'] ) ? (string) $data['title'] : $name;
+				$label           = isset( $data['title'] ) ? (string) $data['title'] : $name;
 				$namespace_title = $label;
 
 				if ( false !== strpos( $label, '/' ) ) {
-					$parts = explode( '/', $label );
+					$parts           = explode( '/', $label );
 					$namespace_title = trim( end( $parts ) );
 				}
 
 				$cache[ $name ] = array(
-					'name'        => $name,
+					'name'           => $name,
 					'namespaceTitle' => $namespace_title,
-					'title'       => $label,
-					'description' => isset( $data['description'] ) ? (string) $data['description'] : '',
-					'path'        => $config['register_path'] ? $block_dir : null,
-					'source'      => $config['source'],
+					'title'          => $label,
+					'description'    => isset( $data['description'] ) ? (string) $data['description'] : '',
+					'path'           => $config['register_path'] ? $block_dir : null,
+					'source'         => $config['source'],
 				);
 			}
 		}
@@ -355,4 +355,3 @@ if ( ! function_exists( __NAMESPACE__ . '\\get_block_default_states' ) ) {
 		return $output;
 	}
 }
-

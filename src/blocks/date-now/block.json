@@ -1,0 +1,59 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "yokoi/date-now",
+	"version": "0.1.0",
+	"title": "Date.now Calendar",
+	"category": "yokoi",
+	"icon": "calendar-alt",
+	"description": "Display a Google Calendar feed with multiple views and a polished schedule layout.",
+	"keywords": [
+		"calendar",
+		"google",
+		"events",
+		"schedule"
+	],
+	"attributes": {
+		"calendarId": {
+			"type": "string",
+			"default": ""
+		},
+		"defaultView": {
+			"type": "string",
+			"default": "week"
+		},
+		"showWeekends": {
+			"type": "boolean",
+			"default": true
+		},
+		"eventLimit": {
+			"type": "number",
+			"default": 3
+		},
+		"customHeadline": {
+			"type": "string",
+			"default": ""
+		},
+		"customSubheadline": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": [
+			"wide",
+			"full"
+		],
+		"spacing": {
+			"margin": true,
+			"padding": true
+		}
+	},
+	"textdomain": "yokoi",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css",
+	"render": "file:./render.php"
+}
+

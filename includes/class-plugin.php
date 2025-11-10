@@ -8,6 +8,7 @@
 namespace Yokoi;
 
 use WP_Block_Editor_Context;
+use Yokoi\Date_Now\Service as Date_Now_Service;
 use function __;
 use function add_action;
 use function add_filter;
@@ -53,6 +54,13 @@ class Plugin {
 	private ?Block_Catalog_API $block_catalog_api = null;
 
 	/**
+	 * Date.now integration.
+	 *
+	 * @var Date_Now_Service|null
+	 */
+	private ?Date_Now_Service $date_now_service = null;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -70,9 +78,10 @@ class Plugin {
 		require_once YOKOI_PLUGIN_DIR . 'includes/class-block-registry.php';
 		require_once YOKOI_PLUGIN_DIR . 'includes/class-block-catalog-api.php';
 
-		$this->settings_api       = new Settings_API();
-		$this->block_registry     = new Block_Registry( $this->settings_api );
-		$this->block_catalog_api  = new Block_Catalog_API();
+		$this->settings_api      = new Settings_API();
+		$this->block_registry    = new Block_Registry( $this->settings_api );
+		$this->block_catalog_api = new Block_Catalog_API();
+		$this->date_now_service  = new Date_Now_Service();
 	}
 
 	/**
@@ -93,6 +102,10 @@ class Plugin {
 
 		if ( $this->block_catalog_api instanceof Block_Catalog_API ) {
 			$this->block_catalog_api->register();
+		}
+
+		if ( $this->date_now_service instanceof Date_Now_Service ) {
+			$this->date_now_service->register();
 		}
 
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_editor_assets' ), 5 );
@@ -207,12 +220,12 @@ class Plugin {
 		$blocks = array();
 
 		return array(
-			'settings'     => $settings,
-			'blocks'       => array(),
-			'restEndpoint' => rest_url( Settings_API::REST_NAMESPACE . '/settings' ),
+			'settings'       => $settings,
+			'blocks'         => array(),
+			'restEndpoint'   => rest_url( Settings_API::REST_NAMESPACE . '/settings' ),
 			'blocksEndpoint' => rest_url( Settings_API::REST_NAMESPACE . '/blocks' ),
-			'nonce'        => wp_create_nonce( 'wp_rest' ),
-			'capabilities' => array(
+			'nonce'          => wp_create_nonce( 'wp_rest' ),
+			'capabilities'   => array(
 				'canManage' => current_user_can( 'manage_options' ),
 			),
 		);

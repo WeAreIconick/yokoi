@@ -1,38 +1,71 @@
 import { __ } from '@wordpress/i18n';
-import {
-	useBlockProps,
-	RichText,
-	InspectorControls,
-} from '@wordpress/block-editor';
+import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import { PanelBody, ToggleControl, TextControl } from '@wordpress/components';
 
 import './editor.scss';
 
-const CozyModePlaceholder = ( { label, helperText, showHelperText } ) => {
-	return (
-		<div className="yokoi-cozy-mode-editor-card">
-			<div className="yokoi-cozy-mode-editor-icon" aria-hidden="true">
-				📖
-			</div>
-			<div className="yokoi-cozy-mode-editor-content">
-				<RichText
-					tagName="div"
-					className="yokoi-cozy-mode-editor-label"
-					value={ label }
-					allowedFormats={ [] }
-					onChange={ () => {} }
-					placeholder={ __( 'Read in Cozy Mode', 'yokoi' ) }
-					disabled
-				/>
-				{ showHelperText && (
-					<div className="yokoi-cozy-mode-editor-helper">
-						{ helperText }
-					</div>
-				) }
-			</div>
+const CozyModePlaceholder = ( { label, helperText, showHelperText } ) => (
+	<div className="yokoi-cozy-mode-preview">
+		<div className="cozy-mode-button-container cozy-mode-button-container--preview">
+			<button type="button" className="cozy-mode-toggle" disabled>
+				<span className="cozy-mode-icon" aria-hidden="true">
+					<svg
+						width="18"
+						height="18"
+						viewBox="0 0 24 24"
+						xmlns="http://www.w3.org/2000/svg"
+					>
+						<path
+							d="M4 6H20M4 12H20M4 18H14"
+							stroke="currentColor"
+							strokeWidth="2"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						/>
+					</svg>
+				</span>
+				<span className="cozy-mode-toggle__label">
+					{ label || __( 'Read in Cozy Mode', 'yokoi' ) }
+				</span>
+			</button>
+			{ showHelperText && helperText && (
+				<span className="cozy-mode-toggle__helper">{ helperText }</span>
+			) }
 		</div>
-	);
-};
+
+		<div className="yokoi-cozy-mode-preview__modal">
+			<header className="yokoi-cozy-mode-preview__modal-header">
+				<span className="yokoi-cozy-mode-preview__modal-title">
+					{ __( 'Reading Mode', 'yokoi' ) }
+				</span>
+				<span className="yokoi-cozy-mode-preview__modal-close" aria-hidden="true">
+					&times;
+				</span>
+			</header>
+			<div className="yokoi-cozy-mode-preview__modal-body">
+				<p>
+					{ __(
+						'Cozy Mode reflows your content with research-backed typography for a delightful reading experience.',
+						'yokoi'
+					) }
+				</p>
+				<p>
+					{ __(
+						'Readers can toggle dark mode, adjust font size, and stay focused on the words that matter.',
+						'yokoi'
+					) }
+				</p>
+			</div>
+			<footer className="yokoi-cozy-mode-preview__modal-controls">
+				<span className="yokoi-cozy-mode-preview__control">A-</span>
+				<span className="yokoi-cozy-mode-preview__control">A</span>
+				<span className="yokoi-cozy-mode-preview__control">A+</span>
+				<span className="yokoi-cozy-mode-preview__control">🌙</span>
+				<span className="yokoi-cozy-mode-preview__control">🖨️</span>
+			</footer>
+		</div>
+	</div>
+);
 
 const Edit = ( { attributes, setAttributes } ) => {
 	const { buttonLabel, helperText, showHelperText } = attributes;

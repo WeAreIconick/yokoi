@@ -1,0 +1,31 @@
+.yokoi-date-now-block {
+	padding: 16px;
+	border: 1px dashed #cbd5f5;
+	border-radius: 12px;
+	background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
+
+	.yokoi-date-now-preview {
+		border-radius: 10px;
+		background: #fff;
+		box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+		padding: 24px;
+	}
+
+	.yokoi-date-now-preview__loading,
+	.yokoi-date-now-preview__error {
+		padding: 24px;
+		text-align: center;
+
+		.components-spinner {
+			margin: 0 auto 16px;
+		}
+	}
+
+	.yokoi-date-now-preview__error {
+		border-radius: 10px;
+		border: 1px solid #fecdd3;
+		background: #fff5f7;
+		color: #9f1239;
+	}
+}
+

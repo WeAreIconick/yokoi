@@ -1,0 +1,73 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "yokoi/ticker-tape-parade",
+	"version": "0.1.0",
+	"title": "Ticker Tape Parade",
+	"category": "yokoi",
+	"icon": "controls-forward",
+	"description": "A customizable horizontal scrolling ticker for announcements and headlines.",
+	"example": {
+		"attributes": {
+			"content": "Breaking News: New Product Launch • Special Offer: 50% Off This Week • Update: Server Maintenance Tonight",
+			"speed": 30,
+			"textColor": "#111827",
+			"backgroundColor": "#ffffff",
+			"fontSize": 18,
+			"hasBackground": true
+		}
+	},
+	"attributes": {
+		"content": {
+			"type": "string",
+			"default": "Enter your ticker text here • Separate items with bullet points or line breaks"
+		},
+		"speed": {
+			"type": "number",
+			"default": 30
+		},
+		"textColor": {
+			"type": "string",
+			"default": "#111827"
+		},
+		"backgroundColor": {
+			"type": "string",
+			"default": "#ffffff"
+		},
+		"fontSize": {
+			"type": "number",
+			"default": 18
+		},
+		"pauseOnHover": {
+			"type": "boolean",
+			"default": true
+		},
+		"textTransform": {
+			"type": "string",
+			"default": "none"
+		},
+		"fontWeight": {
+			"type": "string",
+			"default": "normal"
+		},
+		"hasBackground": {
+			"type": "boolean",
+			"default": false
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": [ "wide", "full" ],
+		"color": {
+			"text": true,
+			"background": true,
+			"gradients": false
+		}
+	},
+	"textdomain": "yokoi",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css",
+	"viewScript": "file:./view.js"
+}
+

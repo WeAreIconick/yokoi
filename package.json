@@ -5,8 +5,11 @@
   "main": "yokoi.php",
   "scripts": {
     "test": "php tests/run.php",
+    "clean": "node scripts/clean.js",
     "start": "wp-scripts start --webpack-copy-php --hot",
-    "build": "wp-scripts build --webpack-copy-php --blocks-manifest",
+    "build": "npm run clean && wp-scripts build --webpack-copy-php --blocks-manifest",
+    "package": "node scripts/package.js",
+    "build:dist": "npm run build && npm run package",
     "lint:js": "wp-scripts lint-js",
     "lint:js:fix": "wp-scripts lint-js --fix",
     "lint:css": "wp-scripts lint-style",
@@ -26,21 +29,12 @@
   "author": "Yokoi Team",
   "license": "GPL-2.0-or-later",
   "devDependencies": {
+    "@wordpress/icons": "^11.1.0",
+    "@wordpress/server-side-render": "^6.10.0",
     "@wordpress/scripts": "^30.27.0",
     "husky": "^9.0.0",
-    "lint-staged": "^15.2.0"
-  },
-  "lint-staged": {
-    "*.php": [
-      "vendor/bin/phpcbf",
-      "vendor/bin/phpcs"
-    ],
-    "*.{js,jsx,ts,tsx}": [
-      "wp-scripts format",
-      "wp-scripts lint-js"
-    ],
-    "*.{css,scss}": [
-      "wp-scripts lint-style --fix"
-    ]
+    "lint-staged": "^16.2.6",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   }
 }

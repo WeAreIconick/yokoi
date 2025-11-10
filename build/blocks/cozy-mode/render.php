@@ -81,18 +81,37 @@ if ( ! function_exists( 'yokoi_enqueue_cozy_mode_assets' ) ) :
 		$base_url = trailingslashit( YOKOI_PLUGIN_URL . 'assets/cozy-mode' );
 		$version  = defined( 'YOKOI_VERSION' ) ? YOKOI_VERSION : '1.0.0';
 
+	$style_path = YOKOI_PLUGIN_DIR . 'assets/cozy-mode/css/cozy-mode.css';
+	$readability_path = YOKOI_PLUGIN_DIR . 'assets/cozy-mode/js/readability.js';
+	$script_path = YOKOI_PLUGIN_DIR . 'assets/cozy-mode/js/cozy-mode.js';
+	$version_string = $version;
+
+	if ( file_exists( $script_path ) ) {
+		$version_string .= '.' . filemtime( $script_path );
+	}
+
+	$style_version = $version;
+	if ( file_exists( $style_path ) ) {
+		$style_version .= '.' . filemtime( $style_path );
+	}
+
+	$readability_version = $version;
+	if ( file_exists( $readability_path ) ) {
+		$readability_version .= '.' . filemtime( $readability_path );
+	}
+
 		wp_enqueue_style(
 			'yokoi-cozy-mode',
 			$base_url . 'css/cozy-mode.css',
 			array(),
-			$version
+		$style_version
 		);
 
 		wp_enqueue_script(
 			'yokoi-readability',
 			$base_url . 'js/readability.js',
 			array(),
-			$version,
+		$readability_version,
 			true
 		);
 
@@ -100,7 +119,7 @@ if ( ! function_exists( 'yokoi_enqueue_cozy_mode_assets' ) ) :
 			'yokoi-cozy-mode',
 			$base_url . 'js/cozy-mode.js',
 			array( 'yokoi-readability' ),
-			$version,
+		$version_string,
 			true
 		);
 

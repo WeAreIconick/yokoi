@@ -27,4 +27,8 @@
             </property>
         </properties>
     </rule>
+
+    <rule ref="WordPress.Files.FileName">
+        <exclude-pattern>includes/Date_Now/*</exclude-pattern>
+    </rule>
 </ruleset>

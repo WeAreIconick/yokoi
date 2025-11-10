@@ -74,4 +74,3 @@ class Block_Catalog_API {
 		return new WP_REST_Response( $catalog, 200 );
 	}
 }
-
