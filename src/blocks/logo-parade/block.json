@@ -1,0 +1,104 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "yokoi/logo-parade",
+	"version": "1.0.0",
+	"title": "Logo Parade",
+	"category": "yokoi",
+	"icon": "slides",
+	"description": "Showcase client and partner logos in an endlessly scrolling parade.",
+	"example": {
+		"attributes": {
+			"logos": [
+				{ "id": 1, "url": "https://picsum.photos/200/80?random=1", "alt": "Client Logo 1" },
+				{ "id": 2, "url": "https://picsum.photos/200/80?random=2", "alt": "Client Logo 2" },
+				{ "id": 3, "url": "https://picsum.photos/200/80?random=3", "alt": "Client Logo 3" },
+				{ "id": 4, "url": "https://picsum.photos/200/80?random=4", "alt": "Client Logo 4" },
+				{ "id": 5, "url": "https://picsum.photos/200/80?random=5", "alt": "Client Logo 5" }
+			]
+		}
+	},
+	"attributes": {
+		"logos": {
+			"type": "array",
+			"default": [],
+			"items": {
+				"type": "object",
+				"properties": {
+					"id": { "type": "number" },
+					"url": { "type": "string" },
+					"alt": { "type": "string" },
+					"linkUrl": { "type": "string" },
+					"newTab": { "type": "boolean" }
+				}
+			}
+		},
+		"rotationSpeed": {
+			"type": "number",
+			"default": 3000,
+			"minimum": 1000,
+			"maximum": 10000
+		},
+		"transitionDuration": {
+			"type": "number",
+			"default": 500,
+			"minimum": 200,
+			"maximum": 2000
+		},
+		"pauseOnHover": {
+			"type": "boolean",
+			"default": true
+		},
+		"logosPerView": {
+			"type": "number",
+			"default": 4,
+			"minimum": 1,
+			"maximum": 8
+		},
+		"mobileLogosPerView": {
+			"type": "number",
+			"default": 2,
+			"minimum": 1,
+			"maximum": 4
+		},
+		"hideOnMobile": {
+			"type": "boolean",
+			"default": false
+		},
+		"logoHeight": {
+			"type": "string",
+			"default": "60px"
+		},
+		"gapBetweenLogos": {
+			"type": "number",
+			"default": 40,
+			"minimum": 0,
+			"maximum": 100
+		},
+		"backgroundColor": {
+			"type": "string",
+			"default": "transparent"
+		},
+		"alignment": {
+			"type": "string",
+			"default": "center",
+			"enum": [ "left", "center", "right" ]
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": [ "wide", "full" ],
+		"anchor": true,
+		"spacing": {
+			"margin": true,
+			"padding": true
+		}
+	},
+	"textdomain": "yokoi",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css",
+	"viewScript": "file:./view.js",
+	"render": "file:./render.php"
+}
+

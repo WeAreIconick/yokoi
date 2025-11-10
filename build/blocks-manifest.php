@@ -417,4 +417,109 @@ return array(
 		'style' => 'file:./style-index.css',
 		'viewScript' => 'file:./view.js'
 	),
+	'logo-parade' => array(
+		'$schema' => 'https://schemas.wp.org/trunk/block.json',
+		'apiVersion' => 3,
+		'name' => 'yokoi/logo-parade',
+		'version' => '1.0.0',
+		'title' => 'Logo Parade',
+		'category' => 'yokoi',
+		'icon' => 'slides',
+		'description' => 'Showcase client and partner logos in an endlessly scrolling parade.',
+		'example' => array(
+			'attributes' => array(
+				'logos' => array(
+					array(
+						'id' => 1,
+						'url' => 'https://picsum.photos/200/80?random=1',
+						'alt' => 'Client Logo 1',
+					),
+					array(
+						'id' => 2,
+						'url' => 'https://picsum.photos/200/80?random=2',
+						'alt' => 'Client Logo 2',
+					),
+					array(
+						'id' => 3,
+						'url' => 'https://picsum.photos/200/80?random=3',
+						'alt' => 'Client Logo 3',
+					),
+					array(
+						'id' => 4,
+						'url' => 'https://picsum.photos/200/80?random=4',
+						'alt' => 'Client Logo 4',
+					),
+					array(
+						'id' => 5,
+						'url' => 'https://picsum.photos/200/80?random=5',
+						'alt' => 'Client Logo 5',
+					),
+				),
+			),
+		),
+		'attributes' => array(
+			'logos' => array(
+				'type' => 'array',
+				'default' => array(),
+			),
+			'rotationSpeed' => array(
+				'type' => 'number',
+				'default' => 3000,
+			),
+			'transitionDuration' => array(
+				'type' => 'number',
+				'default' => 500,
+			),
+			'pauseOnHover' => array(
+				'type' => 'boolean',
+				'default' => true,
+			),
+			'logosPerView' => array(
+				'type' => 'number',
+				'default' => 4,
+			),
+			'mobileLogosPerView' => array(
+				'type' => 'number',
+				'default' => 2,
+			),
+			'hideOnMobile' => array(
+				'type' => 'boolean',
+				'default' => false,
+			),
+			'logoHeight' => array(
+				'type' => 'string',
+				'default' => '60px',
+			),
+			'gapBetweenLogos' => array(
+				'type' => 'number',
+				'default' => 40,
+			),
+			'backgroundColor' => array(
+				'type' => 'string',
+				'default' => 'transparent',
+			),
+			'alignment' => array(
+				'type' => 'string',
+				'default' => 'center',
+			),
+		),
+		'supports' => array(
+			'html' => false,
+			'align' => array(
+				'wide',
+				'full',
+			),
+			'anchor' => true,
+			'spacing' => array(
+				'margin' => true,
+				'padding' => true,
+			),
+		),
+		'textdomain' => 'yokoi',
+		'editorScript' => 'file:./index.js',
+		'editorStyle' => 'file:./index.css',
+		'style' => 'file:./style-index.css',
+		'viewScript' => 'file:./view.js',
+		'render' => 'file:./render.php',
+	),
 );
