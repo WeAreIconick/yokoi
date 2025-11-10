@@ -1,5 +1,5 @@
 {
-  "description": "Auto-run build after code modifications",
+  "description": "Auto-run build and tests after code modifications",
   "trigger": {
     "events": [
       "afterEdit"
@@ -13,7 +13,7 @@
   },
   "action": {
     "type": "shell",
-    "command": "cd /Users/nick/Documents/GitHub/yokoi && npm run build"
+    "command": "cd /Users/nick/Documents/GitHub/yokoi && npm run build && npm test"
   }
 }
 

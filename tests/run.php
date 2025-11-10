@@ -171,6 +171,11 @@ try {
 		'Default states should enable src-only block.'
 	);
 
+	yokoi_assert(
+		class_exists( '\\Yokoi\\Date_Now\\Service' ),
+		'Expected Yokoi\\Date_Now\\Service to be autoloadable.'
+	);
+
 	Yokoi_Block_Test_Environment::teardown();
 	echo "All tests passed.\n";
 	exit( 0 );

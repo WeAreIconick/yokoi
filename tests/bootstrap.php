@@ -13,5 +13,5 @@ if ( ! defined( 'YOKOI_PLUGIN_DIR' ) ) {
 	define( 'YOKOI_PLUGIN_DIR', $project_root . '/' );
 }
 
-require_once YOKOI_PLUGIN_DIR . 'includes/block-utils.php';
+require_once YOKOI_PLUGIN_DIR . 'includes/bootstrap.php';
 

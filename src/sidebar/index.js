@@ -177,68 +177,6 @@ useEffect( () => {
 		[ sanitizeSettings, blockDefinitions ]
 	);
 
-	const fetchLatestSettings = useCallback( () => {
-		if ( ! restEndpoint || ! canManage ) {
-			setIsLoading( false );
-			return;
-		}
-
-		setIsLoading( true );
-		apiFetch( { url: restEndpoint, method: 'GET' } )
-			.then( ( response ) => {
-				setSettings( ensureSettings( response ) );
-				setHasChanges( false );
-				if ( savedNotice ) {
-					setSavedNotice( false );
-				}
-				setError( null );
-			} )
-			.catch( ( err ) => {
-				setError( err );
-			} )
-			.finally( () => {
-				setIsLoading( false );
-			} );
-	}, [ restEndpoint, canManage, ensureSettings, savedNotice ] );
-
-	useEffect( () => {
-		if ( ! bootstrap.settings ) {
-			fetchLatestSettings();
-		}
-	}, [ fetchLatestSettings ] );
-
-	useEffect( () => {
-		if ( ! blocksEndpoint ) {
-			return;
-		}
-
-		fetchBlockCatalog( {
-			search: debouncedSearchTerm,
-			page: 1,
-			append: false,
-		} );
-	}, [ blocksEndpoint, debouncedSearchTerm, fetchBlockCatalog ] );
-
-	const blocksEnabled = useMemo(
-		() => settings?.blocks_enabled || {},
-		[ settings ]
-	);
-
-	const toggleBlock = useCallback( ( blockName ) => {
-		setSettings( ( current ) => {
-			const nextBlocks = {
-				...current.blocks_enabled,
-				[ blockName ]: ! current.blocks_enabled?.[ blockName ],
-			};
-
-			return {
-				...current,
-				blocks_enabled: nextBlocks,
-			};
-		} );
-		setHasChanges( true );
-	}, [] );
-
 	const fetchBlockCatalog = useCallback(
 		async ( { search = '', page = 1, append = false } = {} ) => {
 			if ( ! blocksEndpoint ) {
@@ -323,6 +261,68 @@ useEffect( () => {
 		},
 		[ blocksEndpoint ]
 	);
+
+	const fetchLatestSettings = useCallback( () => {
+		if ( ! restEndpoint || ! canManage ) {
+			setIsLoading( false );
+			return;
+		}
+
+		setIsLoading( true );
+		apiFetch( { url: restEndpoint, method: 'GET' } )
+			.then( ( response ) => {
+				setSettings( ensureSettings( response ) );
+				setHasChanges( false );
+				if ( savedNotice ) {
+					setSavedNotice( false );
+				}
+				setError( null );
+			} )
+			.catch( ( err ) => {
+				setError( err );
+			} )
+			.finally( () => {
+				setIsLoading( false );
+			} );
+	}, [ restEndpoint, canManage, ensureSettings, savedNotice ] );
+
+	useEffect( () => {
+		if ( ! bootstrap.settings ) {
+			fetchLatestSettings();
+		}
+	}, [ fetchLatestSettings ] );
+
+	useEffect( () => {
+		if ( ! blocksEndpoint ) {
+			return;
+		}
+
+		fetchBlockCatalog( {
+			search: debouncedSearchTerm,
+			page: 1,
+			append: false,
+		} );
+	}, [ blocksEndpoint, debouncedSearchTerm, fetchBlockCatalog ] );
+
+	const blocksEnabled = useMemo(
+		() => settings?.blocks_enabled || {},
+		[ settings ]
+	);
+
+	const toggleBlock = useCallback( ( blockName ) => {
+		setSettings( ( current ) => {
+			const nextBlocks = {
+				...current.blocks_enabled,
+				[ blockName ]: ! current.blocks_enabled?.[ blockName ],
+			};
+
+			return {
+				...current,
+				blocks_enabled: nextBlocks,
+			};
+		} );
+		setHasChanges( true );
+	}, [] );
 
 	const hasMoreBlocks =
 		catalogMeta.page > 0 && catalogMeta.page < catalogMeta.totalPages;

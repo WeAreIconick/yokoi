@@ -38,6 +38,7 @@ if ( file_exists( YOKOI_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
 	require_once YOKOI_PLUGIN_DIR . 'vendor/autoload.php';
 }
 
+require_once YOKOI_PLUGIN_DIR . 'includes/bootstrap.php';
 require_once YOKOI_PLUGIN_DIR . 'includes/class-plugin.php';
 
 /**
