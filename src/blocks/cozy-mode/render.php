@@ -78,69 +78,68 @@ if ( ! function_exists( 'yokoi_enqueue_cozy_mode_assets' ) ) :
 	function yokoi_enqueue_cozy_mode_assets( int $post_id ): void {
 		static $localized = false;
 
-		$base_url = trailingslashit( YOKOI_PLUGIN_URL . 'assets/cozy-mode' );
-		$version  = defined( 'YOKOI_VERSION' ) ? YOKOI_VERSION : '1.0.0';
+		$version      = defined( 'YOKOI_VERSION' ) ? YOKOI_VERSION : '1.0.0';
+		$view_handle  = 'yokoi-cozy-mode-view';
+		$style_handle = 'yokoi-cozy-mode-style';
 
-	$style_path = YOKOI_PLUGIN_DIR . 'assets/cozy-mode/css/cozy-mode.css';
-	$readability_path = YOKOI_PLUGIN_DIR . 'assets/cozy-mode/js/readability.js';
-	$script_path = YOKOI_PLUGIN_DIR . 'assets/cozy-mode/js/cozy-mode.js';
-	$version_string = $version;
+		if ( wp_style_is( $style_handle, 'registered' ) ) {
+			wp_enqueue_style( $style_handle );
+		}
 
-	if ( file_exists( $script_path ) ) {
-		$version_string .= '.' . filemtime( $script_path );
-	}
+		if ( ! wp_script_is( $view_handle, 'registered' ) ) {
+			$asset_file = YOKOI_PLUGIN_DIR . 'build/blocks/cozy-mode/view.asset.php';
+			$asset      = array(
+				'dependencies' => array(),
+				'version'      => $version,
+			);
 
-	$style_version = $version;
-	if ( file_exists( $style_path ) ) {
-		$style_version .= '.' . filemtime( $style_path );
-	}
+			if ( file_exists( $asset_file ) ) {
+				$maybe_asset = include $asset_file;
+				if ( is_array( $maybe_asset ) ) {
+					$asset = wp_parse_args( $maybe_asset, $asset );
+				}
+			}
 
-	$readability_version = $version;
-	if ( file_exists( $readability_path ) ) {
-		$readability_version .= '.' . filemtime( $readability_path );
-	}
+			wp_register_script(
+				$view_handle,
+				YOKOI_PLUGIN_URL . 'build/blocks/cozy-mode/view.js',
+				$asset['dependencies'],
+				$asset['version'],
+				true
+			);
+		}
 
-		wp_enqueue_style(
-			'yokoi-cozy-mode',
-			$base_url . 'css/cozy-mode.css',
-			array(),
-		$style_version
-		);
-
-		wp_enqueue_script(
-			'yokoi-readability',
-			$base_url . 'js/readability.js',
-			array(),
-		$readability_version,
-			true
-		);
-
-		wp_enqueue_script(
-			'yokoi-cozy-mode',
-			$base_url . 'js/cozy-mode.js',
-			array( 'yokoi-readability' ),
-		$version_string,
-			true
-		);
+		wp_enqueue_script( $view_handle );
 
 		if ( ! $localized ) {
 			$localized = true;
 
+			$trusted_domains = apply_filters( 'yokoi_cozy_mode_trusted_domains', array() );
+
 			$data = array(
-				'postId'  => $post_id,
-				'version' => $version,
-				'strings' => array(
+				'postId'         => $post_id,
+				'version'        => $version,
+				'strings'        => array(
 					'enterCozyMode'   => __( 'Enter Cozy Mode', 'yokoi' ),
 					'closeCozyMode'   => __( 'Close Cozy Mode', 'yokoi' ),
 					'readingMode'     => __( 'Reading Mode', 'yokoi' ),
 					'extractionError' => __( 'Unable to extract content. Showing original content.', 'yokoi' ),
 					'loading'         => __( 'Loading...', 'yokoi' ),
 					'error'           => __( 'An error occurred. Please try again.', 'yokoi' ),
+					'toggleDarkMode'  => __( 'Toggle dark mode', 'yokoi' ),
+					'print'           => __( 'Print article', 'yokoi' ),
+				),
+				'trustedDomains' => array_values(
+					array_unique(
+						array_filter(
+							array_map( 'sanitize_text_field', (array) $trusted_domains )
+						)
+					)
 				),
 			);
 
 			wp_add_inline_script(
-				'yokoi-cozy-mode',
+				$view_handle,
 				'window.cozyMode = ' . wp_json_encode( $data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP ) . ';',
 				'before'
 			);
