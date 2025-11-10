@@ -1,0 +1,119 @@
+.wp-block-yokoi-webwindow {
+	border: 1px dashed #21759b;
+	padding: 4px;
+	background: #f4fafd;
+	margin-bottom: 6px;
+}
+
+.webwindow-block-empty {
+	font-size: 1.1em;
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	aspect-ratio: 16 / 9;
+	background: #fbfcfd;
+	color: #6a6e74;
+}
+
+.webwindow-block-embed.scale-to-fit {
+	position: relative;
+	background: #fff;
+	overflow: hidden;
+}
+
+.webwindow-block-embed.scale-to-fit .webwindow-iframe-outer {
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	margin: 0 auto;
+	position: relative;
+	background: #fff;
+	overflow: hidden;
+}
+
+.webwindow-iframe-outer {
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	background: #fff;
+	position: relative;
+	overflow: hidden;
+}
+
+.browser-frame {
+	border-radius: 8px;
+	box-shadow: 0 4px 32px rgba( 0, 0, 0, 0.1 );
+	border: 1px solid #d6dae1;
+	background: #f7f8fa;
+	aspect-ratio: 16 / 9;
+	display: flex;
+	flex-direction: column;
+}
+
+.browser-frame-bar {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	min-height: 36px;
+	background: linear-gradient( 180deg, #ebeef3 0%, #f6f7fa 100% );
+	border-bottom: 1px solid #ebeef3;
+	padding: 0 12px;
+	box-sizing: border-box;
+}
+
+.browser-frame-dot {
+	display: inline-block;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	margin-right: 4px;
+}
+
+.browser-frame-dot.red {
+	background: #ff6053;
+	border: 1px solid #e06666;
+}
+
+.browser-frame-dot.yellow {
+	background: #ffbd44;
+	border: 1px solid #f6d155;
+}
+
+.browser-frame-dot.green {
+	background: #00ca4e;
+	border: 1px solid #83c993;
+}
+
+.browser-frame-url {
+	font-size: 0.97em;
+	margin-left: 1.1em;
+	color: #6a6e74;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	max-width: 62%;
+	flex-shrink: 1;
+}
+
+.browser-frame-open-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin-left: auto;
+	color: #3575e8;
+	background: none;
+	border: none;
+	font-weight: 500;
+	cursor: pointer;
+	text-decoration: none;
+	transition: color 0.16s ease;
+	padding: 3px 14px;
+	border-radius: 4px;
+	font-size: 1em;
+	line-height: 1.15em;
+}
+
+.browser-frame-open-button:hover {
+	background: #f2f4fa;
+	color: #174fa8;
+}
+

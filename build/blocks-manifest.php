@@ -303,5 +303,50 @@ return array(
 		'editorStyle' => 'file:./index.css',
 		'style' => 'file:./style-index.css',
 		'viewScript' => 'file:./view.js'
+	),
+	'webwindow' => array(
+		'$schema' => 'https://schemas.wp.org/trunk/block.json',
+		'apiVersion' => 3,
+		'name' => 'yokoi/webwindow',
+		'version' => '0.1.0',
+		'title' => 'WebWindow',
+		'category' => 'yokoi',
+		'icon' => 'media-code',
+		'description' => 'Embed external sites inside a responsive browser frame with optional scale-to-fit zoom.',
+		'keywords' => array(
+			'embed',
+			'iframe',
+			'browser',
+			'preview'
+		),
+		'example' => array(
+			'attributes' => array(
+				'src' => 'https://demo.iconick.io/twombly/',
+				'scaleToFit' => true
+			)
+		),
+		'attributes' => array(
+			'src' => array(
+				'type' => 'string',
+				'default' => 'https://demo.iconick.io/twombly/'
+			),
+			'scaleToFit' => array(
+				'type' => 'boolean',
+				'default' => true
+			)
+		),
+		'supports' => array(
+			'html' => false,
+			'align' => array(
+				'wide',
+				'full'
+			),
+			'layout' => true
+		),
+		'textdomain' => 'yokoi',
+		'editorScript' => 'file:./index.js',
+		'editorStyle' => 'file:./editor.css',
+		'style' => 'file:./style-index.css',
+		'viewScript' => 'file:./view.js'
 	)
 );
