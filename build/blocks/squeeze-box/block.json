@@ -1,0 +1,16 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "yokoi/squeeze-box",
+	"version": "1.0.0",
+	"title": "Squeeze Box",
+	"category": "yokoi",
+	"icon": "admin-collapse",
+	"description": "Create accordion-style sections with single or multiple panels open at once.",
+	"textdomain": "yokoi",
+	"style": "file:./style-index.css",
+	"editorStyle": "file:./index.css",
+	"editorScript": "file:./index.js",
+	"viewScript": "file:./view.js"
+}
+

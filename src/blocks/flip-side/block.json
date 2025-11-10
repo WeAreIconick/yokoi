@@ -1,0 +1,108 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "yokoi/flip-side",
+	"version": "0.1.0",
+	"title": "Flip Side",
+	"category": "yokoi",
+	"icon": "image-flip-horizontal",
+	"description": "Create interactive flip cards with front/back content, navigation, and autoplay.",
+	"example": {
+		"attributes": {
+			"cards": [
+				{
+					"frontTitle": "Your Title Here",
+					"backTitle": "More Details",
+					"frontContent": "Add your main content here",
+					"backContent": "Additional information revealed on hover"
+				},
+				{
+					"frontTitle": "Second Card",
+					"backTitle": "Learn More",
+					"frontContent": "Another piece of content",
+					"backContent": "Extended details about this item"
+				}
+			]
+		}
+	},
+	"attributes": {
+		"cards": {
+			"type": "array",
+			"default": [
+				{
+					"id": 1,
+					"frontTitle": "",
+					"backTitle": "",
+					"frontContent": "",
+					"backContent": "",
+					"frontImageId": null,
+					"frontImageUrl": "",
+					"frontImageAlt": "",
+					"backImageId": null,
+					"backImageUrl": "",
+					"backImageAlt": ""
+				}
+			]
+		},
+		"currentCard": {
+			"type": "number",
+			"default": 0
+		},
+		"cardWidth": {
+			"type": "number",
+			"default": 300
+		},
+		"cardHeight": {
+			"type": "number",
+			"default": 400
+		},
+		"frontColor": {
+			"type": "string",
+			"default": "#6366f1"
+		},
+		"backColor": {
+			"type": "string",
+			"default": "#ec4899"
+		},
+		"textColor": {
+			"type": "string",
+			"default": "#ffffff"
+		},
+		"showNavigation": {
+			"type": "boolean",
+			"default": true
+		},
+		"showIndicators": {
+			"type": "boolean",
+			"default": true
+		},
+		"autoPlay": {
+			"type": "boolean",
+			"default": false
+		},
+		"autoPlayDelay": {
+			"type": "number",
+			"default": 5000
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": [
+			"left",
+			"center",
+			"right"
+		],
+		"color": {
+			"background": false,
+			"text": false,
+			"gradients": false,
+			"link": false
+		}
+	},
+	"textdomain": "yokoi",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css",
+	"viewScript": "file:./view.js"
+}
+

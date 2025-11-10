@@ -1,0 +1,234 @@
+/**
+ * Frontend + editor shared styles for Squeeze Box.
+ */
+
+.wp-block-yokoi-squeeze-box {
+	--squeeze-box-primary: #227093;
+	--squeeze-box-transition: all 0.35s ease-in-out;
+	--squeeze-box-border-radius: 0.5rem;
+	--squeeze-box-padding: 1rem;
+
+	max-width: 100%;
+	overflow: hidden;
+	word-wrap: break-word;
+
+	.squeeze-box {
+		color: var(--squeeze-box-primary);
+		border: 2px solid var(--squeeze-box-primary);
+		border-radius: var(--squeeze-box-border-radius);
+		overflow: hidden;
+		word-break: break-word;
+		hyphens: auto;
+	}
+
+	.tab {
+		position: relative;
+		will-change: auto;
+	}
+
+	.tab input {
+		position: absolute;
+		opacity: 0;
+		z-index: -1;
+		left: -9999px;
+		pointer-events: none;
+	}
+
+	.tab input + label {
+		pointer-events: auto;
+		cursor: pointer;
+	}
+
+	.tab__label,
+	.tab__close {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: var(--squeeze-box-padding);
+		min-height: 44px;
+		color: #fff;
+		background: var(--squeeze-box-primary);
+		cursor: pointer;
+		user-select: none;
+		transition: background-color 0.2s ease;
+		outline: none;
+		border: none;
+	}
+
+	.tab__label::after {
+		content: '\276F';
+		width: 1em;
+		height: 1em;
+		text-align: center;
+		transform: rotate(90deg);
+		transition: var(--squeeze-box-transition);
+		flex-shrink: 0;
+		margin-left: 1em;
+	}
+
+	.tab input:checked + .tab__label::after {
+		transform: rotate(270deg);
+	}
+
+	.tab__label:focus,
+	.tab__close:focus {
+		outline: 2px solid #007cba;
+		outline-offset: 2px;
+	}
+
+	.tab__close {
+		justify-content: flex-end;
+		font-size: 0.75rem;
+	}
+
+	.tab__content {
+		max-height: 0;
+		overflow: hidden;
+		transition: var(--squeeze-box-transition);
+		will-change: max-height;
+		transform: translateZ(0);
+	}
+
+	.tab input:checked ~ .tab__content {
+		max-height: 50rem;
+	}
+
+	.tab__content * {
+		max-width: 100%;
+		height: auto;
+	}
+
+	.tab__content p {
+		margin: 0;
+		padding: var(--squeeze-box-padding);
+		line-height: 1.6;
+	}
+
+	.tab input:not(:checked) + .tab__label:hover::after {
+		animation: yokoi-squeeze-box-bounce 0.5s ease-in-out;
+	}
+
+	@keyframes yokoi-squeeze-box-bounce {
+		0%,
+		100% {
+			transform: rotate(90deg);
+		}
+		25% {
+			transform: rotate(90deg) translateX(0.25rem);
+		}
+		75% {
+			transform: rotate(90deg) translateX(-0.25rem);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.tab__content {
+			transition: none;
+		}
+
+		.tab__label::after {
+			transition: none;
+		}
+
+		.tab input:not(:checked) + .tab__label:hover::after {
+			animation: none;
+		}
+	}
+
+	@media (max-width: 768px) {
+		.tab__label {
+			padding: 0.75rem;
+			font-size: 0.9rem;
+		}
+
+		.tab__content p {
+			padding: 0.75rem;
+			font-size: 0.9rem;
+		}
+
+		.tab__close {
+			padding: 0.5rem 0.75rem;
+		}
+	}
+
+	@media (prefers-contrast: high) {
+		.squeeze-box {
+			border-width: 3px;
+		}
+
+		.tab__label,
+		.tab__close {
+			border: 1px solid transparent;
+		}
+
+		.tab__label:focus,
+		.tab__close:focus {
+			outline: 3px solid currentColor;
+			outline-offset: 3px;
+		}
+	}
+
+	&.alignleft,
+	&.alignright,
+	&.aligncenter {
+		max-width: none;
+		width: 100%;
+	}
+
+	&.alignleft {
+		float: left;
+		margin-right: 2em;
+		margin-left: 0;
+	}
+
+	&.alignright {
+		float: right;
+		margin-left: 2em;
+		margin-right: 0;
+	}
+
+	&.aligncenter {
+		margin-left: auto;
+		margin-right: auto;
+	}
+
+	&.alignwide {
+		max-width: 1280px;
+		width: 100%;
+	}
+
+	&.alignfull {
+		max-width: none;
+		width: 100vw;
+		position: relative;
+		left: 50%;
+		right: 50%;
+		margin-left: -50vw;
+		margin-right: -50vw;
+	}
+
+	@media print {
+		.tab__content {
+			max-height: none !important;
+			overflow: visible !important;
+		}
+
+		.tab input {
+			display: none;
+		}
+
+		.tab__label::after {
+			display: none;
+		}
+
+		.tab__close {
+			display: none;
+		}
+
+		.tab__label {
+			background: #000 !important;
+			color: #fff !important;
+		}
+	}
+}
+

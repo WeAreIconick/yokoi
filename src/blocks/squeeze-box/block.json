@@ -1,0 +1,75 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "yokoi/squeeze-box",
+	"version": "1.0.0",
+	"title": "Squeeze Box",
+	"category": "yokoi",
+	"icon": "admin-collapse",
+	"description": "Create accordion-style sections with single or multiple panels open at once.",
+	"keywords": [
+		"accordion",
+		"collapsible",
+		"tabs",
+		"faq"
+	],
+	"example": {
+		"attributes": {
+			"items": [
+				{
+					"title": "What's behind door #1?",
+					"content": "This humble text box is ready to become whatever you need it to be. Go ahead, make it shine!",
+					"isOpen": true
+				},
+				{
+					"title": "Plot twist revealed here",
+					"content": "This humble text box is ready to become whatever you need it to be. Go ahead, make it shine!",
+					"isOpen": false
+				}
+			],
+			"mode": "multiple"
+		}
+	},
+	"attributes": {
+		"items": {
+			"type": "array",
+			"default": [
+				{
+					"title": "",
+					"content": "",
+					"isOpen": false
+				},
+				{
+					"title": "",
+					"content": "",
+					"isOpen": false
+				}
+			]
+		},
+		"mode": {
+			"type": "string",
+			"default": "multiple",
+			"enum": [ "multiple", "single" ]
+		},
+		"primaryColor": {
+			"type": "string",
+			"default": "#227093"
+		},
+		"uniqueId": {
+			"type": "string"
+		}
+	},
+	"supports": {
+		"html": false,
+		"spacing": {
+			"margin": true,
+			"padding": true
+		}
+	},
+	"textdomain": "yokoi",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./editor.css",
+	"style": "file:./style-index.css",
+	"viewScript": "file:./view.js"
+}
+

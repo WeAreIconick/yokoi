@@ -1,0 +1,77 @@
+.wp-block-yokoi-squeeze-box {
+	.squeeze-box-editor {
+		padding: 1rem;
+		border: 2px dashed #ddd;
+		border-radius: 0.5rem;
+		margin-bottom: 1rem;
+
+		h4 {
+			margin: 0 0 1rem 0;
+			color: #1e1e1e;
+		}
+	}
+
+	.squeeze-box {
+		margin-top: 1rem;
+	}
+
+	.tab input {
+		pointer-events: auto;
+	}
+
+	.squeeze-box-panel-number {
+		display: inline-block;
+		background: #0073aa;
+		color: #fff;
+		padding: 6px 12px;
+		border-radius: 4px;
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: 0.5px;
+		text-transform: uppercase;
+		border: 1px solid #005a87;
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+		min-width: 60px;
+		text-align: center;
+	}
+
+	.components-card__header .components-flex {
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	&.alignleft,
+	&.alignright,
+	&.aligncenter {
+		max-width: none;
+		width: 100%;
+	}
+
+	&.alignleft {
+		float: left;
+		margin-right: 2em;
+		margin-left: 0;
+	}
+
+	&.alignright {
+		float: right;
+		margin-left: 2em;
+		margin-right: 0;
+	}
+
+	&.aligncenter {
+		margin-left: auto;
+		margin-right: auto;
+	}
+
+	&.alignwide {
+		max-width: 1280px;
+		width: 100%;
+	}
+
+	&.alignfull {
+		max-width: none;
+		width: 100%;
+	}
+}
+

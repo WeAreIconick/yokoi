@@ -348,5 +348,73 @@ return array(
 		'editorStyle' => 'file:./editor.css',
 		'style' => 'file:./style-index.css',
 		'viewScript' => 'file:./view.js'
-	)
+	),
+	'squeeze-box' => array(
+		'$schema' => 'https://schemas.wp.org/trunk/block.json',
+		'apiVersion' => 3,
+		'name' => 'yokoi/squeeze-box',
+		'version' => '1.0.0',
+		'title' => 'Squeeze Box',
+		'category' => 'yokoi',
+		'icon' => 'admin-collapse',
+		'description' => 'Create accordion-style sections with single or multiple panels open at once.',
+		'example' => array(
+			'attributes' => array(
+				'items' => array(
+					array(
+						'title' => "What's behind door #1?",
+						'content' => 'This humble text box is ready to become whatever you need it to be. Go ahead, make it shine!',
+						'isOpen' => true,
+					),
+					array(
+						'title' => 'Plot twist revealed here',
+						'content' => 'This humble text box is ready to become whatever you need it to be. Go ahead, make it shine!',
+						'isOpen' => false,
+					),
+				),
+				'mode' => 'multiple',
+			),
+		),
+		'attributes' => array(
+			'items' => array(
+				'type' => 'array',
+				'default' => array(
+					array(
+						'title' => '',
+						'content' => '',
+						'isOpen' => false,
+					),
+					array(
+						'title' => '',
+						'content' => '',
+						'isOpen' => false,
+					),
+				),
+			),
+			'mode' => array(
+				'type' => 'string',
+				'default' => 'multiple',
+				'enum' => array( 'multiple', 'single' ),
+			),
+			'primaryColor' => array(
+				'type' => 'string',
+				'default' => '#227093',
+			),
+			'uniqueId' => array(
+				'type' => 'string',
+			),
+		),
+		'supports' => array(
+			'html' => false,
+			'spacing' => array(
+				'margin' => true,
+				'padding' => true,
+			),
+		),
+		'textdomain' => 'yokoi',
+		'editorScript' => 'file:./index.js',
+		'editorStyle' => 'file:./index.css',
+		'style' => 'file:./style-index.css',
+		'viewScript' => 'file:./view.js'
+	),
 );
