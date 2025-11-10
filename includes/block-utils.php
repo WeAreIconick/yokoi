@@ -19,10 +19,17 @@ use function array_map;
 use function array_filter;
 use function array_values;
 use function function_exists;
+use function delete_option;
+use function delete_transient;
 use function get_option;
+use function get_transient;
 use function update_option;
 use function filemtime;
 use function ltrim;
+use function set_transient;
+use function wp_cache_delete;
+use function wp_cache_get;
+use function wp_cache_set;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -30,6 +37,54 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 const YOKOI_BLOCK_MANIFEST     = 'build/yokoi-blocks-manifest.json';
 const YOKOI_BLOCK_CACHE_OPTION = 'yokoi_block_metadata_cache';
+const YOKOI_BLOCK_CACHE_GROUP  = 'yokoi';
+const YOKOI_BLOCK_CACHE_TTL    = DAY_IN_SECONDS;
+
+/**
+ * Retrieve a cache payload stored with the given key.
+ *
+ * @return array<string,mixed>|false
+ */
+function yokoi_get_cache_payload() {
+	$payload = wp_cache_get( YOKOI_BLOCK_CACHE_OPTION, YOKOI_BLOCK_CACHE_GROUP );
+
+	if ( false !== $payload ) {
+		return $payload;
+	}
+
+	$payload = get_transient( YOKOI_BLOCK_CACHE_OPTION );
+
+	if ( false !== $payload ) {
+		wp_cache_set( YOKOI_BLOCK_CACHE_OPTION, $payload, YOKOI_BLOCK_CACHE_GROUP, YOKOI_BLOCK_CACHE_TTL );
+		return $payload;
+	}
+
+	return get_option( YOKOI_BLOCK_CACHE_OPTION );
+}
+
+/**
+ * Persist a cache payload across runtime layers.
+ *
+ * @param array<string,mixed> $payload Cache payload.
+ *
+ * @return void
+ */
+function yokoi_set_cache_payload( array $payload ): void {
+	wp_cache_set( YOKOI_BLOCK_CACHE_OPTION, $payload, YOKOI_BLOCK_CACHE_GROUP, YOKOI_BLOCK_CACHE_TTL );
+	set_transient( YOKOI_BLOCK_CACHE_OPTION, $payload, YOKOI_BLOCK_CACHE_TTL );
+	update_option( YOKOI_BLOCK_CACHE_OPTION, $payload, false );
+}
+
+/**
+ * Remove existing cache payload.
+ *
+ * @return void
+ */
+function yokoi_delete_cache_payload(): void {
+	wp_cache_delete( YOKOI_BLOCK_CACHE_OPTION, YOKOI_BLOCK_CACHE_GROUP );
+	delete_transient( YOKOI_BLOCK_CACHE_OPTION );
+	delete_option( YOKOI_BLOCK_CACHE_OPTION );
+}
 
 /**
  * Retrieve the absolute path to the Yokoi manifest file.
@@ -153,7 +208,7 @@ function yokoi_get_cached_metadata( string $signature ): ?array {
 		return null;
 	}
 
-	$cache = get_option( YOKOI_BLOCK_CACHE_OPTION );
+	$cache = yokoi_get_cache_payload();
 
 	if ( ! is_array( $cache ) ) {
 		return null;
@@ -183,14 +238,12 @@ function yokoi_set_cached_metadata( string $signature, array $metadata ): void {
 		return;
 	}
 
-	update_option(
-		YOKOI_BLOCK_CACHE_OPTION,
-		array(
-			'signature' => $signature,
-			'metadata'  => $metadata,
-		),
-		false
+	$payload = array(
+		'signature' => $signature,
+		'metadata'  => $metadata,
 	);
+
+	yokoi_set_cache_payload( $payload );
 }
 
 if ( ! function_exists( __NAMESPACE__ . '\\get_all_blocks_metadata' ) ) {

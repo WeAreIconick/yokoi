@@ -23,6 +23,7 @@ use function register_rest_route;
 use function update_option;
 use function wp_parse_args;
 use function __;
+use function wp_verify_nonce;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -127,6 +128,12 @@ class Settings_API {
 				'description'       => __( 'Role-based or condition-based visibility controls.', 'yokoi' ),
 				'sanitize_callback' => array( $this, 'sanitize_recursive' ),
 			),
+			'nonce'               => array(
+				'required'          => true,
+				'type'              => 'string',
+				'description'       => __( 'Nonce used to validate Yokoi settings updates.', 'yokoi' ),
+				'sanitize_callback' => 'sanitize_text_field',
+			),
 		);
 	}
 
@@ -184,6 +191,15 @@ class Settings_API {
 	public function update_settings( WP_REST_Request $request ) {
 		$current_settings = $this->get_stored_settings();
 		$new_settings     = $current_settings;
+		$nonce            = $request->get_param( 'nonce' );
+
+		if ( ! is_string( $nonce ) || ! wp_verify_nonce( $nonce, 'yokoi_settings' ) ) {
+			return new WP_Error(
+				'yokoi_invalid_nonce',
+				__( 'Your session has expired. Please refresh and try again.', 'yokoi' ),
+				array( 'status' => 403 )
+			);
+		}
 
 		if ( null !== $request->get_param( 'blocks_enabled' ) ) {
 			$new_settings['blocks_enabled'] = $request->get_param( 'blocks_enabled' );

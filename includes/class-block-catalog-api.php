@@ -13,6 +13,7 @@ use WP_REST_Server;
 use function add_action;
 use function current_user_can;
 use function register_rest_route;
+use function sanitize_text_field;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -68,9 +69,46 @@ class Block_Catalog_API {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function get_blocks( WP_REST_Request $request ): WP_REST_Response { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+	public function get_blocks( WP_REST_Request $request ): WP_REST_Response {
 		$catalog = get_block_catalog_entries();
+		$search  = $request->get_param( 'search' );
 
-		return new WP_REST_Response( $catalog, 200 );
+		if ( is_string( $search ) && '' !== $search ) {
+			$needle  = sanitize_text_field( $search );
+			$catalog = array_values(
+				array_filter(
+					$catalog,
+					static function ( $entry ) use ( $needle ) {
+						$haystack = strtolower(
+							( $entry['name'] ?? '' ) . ' ' . ( $entry['title'] ?? '' ) . ' ' . ( $entry['description'] ?? '' )
+						);
+						return false !== strpos( $haystack, strtolower( $needle ) );
+					}
+				)
+			);
+		}
+
+		$per_page = (int) $request->get_param( 'per_page' );
+		if ( $per_page <= 0 ) {
+			$per_page = 100;
+		}
+
+		$per_page    = min( 500, max( 1, $per_page ) );
+		$page        = max( 1, (int) $request->get_param( 'page' ) );
+		$total       = count( $catalog );
+		$total_pages = (int) max( 1, ceil( $total / $per_page ) );
+
+		if ( $page > $total_pages ) {
+			$page = $total_pages;
+		}
+
+		$offset  = ( $page - 1 ) * $per_page;
+		$catalog = array_slice( $catalog, $offset, $per_page );
+
+		$response = new WP_REST_Response( $catalog, 200 );
+		$response->header( 'X-WP-Total', (string) $total );
+		$response->header( 'X-WP-TotalPages', (string) $total_pages );
+
+		return $response;
 	}
 }

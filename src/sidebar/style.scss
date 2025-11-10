@@ -25,6 +25,15 @@
 	align-items: center;
 }
 
+.yokoi-sidebar__panel-row--load-more {
+	justify-content: center;
+
+	.components-button {
+		width: 100%;
+		justify-content: center;
+	}
+}
+
 .yokoi-sidebar__loading-message,
 .yokoi-sidebar__error {
 	font-size: 13px;

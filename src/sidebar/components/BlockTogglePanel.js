@@ -1,4 +1,5 @@
 import {
+	Button,
 	Panel,
 	PanelBody,
 	PanelRow,
@@ -9,12 +10,15 @@ import { __ } from '@wordpress/i18n';
 
 const BlockTogglePanel = ( {
 	isLoading = false,
+	isLoadingMore = false,
 	error = null,
 	searchValue = '',
 	onSearchChange = () => {},
 	blocksEnabled = {},
 	blockDefinitions = {},
 	onToggle,
+	hasMore = false,
+	onLoadMore = () => {},
 } ) => {
 	const orderedKeys = Object.keys( blockDefinitions ).length
 		? Object.keys( blockDefinitions )
@@ -108,6 +112,21 @@ const BlockTogglePanel = ( {
 						</PanelRow>
 					);
 				} ) }
+
+				{ hasMore && ! isLoading && (
+					<PanelRow className="yokoi-sidebar__panel-row yokoi-sidebar__panel-row--load-more">
+						<Button
+							variant="secondary"
+							onClick={ onLoadMore }
+							isBusy={ isLoadingMore }
+							disabled={ isLoadingMore }
+						>
+							{ isLoadingMore
+								? __( 'Loading…', 'yokoi' )
+								: __( 'Load more blocks', 'yokoi' ) }
+						</Button>
+					</PanelRow>
+				) }
 			</PanelBody>
 		</Panel>
 	);

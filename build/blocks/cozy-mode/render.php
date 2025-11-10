@@ -114,7 +114,14 @@ if ( ! function_exists( 'yokoi_enqueue_cozy_mode_assets' ) ) :
 		if ( ! $localized ) {
 			$localized = true;
 
-			$trusted_domains = apply_filters( 'yokoi_cozy_mode_trusted_domains', array() );
+			$default_host    = wp_parse_url( home_url(), PHP_URL_HOST );
+			$trusted_domains = array();
+
+			if ( $default_host ) {
+				$trusted_domains[] = sanitize_text_field( $default_host );
+			}
+
+			$trusted_domains = apply_filters( 'yokoi_cozy_mode_trusted_domains', $trusted_domains );
 
 			$data = array(
 				'postId'         => $post_id,

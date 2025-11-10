@@ -14,6 +14,7 @@ use function add_action;
 use function add_filter;
 use function current_user_can;
 use function file_exists;
+use function get_current_screen;
 use function rest_url;
 use function wp_add_inline_script;
 use function wp_create_nonce;
@@ -138,6 +139,10 @@ class Plugin {
 	 * @return void
 	 */
 	public function enqueue_editor_assets(): void {
+		if ( ! $this->is_site_editor_context() ) {
+			return;
+		}
+
 		$asset_path = YOKOI_PLUGIN_DIR . 'build/sidebar.asset.php';
 
 		if ( ! file_exists( $asset_path ) ) {
@@ -192,6 +197,10 @@ class Plugin {
 			return;
 		}
 
+		if ( ! $this->is_site_editor_context() ) {
+			return;
+		}
+
 		if ( ! wp_script_is( 'yokoi-sidebar', 'registered' ) ) {
 			return;
 		}
@@ -225,6 +234,7 @@ class Plugin {
 			'restEndpoint'   => rest_url( Settings_API::REST_NAMESPACE . '/settings' ),
 			'blocksEndpoint' => rest_url( Settings_API::REST_NAMESPACE . '/blocks' ),
 			'nonce'          => wp_create_nonce( 'wp_rest' ),
+			'settingsNonce'  => wp_create_nonce( 'yokoi_settings' ),
 			'capabilities'   => array(
 				'canManage' => current_user_can( 'manage_options' ),
 			),
@@ -277,5 +287,32 @@ class Plugin {
 		}
 
 		return $categories;
+	}
+
+	/**
+	 * Determine whether the current admin screen is the Site Editor.
+	 *
+	 * @return bool
+	 */
+	private function is_site_editor_context(): bool {
+		if ( ! function_exists( 'get_current_screen' ) ) {
+			return false;
+		}
+
+		$screen = get_current_screen();
+
+		if ( ! $screen ) {
+			return false;
+		}
+
+		if ( isset( $screen->id ) && 'site-editor' === $screen->id ) {
+			return true;
+		}
+
+		if ( isset( $screen->base ) && 'site-editor' === $screen->base ) {
+			return true;
+		}
+
+		return false;
 	}
 }

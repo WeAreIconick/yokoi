@@ -12,11 +12,13 @@ import {
 	useState,
 } from '@wordpress/element';
 import domReady from '@wordpress/dom-ready';
+import { addQueryArgs } from '@wordpress/url';
 
 import BlockTogglePanel from './components/BlockTogglePanel';
 
 const bootstrap = window.yokoiSettings || {};
 const initialBlockList = Array.isArray( bootstrap.blocks ) ? bootstrap.blocks : [];
+const CATALOG_PAGE_SIZE = 100;
 
 const toDefinitionMap = ( list = [] ) =>
 	list.reduce( ( acc, block ) => {
@@ -131,6 +133,21 @@ const YokoiSidebar = () => {
 	const [ isBlockCatalogLoading, setIsBlockCatalogLoading ] = useState( false );
 	const [ blockCatalogError, setBlockCatalogError ] = useState( null );
 	const [ searchTerm, setSearchTerm ] = useState( '' );
+const [ debouncedSearchTerm, setDebouncedSearchTerm ] = useState( '' );
+const [ catalogMeta, setCatalogMeta ] = useState( {
+	page: 0,
+	totalPages: 0,
+	search: '',
+} );
+const [ isCatalogLoadingMore, setIsCatalogLoadingMore ] = useState( false );
+
+useEffect( () => {
+	const handle = setTimeout( () => {
+		setDebouncedSearchTerm( searchTerm );
+	}, 300 );
+
+	return () => clearTimeout( handle );
+}, [ searchTerm ] );
 
 	const sanitizeSettings = useCallback(
 		( value, definitions = blockDefinitions ) =>
@@ -195,42 +212,12 @@ const YokoiSidebar = () => {
 			return;
 		}
 
-		let isMounted = true;
-
-		setIsBlockCatalogLoading( true );
-		setBlockCatalogError( null );
-
-		apiFetch( { url: blocksEndpoint, method: 'GET' } )
-			.then( ( response ) => {
-				if ( ! isMounted ) {
-					return;
-				}
-
-				const definitions = toDefinitionMap(
-					Array.isArray( response ) ? response : []
-				);
-				setBlockDefinitions( definitions );
-				setSettings( ( current ) =>
-					sanitizeSettingsWithDefinitions( current, definitions )
-				);
-			} )
-			.catch( ( err ) => {
-				if ( ! isMounted ) {
-					return;
-				}
-
-				setBlockCatalogError( err );
-			} )
-			.finally( () => {
-				if ( isMounted ) {
-					setIsBlockCatalogLoading( false );
-				}
-			} );
-
-		return () => {
-			isMounted = false;
-		};
-	}, [ blocksEndpoint ] );
+		fetchBlockCatalog( {
+			search: debouncedSearchTerm,
+			page: 1,
+			append: false,
+		} );
+	}, [ blocksEndpoint, debouncedSearchTerm, fetchBlockCatalog ] );
 
 	const blocksEnabled = useMemo(
 		() => settings?.blocks_enabled || {},
@@ -252,6 +239,110 @@ const YokoiSidebar = () => {
 		setHasChanges( true );
 	}, [] );
 
+	const fetchBlockCatalog = useCallback(
+		async ( { search = '', page = 1, append = false } = {} ) => {
+			if ( ! blocksEndpoint ) {
+				return;
+			}
+
+			setBlockCatalogError( null );
+
+			if ( append ) {
+				setIsCatalogLoadingMore( true );
+			} else {
+				setIsBlockCatalogLoading( true );
+			}
+
+			try {
+				const requestUrl = addQueryArgs( blocksEndpoint, {
+					per_page: CATALOG_PAGE_SIZE,
+					page,
+					...( search ? { search } : {} ),
+				} );
+
+				const response = await apiFetch( {
+					url: requestUrl,
+					method: 'GET',
+					parse: false,
+				} );
+
+				const payload = await response.json();
+
+				if ( ! response.ok ) {
+					throw payload;
+				}
+				const total = parseInt(
+					response.headers.get( 'X-WP-Total' ),
+					10
+				) || payload.length || 0;
+				const totalPages =
+					parseInt(
+						response.headers.get( 'X-WP-TotalPages' ),
+						10
+					) || Math.max( 1, Math.ceil( total / CATALOG_PAGE_SIZE ) );
+				const mapped = toDefinitionMap(
+					Array.isArray( payload ) ? payload : []
+				);
+
+				let mergedDefinitions = mapped;
+				setBlockDefinitions( ( previous ) => {
+					mergedDefinitions = append
+						? { ...previous, ...mapped }
+						: mapped;
+					return mergedDefinitions;
+				} );
+
+				setSettings( ( current ) =>
+					sanitizeSettingsWithDefinitions(
+						current,
+						mergedDefinitions
+					)
+				);
+
+				setCatalogMeta( {
+					page,
+					totalPages,
+					search,
+				} );
+			} catch ( err ) {
+				setBlockCatalogError( err );
+				if ( ! append ) {
+					setCatalogMeta( {
+						page: 0,
+						totalPages: 0,
+						search,
+					} );
+				}
+			} finally {
+				if ( append ) {
+					setIsCatalogLoadingMore( false );
+				} else {
+					setIsBlockCatalogLoading( false );
+				}
+			}
+		},
+		[ blocksEndpoint ]
+	);
+
+	const hasMoreBlocks =
+		catalogMeta.page > 0 && catalogMeta.page < catalogMeta.totalPages;
+
+	const loadMoreBlocks = useCallback( () => {
+		if ( ! blocksEndpoint ) {
+			return;
+		}
+
+		if ( catalogMeta.page >= catalogMeta.totalPages ) {
+			return;
+		}
+
+		fetchBlockCatalog( {
+			search: catalogMeta.search,
+			page: catalogMeta.page + 1,
+			append: true,
+		} );
+	}, [ blocksEndpoint, catalogMeta, fetchBlockCatalog ] );
+
 	const saveSettings = useCallback( () => {
 		if ( ! restEndpoint ) {
 			return;
@@ -267,6 +358,7 @@ const YokoiSidebar = () => {
 				blocks_enabled: settings.blocks_enabled,
 				default_configs: settings.default_configs,
 				visibility_controls: settings.visibility_controls,
+				nonce: bootstrap?.settingsNonce,
 			},
 		} )
 			.then( ( response ) => {
@@ -344,10 +436,13 @@ const YokoiSidebar = () => {
 				) }
 
 				<BlockTogglePanel
-			isLoading={ isBlockCatalogLoading }
-			error={ blockCatalogError }
-			searchValue={ searchTerm }
-			onSearchChange={ setSearchTerm }
+					isLoading={ isBlockCatalogLoading }
+					isLoadingMore={ isCatalogLoadingMore }
+					error={ blockCatalogError }
+					searchValue={ searchTerm }
+					onSearchChange={ setSearchTerm }
+					hasMore={ hasMoreBlocks }
+					onLoadMore={ loadMoreBlocks }
 					blocksEnabled={ blocksEnabled }
 					blockDefinitions={ blockDefinitions }
 					onToggle={ toggleBlock }
