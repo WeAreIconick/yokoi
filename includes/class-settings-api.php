@@ -53,6 +53,7 @@ class Settings_API {
 			'blocks_enabled'      => get_block_default_states(),
 			'default_configs'     => array(),
 			'visibility_controls' => array(),
+			'date_now_api_key'    => sanitize_text_field( (string) get_option( 'yokoi_date_now_api_key', '' ) ),
 		);
 	}
 
@@ -134,6 +135,12 @@ class Settings_API {
 				'description'       => __( 'Nonce used to validate Yokoi settings updates.', 'yokoi' ),
 				'sanitize_callback' => 'sanitize_text_field',
 			),
+			'date_now_api_key'    => array(
+				'required'          => false,
+				'type'              => 'string',
+				'description'       => __( 'Google Calendar API key used by the Date.now block.', 'yokoi' ),
+				'sanitize_callback' => 'sanitize_text_field',
+			),
 		);
 	}
 
@@ -164,6 +171,7 @@ class Settings_API {
 		$settings['blocks_enabled']      = wp_parse_args( $settings['blocks_enabled'], $defaults['blocks_enabled'] );
 		$settings['default_configs']     = wp_parse_args( $settings['default_configs'], $defaults['default_configs'] );
 		$settings['visibility_controls'] = wp_parse_args( $settings['visibility_controls'], $defaults['visibility_controls'] );
+		$settings['date_now_api_key']    = sanitize_text_field( (string) $settings['date_now_api_key'] );
 
 		return $settings;
 	}
@@ -211,6 +219,11 @@ class Settings_API {
 
 		if ( null !== $request->get_param( 'visibility_controls' ) ) {
 			$new_settings['visibility_controls'] = $request->get_param( 'visibility_controls' );
+		}
+
+		if ( null !== $request->get_param( 'date_now_api_key' ) ) {
+			$new_settings['date_now_api_key'] = sanitize_text_field( (string) $request->get_param( 'date_now_api_key' ) );
+			update_option( 'yokoi_date_now_api_key', $new_settings['date_now_api_key'], 'yes' );
 		}
 
 		update_option( self::OPTION_NAME, $new_settings, 'yes' );
@@ -355,6 +368,11 @@ class Settings_API {
 					'context'     => array( 'view', 'edit' ),
 					'description' => __( 'Controls for block visibility based on context such as user role.', 'yokoi' ),
 				),
+			),
+			'date_now_api_key'    => array(
+				'type'        => 'string',
+				'context'     => array( 'view', 'edit' ),
+				'description' => __( 'Google Calendar API key for the Date.now block.', 'yokoi' ),
 			),
 		);
 	}

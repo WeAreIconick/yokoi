@@ -34,6 +34,7 @@ const buildDefaultSettings = ( definitions = {} ) => ( {
 	),
 	default_configs: {},
 	visibility_controls: {},
+	date_now_api_key: '',
 } );
 
 const sanitizeSettingsWithDefinitions = ( value, definitions ) => {
@@ -66,7 +67,27 @@ const sanitizeSettingsWithDefinitions = ( value, definitions ) => {
 		...( value?.visibility_controls || {} ),
 	};
 
+	output.date_now_api_key =
+		typeof value?.date_now_api_key === 'string'
+			? value.date_now_api_key
+			: defaults.date_now_api_key;
+
 	return output;
+};
+
+const broadcastSettingsUpdate = ( nextSettings ) => {
+	if ( typeof window === 'undefined' ) {
+		return;
+	}
+
+	window.yokoiSettings = {
+		...( window.yokoiSettings || {} ),
+		settings: nextSettings,
+	};
+
+	window.dispatchEvent(
+		new CustomEvent( 'yokoi:settings-updated', { detail: nextSettings } )
+	);
 };
 
 if ( bootstrap?.nonce ) {
@@ -166,6 +187,12 @@ useEffect( () => {
 	const [ hasChanges, setHasChanges ] = useState( false );
 	const [ error, setError ] = useState( null );
 	const [ savedNotice, setSavedNotice ] = useState( false );
+
+	useEffect( () => {
+		if ( settings ) {
+			broadcastSettingsUpdate( settings );
+		}
+	}, [ settings ] );
 
 	const canManage = bootstrap?.capabilities?.canManage !== false;
 	const restEndpoint = bootstrap?.restEndpoint;
@@ -309,18 +336,24 @@ useEffect( () => {
 		[ settings ]
 	);
 
+	const dateNowApiKey = settings?.date_now_api_key || '';
+
 	const toggleBlock = useCallback( ( blockName ) => {
-		setSettings( ( current ) => {
-			const nextBlocks = {
+		setSettings( ( current ) => ( {
+			...current,
+			blocks_enabled: {
 				...current.blocks_enabled,
 				[ blockName ]: ! current.blocks_enabled?.[ blockName ],
-			};
+			},
+		} ) );
+		setHasChanges( true );
+	}, [] );
 
-			return {
-				...current,
-				blocks_enabled: nextBlocks,
-			};
-		} );
+	const handleDateNowApiKeyChange = useCallback( ( value ) => {
+		setSettings( ( current ) => ( {
+			...current,
+			date_now_api_key: value,
+		} ) );
 		setHasChanges( true );
 	}, [] );
 
@@ -358,6 +391,7 @@ useEffect( () => {
 				blocks_enabled: settings.blocks_enabled,
 				default_configs: settings.default_configs,
 				visibility_controls: settings.visibility_controls,
+				date_now_api_key: settings.date_now_api_key || '',
 				nonce: bootstrap?.settingsNonce,
 			},
 		} )
@@ -446,6 +480,8 @@ useEffect( () => {
 					blocksEnabled={ blocksEnabled }
 					blockDefinitions={ blockDefinitions }
 					onToggle={ toggleBlock }
+					dateNowApiKey={ dateNowApiKey }
+					onDateNowApiKeyChange={ handleDateNowApiKeyChange }
 				/>
 
 				<div className="yokoi-sidebar__footer">

@@ -5,8 +5,10 @@ import {
 	PanelRow,
 	ToggleControl,
 	SearchControl,
+	TextControl,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { Fragment } from '@wordpress/element';
 
 const BlockTogglePanel = ( {
 	isLoading = false,
@@ -19,6 +21,8 @@ const BlockTogglePanel = ( {
 	onToggle,
 	hasMore = false,
 	onLoadMore = () => {},
+	dateNowApiKey = '',
+	onDateNowApiKeyChange = () => {},
 } ) => {
 	const orderedKeys = Object.keys( blockDefinitions ).length
 		? Object.keys( blockDefinitions )
@@ -99,17 +103,30 @@ const BlockTogglePanel = ( {
 				{ filteredEntries.map( ( [ blockName, enabled ] ) => {
 					const label = blockDefinitions[ blockName ]?.title || blockName;
 					const description = blockDefinitions[ blockName ]?.description;
+					const isDateNow = blockName === 'yokoi/date-now';
 
 					return (
-						<PanelRow key={ blockName } className="yokoi-sidebar__panel-row">
-							<ToggleControl
-								label={ label }
-								checked={ Boolean( enabled ) }
-								onChange={ () => onToggle( blockName ) }
-								help={ description }
-								__nextHasNoMarginBottom
-							/>
-						</PanelRow>
+						<Fragment key={ blockName }>
+							<PanelRow className="yokoi-sidebar__panel-row">
+								<ToggleControl
+									label={ label }
+									checked={ Boolean( enabled ) }
+									onChange={ () => onToggle( blockName ) }
+									help={ description }
+									__nextHasNoMarginBottom
+								/>
+							</PanelRow>
+							{ isDateNow && (
+								<PanelRow className="yokoi-sidebar__panel-row yokoi-sidebar__panel-row--date-now">
+									<TextControl
+										label={ __( 'Google Calendar API key', 'yokoi' ) }
+										value={ dateNowApiKey }
+										onChange={ onDateNowApiKeyChange }
+										placeholder="AIza..."
+									/>
+								</PanelRow>
+							) }
+						</Fragment>
 					);
 				} ) }
 

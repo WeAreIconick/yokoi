@@ -10,11 +10,14 @@ namespace Yokoi;
 use WP_Block_Editor_Context;
 use Yokoi\Date_Now\Service as Date_Now_Service;
 use function __;
+use function array_unique;
 use function add_action;
 use function add_filter;
 use function current_user_can;
+use function esc_html;
 use function file_exists;
 use function get_current_screen;
+use function is_admin;
 use function rest_url;
 use function wp_add_inline_script;
 use function wp_create_nonce;
@@ -60,6 +63,13 @@ class Plugin {
 	 * @var Date_Now_Service|null
 	 */
 	private ?Date_Now_Service $date_now_service = null;
+
+	/**
+	 * Cached block enabled state map.
+	 *
+	 * @var array<string,bool>|null
+	 */
+	private ?array $block_enabled_cache = null;
 
 	/**
 	 * Constructor.
@@ -113,6 +123,7 @@ class Plugin {
 		add_action( 'enqueue_block_editor_assets', array( $this, 'localize_editor_settings' ), 10 );
 		add_filter( 'block_categories_all', array( $this, 'register_block_category' ), 10, 2 );
 		add_filter( 'block_categories', array( $this, 'register_block_category_legacy' ), 10, 2 );
+		add_filter( 'render_block', array( $this, 'maybe_disable_block_output' ), 10, 2 );
 	}
 
 	/**
@@ -184,6 +195,28 @@ class Plugin {
 				array(),
 				$style_version
 			);
+		}
+
+		$editor_asset_path = YOKOI_PLUGIN_DIR . 'build/index.asset.php';
+		$editor_script_path = YOKOI_PLUGIN_DIR . 'build/index.js';
+
+		if ( file_exists( $editor_asset_path ) && file_exists( $editor_script_path ) ) {
+			$editor_asset      = include $editor_asset_path;
+			$editor_deps       = $editor_asset['dependencies'] ?? array();
+			$editor_version    = $editor_asset['version'] ?? YOKOI_VERSION;
+			$editor_version   .= '.' . filemtime( $editor_script_path );
+			$editor_deps[]     = 'yokoi-sidebar';
+			$editor_deps       = array_unique( $editor_deps );
+
+			wp_register_script(
+				'yokoi-editor-controls',
+				YOKOI_PLUGIN_URL . 'build/index.js',
+				$editor_deps,
+				$editor_version,
+				true
+			);
+
+			wp_enqueue_script( 'yokoi-editor-controls' );
 		}
 	}
 
@@ -314,5 +347,74 @@ class Plugin {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Filter block output to suppress disabled Yokoi blocks.
+	 *
+	 * @param string $content Rendered block markup.
+	 * @param array  $block   Block metadata.
+	 *
+	 * @return string
+	 */
+	public function maybe_disable_block_output( string $content, array $block ): string {
+		$block_name = $block['blockName'] ?? '';
+
+		if ( ! is_string( $block_name ) || '' === $block_name ) {
+			return $content;
+		}
+
+		if ( 0 !== strpos( $block_name, 'yokoi/' ) ) {
+			return $content;
+		}
+
+		if ( $this->is_block_enabled( $block_name ) ) {
+			return $content;
+		}
+
+		if ( is_admin() ) {
+			return sprintf(
+				'<div class="yokoi-block-disabled">'. // phpcs:ignore WordPress.Security.EscapeOutput
+				'<p>%s</p>'.
+				'</div>',
+				esc_html(
+					sprintf(
+						/* translators: %s: block name */
+						__( '%s is disabled in Yokoi settings.', 'yokoi' ),
+						$block_name
+					)
+				)
+			);
+		}
+
+		return '';
+	}
+
+	/**
+	 * Determine whether a given block is enabled.
+	 *
+	 * @param string $block_name Block identifier.
+	 *
+	 * @return bool
+	 */
+	private function is_block_enabled( string $block_name ): bool {
+		if ( null === $this->block_enabled_cache ) {
+			$this->block_enabled_cache = array();
+
+			if ( $this->settings_api instanceof Settings_API ) {
+				$settings = $this->settings_api->get_stored_settings();
+				$map      = $settings['blocks_enabled'] ?? array();
+
+				if ( is_array( $map ) ) {
+					$this->block_enabled_cache = $map;
+				}
+			}
+		}
+
+		if ( isset( $this->block_enabled_cache[ $block_name ] ) ) {
+			return (bool) $this->block_enabled_cache[ $block_name ];
+		}
+
+		return true;
 	}
 }

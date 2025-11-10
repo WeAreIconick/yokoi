@@ -27,7 +27,6 @@ class Service {
 	 */
 	public function register(): void {
 		add_action( 'init', array( $this, 'on_init' ) );
-		add_action( 'admin_menu', array( $this, 'register_settings_page' ), 20 );
 		add_action( 'enqueue_block_assets', array( $this, 'enqueue_frontend' ) );
 	}
 
@@ -41,13 +40,6 @@ class Service {
 				'render_callback' => array( Block_Renderer::class, 'render' ),
 			)
 		);
-	}
-
-	/**
-	 * Makes the settings page available.
-	 */
-	public function register_settings_page(): void {
-		( new Settings_Page() )->hooks();
 	}
 
 	/**
