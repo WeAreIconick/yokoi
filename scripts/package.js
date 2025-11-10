@@ -12,12 +12,7 @@ const entriesToCopy = [
 	'build',
 	'includes',
 	'languages',
-	'vendor',
-	'README.md',
 	'readme.txt',
-	'composer.json',
-	'composer.lock',
-	'phpcs.xml',
 	'uninstall.php'
 ];
 
