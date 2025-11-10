@@ -4,6 +4,8 @@
  * Plugin URI: https://iconick.io/yokoi
  * Description: Modular block suite with PluginSidebar settings for WordPress.
  * Version: 0.1.0
+ * Requires at least: 6.2
+ * Requires PHP: 7.4
  * Author: Yokoi Team
  * Author URI: https://iconick.io
  * License: GPL v2 or later

@@ -14,9 +14,11 @@ const entriesToCopy = [
 	'languages',
 	'vendor',
 	'README.md',
+	'readme.txt',
 	'composer.json',
 	'composer.lock',
-	'phpcs.xml'
+	'phpcs.xml',
+	'uninstall.php'
 ];
 
 async function copyRecursive(source, destination) {
