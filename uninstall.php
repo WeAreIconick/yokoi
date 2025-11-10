@@ -9,38 +9,25 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
-$options_to_delete = array(
+$yokoi_options_to_delete = array(
 	'yokoi_settings',
 	'yokoi_block_metadata_cache',
 	'yokoi_date_now_api_key',
+	'yokoi_date_now_cache_keys',
 );
 
-foreach ( $options_to_delete as $option_name ) {
-	delete_option( $option_name );
-	delete_site_option( $option_name );
+foreach ( $yokoi_options_to_delete as $yokoi_option_name ) {
+	delete_option( $yokoi_option_name );
+	delete_site_option( $yokoi_option_name );
 }
 
-global $wpdb;
+$yokoi_cache_keys = get_option( 'yokoi_date_now_cache_keys', array() );
 
-if ( isset( $wpdb ) ) {
-	$transient_prefix = $wpdb->esc_like( 'yokoi_date_now_' ) . '%';
-
-	$wpdb->query(
-		$wpdb->prepare(
-			"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
-			'_transient_' . $transient_prefix,
-			'_transient_timeout_' . $transient_prefix
-		)
-	);
-
-	if ( is_multisite() ) {
-		$wpdb->query(
-			$wpdb->prepare(
-				"DELETE FROM {$wpdb->sitemeta} WHERE meta_key LIKE %s OR meta_key LIKE %s",
-				'_site_transient_' . $transient_prefix,
-				'_site_transient_timeout_' . $transient_prefix
-			)
-		);
+if ( is_array( $yokoi_cache_keys ) ) {
+	foreach ( $yokoi_cache_keys as $yokoi_cache_key ) {
+		delete_transient( 'yokoi_date_now_' . $yokoi_cache_key );
 	}
 }
+
+delete_option( 'yokoi_date_now_cache_keys' );
 
