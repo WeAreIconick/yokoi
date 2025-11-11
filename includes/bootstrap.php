@@ -17,6 +17,5 @@ require_once YOKOI_PLUGIN_DIR . 'includes/class-block-catalog-api.php';
 require_once YOKOI_PLUGIN_DIR . 'includes/Date_Now/Calendar_Cache.php';
 require_once YOKOI_PLUGIN_DIR . 'includes/Date_Now/Google_Calendar_API.php';
 require_once YOKOI_PLUGIN_DIR . 'includes/Date_Now/Block_Renderer.php';
-require_once YOKOI_PLUGIN_DIR . 'includes/Date_Now/Settings_Page.php';
 require_once YOKOI_PLUGIN_DIR . 'includes/Date_Now/Service.php';
 

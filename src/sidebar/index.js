@@ -55,6 +55,25 @@ const openSidebar = () => {
 	}
 };
 
+const scheduleSidebarOpen = () => {
+	if ( ! shouldAutoOpenSidebar() ) {
+		return;
+	}
+
+	let attempts = 5;
+
+	const tick = () => {
+		openSidebar();
+		attempts -= 1;
+
+		if ( attempts > 0 ) {
+			window.setTimeout( tick, 300 );
+		}
+	};
+
+	window.setTimeout( tick, 150 );
+};
+
 const toDefinitionMap = ( list = [] ) =>
 	list.reduce( ( acc, block ) => {
 		if ( block?.name ) {
@@ -574,7 +593,5 @@ domReady( () => {
 		icon: YokoiSidebarIcon,
 	} );
 
-	if ( shouldAutoOpenSidebar() ) {
-		window.setTimeout( openSidebar, 250 );
-	}
+	scheduleSidebarOpen();
 } );

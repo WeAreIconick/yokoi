@@ -9,8 +9,10 @@
 
 namespace Yokoi\Date_Now;
 
+use WP_Block_Type_Registry;
 use function add_action;
 use function has_block;
+use function file_exists;
 use function register_block_type;
 use function wp_enqueue_script;
 
@@ -34,8 +36,20 @@ class Service {
 	 * Register block type via metadata.
 	 */
 	public function on_init(): void {
+		$registry = WP_Block_Type_Registry::get_instance();
+
+		if ( $registry->is_registered( 'yokoi/date-now' ) ) {
+			return;
+		}
+
+		$block_dir = YOKOI_PLUGIN_DIR . 'build/blocks/date-now';
+
+		if ( ! file_exists( $block_dir . '/block.json' ) ) {
+			return;
+		}
+
 		register_block_type(
-			YOKOI_PLUGIN_DIR . 'build/blocks/date-now',
+			$block_dir,
 			array(
 				'render_callback' => array( Block_Renderer::class, 'render' ),
 			)

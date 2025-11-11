@@ -462,11 +462,11 @@ class Plugin {
 	 * Remove disabled blocks from the inserter.
 	 *
 	 * @param bool|array $allowed_block_types Current allowed block types.
-	 * @param array      $editor_context      Editor context.
+	 * @param mixed      $editor_context      Editor context.
 	 *
 	 * @return bool|array
 	 */
-	public function filter_allowed_block_types( $allowed_block_types, array $editor_context ) {
+	public function filter_allowed_block_types( $allowed_block_types, $editor_context = null ) {
 		unset( $editor_context );
 
 		$disabled = $this->get_disabled_block_names();

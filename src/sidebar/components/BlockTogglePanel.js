@@ -116,13 +116,16 @@ const BlockTogglePanel = ( {
 									__nextHasNoMarginBottom
 								/>
 							</PanelRow>
-							{ isDateNow && (
+							{ isDateNow && enabled && (
 								<PanelRow className="yokoi-sidebar__panel-row yokoi-sidebar__panel-row--date-now">
 									<TextControl
 										label={ __( 'Google Calendar API key', 'yokoi' ) }
 										value={ dateNowApiKey }
 										onChange={ onDateNowApiKeyChange }
-										placeholder="AIza..."
+										placeholder={ __(
+											'Paste your Google API key',
+											'yokoi'
+										) }
 									/>
 								</PanelRow>
 							) }
