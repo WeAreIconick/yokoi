@@ -1,54 +1,49 @@
-.yokoi-sidebar__loading {
+.yokoi-sidebar__loading-shell {
 	display: flex;
 	flex-direction: column;
-	gap: 0.75rem;
-	align-items: flex-start;
+	gap: 12px;
 }
 
-.yokoi-sidebar__footer {
+.yokoi-sidebar__loading-panel {
 	display: flex;
-	flex-direction: row;
-	justify-content: flex-end;
-	gap: 0.75rem;
-	margin-top: 1.5rem;
-	padding: 1rem;
-	border-top: 1px solid #dcdcde;
-}
-
-.yokoi-sidebar__empty {
-	color: #50575e;
-	font-size: 13px;
-	margin-top: 0;
-}
-
-.yokoi-sidebar__panel-row {
+	flex-direction: column;
 	align-items: center;
+	gap: 12px;
+	padding: 24px;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
 }
 
-.yokoi-sidebar__panel-row--load-more {
-	justify-content: center;
-
-	.components-button {
-		width: 100%;
-		justify-content: center;
-	}
-}
-
-.yokoi-sidebar__panel-row--date-now {
-	flex-direction: column;
+.yokoi-sidebar__loading-panel--secondary {
 	align-items: stretch;
+}
 
-	.components-base-control__label {
-		font-weight: 600;
+.yokoi-sidebar__loading-bar {
+	height: 10px;
+	width: 100%;
+	border-radius: 999px;
+	background: linear-gradient(90deg, #e0e2e5 0%, #f0f1f2 50%, #e0e2e5 100%);
+	animation: yokoi-loading-pulse 1.4s ease-in-out infinite;
+}
+
+.yokoi-sidebar__loading-bar--short {
+	width: 60%;
+}
+
+@keyframes yokoi-loading-pulse {
+	0% {
+		opacity: 0.4;
+		transform: translateX(-5%);
 	}
-}
 
-.yokoi-sidebar__loading-message,
-.yokoi-sidebar__error {
-	font-size: 13px;
-	margin: 0;
-}
+	50% {
+		opacity: 1;
+		transform: translateX(0);
+	}
 
-.yokoi-sidebar__error {
-	color: #b32d2e;
+	100% {
+		opacity: 0.4;
+		transform: translateX(5%);
+	}
 }

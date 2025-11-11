@@ -6,10 +6,6 @@ import {
 } from '@wordpress/block-editor';
 import {
 	BaseControl,
-	Button,
-	Card,
-	CardBody,
-	CardHeader,
 	Flex,
 	FlexItem,
 	PanelBody,
@@ -297,9 +293,9 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 
 			<div { ...blockProps }>
 				{ items.map( ( item, index ) => (
-					<Card key={ `panel-${ index }` } style={ { marginBottom: '16px' } }>
-						<CardHeader>
-							<Flex justify="space-between">
+					<div className="squeeze-box-panel" key={ `panel-${ index }` }>
+						<div className="squeeze-box-panel__header">
+							<Flex justify="space-between" align="center">
 								<FlexItem>
 									<span className="squeeze-box-panel-number">
 										{ getNumberWord( index ).toUpperCase() }
@@ -324,8 +320,8 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 									</Button>
 								</FlexItem>
 							</Flex>
-						</CardHeader>
-						<CardBody>
+						</div>
+						<div className="squeeze-box-panel__body">
 							<TextControl
 								label={ __( 'Title', 'yokoi' ) }
 								value={ item.title || '' }
@@ -348,8 +344,8 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 								rows={ 4 }
 								maxLength={ MAX_CONTENT_LENGTH }
 							/>
-						</CardBody>
-					</Card>
+						</div>
+					</div>
 				) ) }
 			</div>
 		</>

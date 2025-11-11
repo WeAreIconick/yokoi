@@ -17,6 +17,7 @@ use function add_action;
 use function add_option;
 use function current_user_can;
 use function get_option;
+use function register_setting;
 use function rest_sanitize_boolean;
 use function sanitize_text_field;
 use function register_rest_route;
@@ -75,6 +76,29 @@ class Settings_API {
 	 */
 	public function register(): void {
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+		add_action( 'init', array( $this, 'register_settings_option' ) );
+	}
+
+	/**
+	 * Register the Yokoi settings option with WordPress.
+	 *
+	 * @return void
+	 */
+	public function register_settings_option(): void {
+		register_setting(
+			'general',
+			self::OPTION_NAME,
+			array(
+				'type'              => 'object',
+				'sanitize_callback' => array( $this, 'sanitize_settings_option' ),
+				'default'           => self::get_default_settings(),
+				'auth_callback'     => array( $this, 'can_manage_settings' ),
+				'show_in_rest'      => array(
+					'name'   => self::OPTION_NAME,
+					'schema' => $this->get_settings_schema(),
+				),
+			)
+		);
 	}
 
 	/**
@@ -237,6 +261,42 @@ class Settings_API {
 	}
 
 	/**
+	 * Sanitize the settings option payload.
+	 *
+	 * @param mixed $value Value provided by WordPress.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function sanitize_settings_option( $value ): array {
+		$defaults = self::get_default_settings();
+
+		if ( ! is_array( $value ) ) {
+			return $defaults;
+		}
+
+		$sanitized = $defaults;
+
+		if ( array_key_exists( 'blocks_enabled', $value ) ) {
+			$sanitized['blocks_enabled'] = $this->sanitize_blocks_enabled( $value['blocks_enabled'] );
+		}
+
+		if ( array_key_exists( 'default_configs', $value ) ) {
+			$sanitized['default_configs'] = $this->sanitize_recursive( $value['default_configs'] );
+		}
+
+		if ( array_key_exists( 'visibility_controls', $value ) ) {
+			$sanitized['visibility_controls'] = $this->sanitize_recursive( $value['visibility_controls'] );
+		}
+
+		if ( array_key_exists( 'date_now_api_key', $value ) ) {
+			$sanitized['date_now_api_key'] = sanitize_text_field( (string) $value['date_now_api_key'] );
+			update_option( 'yokoi_date_now_api_key', $sanitized['date_now_api_key'], 'yes' );
+		}
+
+		return $sanitized;
+	}
+
+	/**
 	 * Sanitize recursive arrays by stripping tags from string values.
 	 *
 	 * @param mixed $value Potentially nested data structure.
@@ -349,6 +409,7 @@ class Settings_API {
 			'$schema'    => 'http://json-schema.org/draft-04/schema#',
 			'title'      => 'Yokoi Settings',
 			'type'       => 'object',
+			'additionalProperties' => false,
 			'properties' => array(
 				'blocks_enabled'      => array(
 					'type'                 => 'object',
@@ -368,11 +429,11 @@ class Settings_API {
 					'context'     => array( 'view', 'edit' ),
 					'description' => __( 'Controls for block visibility based on context such as user role.', 'yokoi' ),
 				),
-			),
-			'date_now_api_key'    => array(
-				'type'        => 'string',
-				'context'     => array( 'view', 'edit' ),
-				'description' => __( 'Google Calendar API key for the Date.now block.', 'yokoi' ),
+				'date_now_api_key'    => array(
+					'type'        => 'string',
+					'context'     => array( 'view', 'edit' ),
+					'description' => __( 'Google Calendar API key for the Date.now block.', 'yokoi' ),
+				),
 			),
 		);
 	}

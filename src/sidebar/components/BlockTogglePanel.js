@@ -1,14 +1,13 @@
 import {
 	Button,
+	Notice,
 	Panel,
 	PanelBody,
-	PanelRow,
-	ToggleControl,
 	SearchControl,
-	TextControl,
+	Spinner,
+	ToggleControl,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { Fragment } from '@wordpress/element';
 
 const BlockTogglePanel = ( {
 	isLoading = false,
@@ -21,8 +20,7 @@ const BlockTogglePanel = ( {
 	onToggle,
 	hasMore = false,
 	onLoadMore = () => {},
-	dateNowApiKey = '',
-	onDateNowApiKeyChange = () => {},
+	disabled = false,
 } ) => {
 	const orderedKeys = Object.keys( blockDefinitions ).length
 		? Object.keys( blockDefinitions )
@@ -56,96 +54,65 @@ const BlockTogglePanel = ( {
 					value={ searchValue }
 					onChange={ onSearchChange }
 					placeholder={ __( 'Search blocks…', 'yokoi' ) }
+					disabled={ disabled }
 				/>
 
 				{ isLoading && (
-					<PanelRow className="yokoi-sidebar__panel-row">
-						<p className="yokoi-sidebar__loading-message">
-							{ __( 'Loading block catalog…', 'yokoi' ) }
-						</p>
-					</PanelRow>
+					<>
+						<Spinner />
+						<span>{ __( 'Loading block catalog…', 'yokoi' ) }</span>
+					</>
 				) }
 
 				{ error && ! isLoading && (
-					<PanelRow className="yokoi-sidebar__panel-row">
-						<p className="yokoi-sidebar__error">
-							{ error?.message ||
-								__(
-									'Unable to load block catalog.',
-									'yokoi'
-								) }
-						</p>
-					</PanelRow>
+					<Notice status="error">
+						{ error?.message ||
+							__( 'Unable to load block catalog.', 'yokoi' ) }
+					</Notice>
 				) }
 
 				{ entries.length === 0 && (
-					<PanelRow className="yokoi-sidebar__panel-row yokoi-sidebar__panel-row--empty">
-						<p className="yokoi-sidebar__empty">
-							{ __(
-								'No blocks registered yet. Blocks will appear here once available.',
-								'yokoi'
-							) }
-						</p>
-					</PanelRow>
+					<p>
+						{ __(
+							'No blocks registered yet. Blocks will appear here once available.',
+							'yokoi'
+						) }
+					</p>
 				) }
 
-				{ ! isLoading && filteredEntries.length === 0 && entries.length > 0 && (
-					<PanelRow className="yokoi-sidebar__panel-row yokoi-sidebar__panel-row--empty">
-						<p className="yokoi-sidebar__empty">
-							{ __(
-								'No blocks match your search.',
-								'yokoi'
-							) }
-						</p>
-					</PanelRow>
-				) }
+				{ ! isLoading &&
+					filteredEntries.length === 0 &&
+					entries.length > 0 && (
+						<p>{ __( 'No blocks match your search.', 'yokoi' ) }</p>
+					) }
 
 				{ filteredEntries.map( ( [ blockName, enabled ] ) => {
 					const label = blockDefinitions[ blockName ]?.title || blockName;
 					const description = blockDefinitions[ blockName ]?.description;
-					const isDateNow = blockName === 'yokoi/date-now';
-
 					return (
-						<Fragment key={ blockName }>
-							<PanelRow className="yokoi-sidebar__panel-row">
-								<ToggleControl
-									label={ label }
-									checked={ Boolean( enabled ) }
-									onChange={ () => onToggle( blockName ) }
-									help={ description }
-									__nextHasNoMarginBottom
-								/>
-							</PanelRow>
-							{ isDateNow && enabled && (
-								<PanelRow className="yokoi-sidebar__panel-row yokoi-sidebar__panel-row--date-now">
-									<TextControl
-										label={ __( 'Google Calendar API key', 'yokoi' ) }
-										value={ dateNowApiKey }
-										onChange={ onDateNowApiKeyChange }
-										placeholder={ __(
-											'Paste your Google API key',
-											'yokoi'
-										) }
-									/>
-								</PanelRow>
-							) }
-						</Fragment>
+						<ToggleControl
+							key={ blockName }
+							label={ label }
+							checked={ Boolean( enabled ) }
+							onChange={ () => onToggle( blockName ) }
+							help={ description }
+							__nextHasNoMarginBottom
+							disabled={ disabled }
+						/>
 					);
 				} ) }
 
 				{ hasMore && ! isLoading && (
-					<PanelRow className="yokoi-sidebar__panel-row yokoi-sidebar__panel-row--load-more">
-						<Button
-							variant="secondary"
-							onClick={ onLoadMore }
-							isBusy={ isLoadingMore }
-							disabled={ isLoadingMore }
-						>
-							{ isLoadingMore
-								? __( 'Loading…', 'yokoi' )
-								: __( 'Load more blocks', 'yokoi' ) }
-						</Button>
-					</PanelRow>
+					<Button
+						variant="secondary"
+						onClick={ onLoadMore }
+						isBusy={ isLoadingMore }
+						disabled={ isLoadingMore || disabled }
+					>
+						{ isLoadingMore
+							? __( 'Loading…', 'yokoi' )
+							: __( 'Load more blocks', 'yokoi' ) }
+					</Button>
 				) }
 			</PanelBody>
 		</Panel>

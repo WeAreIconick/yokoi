@@ -1,7 +1,5 @@
-import './style.scss';
-
 import { registerPlugin } from '@wordpress/plugins';
-import { Button, Notice, Spinner } from '@wordpress/components';
+import { Button, Flex, Notice, Spinner, TabPanel, TextControl } from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
 import {
@@ -9,12 +7,23 @@ import {
 	useCallback,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from '@wordpress/element';
+import { useDispatch, useSelect } from '@wordpress/data';
 import domReady from '@wordpress/dom-ready';
 import { addQueryArgs } from '@wordpress/url';
+import isEqual from 'lodash/isEqual';
 
 import BlockTogglePanel from './components/BlockTogglePanel';
+import './style.scss';
+
+const logDebug = ( ...args ) => {
+	if ( window?.YOKOI_DEBUG ) {
+		// eslint-disable-next-line no-console
+		console.info( '[Yokoi]', ...args );
+	}
+};
 
 const bootstrap = window.yokoiSettings || {};
 const initialBlockList = Array.isArray( bootstrap.blocks ) ? bootstrap.blocks : [];
@@ -181,22 +190,6 @@ const YokoiSidebarIcon = ( props = {} ) => (
 	</svg>
 );
 
-const getErrorMessage = ( error ) => {
-	if ( ! error ) {
-		return '';
-	}
-
-	if ( typeof error === 'string' ) {
-		return error;
-	}
-
-	if ( error?.message ) {
-		return error.message;
-	}
-
-	return __( 'An unexpected error occurred.', 'yokoi' );
-};
-
 const YokoiSidebar = () => {
 	if ( ! SitePluginSidebar || ! SitePluginSidebarMoreMenuItem ) {
 		return null;
@@ -224,38 +217,163 @@ useEffect( () => {
 	return () => clearTimeout( handle );
 }, [ searchTerm ] );
 
-	const sanitizeSettings = useCallback(
-		( value, definitions = blockDefinitions ) =>
-			sanitizeSettingsWithDefinitions( value, definitions ),
-		[ blockDefinitions ]
+	const optionName = bootstrap?.settingsOption || 'yokoi_settings';
+	const canManage = bootstrap?.capabilities?.canManage !== false;
+	const blocksEndpoint = bootstrap?.blocksEndpoint;
+	const { editEntityRecord } = useDispatch( 'core' );
+
+	const {
+		optionValue,
+		persistedOptionValue,
+		optionDirty,
+		optionResolving,
+		optionSaving,
+	} = useSelect(
+		( select ) => {
+			const coreStore = select( 'core' );
+			const record = coreStore.getEntityRecord(
+				'root',
+				'option',
+				optionName
+			);
+			const editedRecord = coreStore.getEditedEntityRecord
+				? coreStore.getEditedEntityRecord(
+						'root',
+						'option',
+						optionName
+				  )
+				: null;
+
+			const hasEditedValue =
+				editedRecord &&
+				Object.prototype.hasOwnProperty.call( editedRecord, 'value' );
+
+			return {
+				optionValue: hasEditedValue ? editedRecord.value : record?.value,
+				persistedOptionValue: record?.value,
+				optionDirty: coreStore.hasEditsForEntityRecord
+					? coreStore.hasEditsForEntityRecord(
+							'root',
+							'option',
+							optionName
+					  )
+					: false,
+				optionResolving: coreStore.isResolving
+					? coreStore.isResolving( 'getEntityRecord', [
+							'root',
+							'option',
+							optionName,
+					  ] )
+					: false,
+				optionSaving: coreStore.isSavingEntityRecord
+					? coreStore.isSavingEntityRecord(
+							'root',
+							'option',
+							optionName
+					  )
+					: false,
+			};
+		},
+		[ optionName ]
 	);
 
-	const [ settings, setSettings ] = useState(
-		sanitizeSettingsWithDefinitions(
-			bootstrap.settings,
-			blockDefinitions
-		)
+	const hasFetchedOption = typeof optionValue !== 'undefined' || typeof persistedOptionValue !== 'undefined';
+	const baseOptionValue =
+		typeof optionValue !== 'undefined'
+			? optionValue
+			: typeof persistedOptionValue !== 'undefined'
+				? persistedOptionValue
+				: bootstrap.settings ?? buildDefaultSettings( blockDefinitions );
+
+	const normalizedOptionValue = useMemo(
+		() =>
+			sanitizeSettingsWithDefinitions(
+				baseOptionValue,
+				blockDefinitions
+			),
+		[ baseOptionValue, blockDefinitions ]
 	);
-	const [ isLoading, setIsLoading ] = useState( ! bootstrap.settings );
-	const [ isSaving, setIsSaving ] = useState( false );
-	const [ hasChanges, setHasChanges ] = useState( false );
-	const [ error, setError ] = useState( null );
-	const [ savedNotice, setSavedNotice ] = useState( false );
+
+	const hasSeededFromPersistedRef = useRef( false );
 
 	useEffect( () => {
-		if ( settings ) {
-			broadcastSettingsUpdate( settings );
+		logDebug( 'Option status', {
+			optionValue,
+			persistedOptionValue,
+			hasFetchedOption,
+		} );
+	}, [ optionValue, persistedOptionValue, hasFetchedOption ] );
+
+	useEffect( () => {
+		if (
+			! hasSeededFromPersistedRef.current &&
+			typeof optionValue === 'undefined' &&
+			typeof persistedOptionValue !== 'undefined'
+		) {
+			const sanitizedPersisted = sanitizeSettingsWithDefinitions(
+				persistedOptionValue,
+				blockDefinitions
+			);
+
+			logDebug( 'Seeding edited option with persisted value' );
+			hasSeededFromPersistedRef.current = true;
+			editEntityRecord( 'root', 'option', optionName, {
+				value: sanitizedPersisted,
+			} );
+			return;
 		}
-	}, [ settings ] );
 
-	const canManage = bootstrap?.capabilities?.canManage !== false;
-	const restEndpoint = bootstrap?.restEndpoint;
-	const blocksEndpoint = bootstrap?.blocksEndpoint;
+		if (
+			typeof optionValue !== 'undefined' &&
+			! isEqual( optionValue, normalizedOptionValue )
+		) {
+			logDebug( 'Syncing edited option to normalized snapshot' );
+			editEntityRecord( 'root', 'option', optionName, {
+				value: normalizedOptionValue,
+			} );
+		}
+	}, [
+		optionValue,
+		persistedOptionValue,
+		normalizedOptionValue,
+		optionName,
+		editEntityRecord,
+		blockDefinitions,
+	] );
 
-	const ensureSettings = useCallback(
-		( value, definitions = blockDefinitions ) =>
-			sanitizeSettings( value, definitions ),
-		[ sanitizeSettings, blockDefinitions ]
+	useEffect( () => {
+		broadcastSettingsUpdate( normalizedOptionValue );
+	}, [ normalizedOptionValue ] );
+
+	const isInitialLoad = ! hasFetchedOption;
+	const isOptionReady = hasFetchedOption;
+	const isLoading = isBlockCatalogLoading && isOptionReady;
+	const blocksEnabled = normalizedOptionValue.blocks_enabled || {};
+	const dateNowApiKey = normalizedOptionValue.date_now_api_key || '';
+
+	const applySettingsChange = useCallback(
+		( updater ) => {
+			if ( ! isOptionReady ) {
+				logDebug( 'applySettingsChange bail: option not ready' );
+				return;
+			}
+
+			const nextValue = sanitizeSettingsWithDefinitions(
+				updater( normalizedOptionValue ),
+				blockDefinitions
+			);
+
+			editEntityRecord( 'root', 'option', optionName, {
+				value: nextValue,
+			} );
+		},
+		[
+			editEntityRecord,
+			optionName,
+			normalizedOptionValue,
+			blockDefinitions,
+			isOptionReady,
+		]
 	);
 
 	const fetchBlockCatalog = useCallback(
@@ -311,13 +429,6 @@ useEffect( () => {
 					return mergedDefinitions;
 				} );
 
-				setSettings( ( current ) =>
-					sanitizeSettingsWithDefinitions(
-						current,
-						mergedDefinitions
-					)
-				);
-
 				setCatalogMeta( {
 					page,
 					totalPages,
@@ -343,36 +454,6 @@ useEffect( () => {
 		[ blocksEndpoint ]
 	);
 
-	const fetchLatestSettings = useCallback( () => {
-		if ( ! restEndpoint || ! canManage ) {
-			setIsLoading( false );
-			return;
-		}
-
-		setIsLoading( true );
-		apiFetch( { url: restEndpoint, method: 'GET' } )
-			.then( ( response ) => {
-				setSettings( ensureSettings( response ) );
-				setHasChanges( false );
-				if ( savedNotice ) {
-					setSavedNotice( false );
-				}
-				setError( null );
-			} )
-			.catch( ( err ) => {
-				setError( err );
-			} )
-			.finally( () => {
-				setIsLoading( false );
-			} );
-	}, [ restEndpoint, canManage, ensureSettings, savedNotice ] );
-
-	useEffect( () => {
-		if ( ! bootstrap.settings ) {
-			fetchLatestSettings();
-		}
-	}, [ fetchLatestSettings ] );
-
 	useEffect( () => {
 		if ( ! blocksEndpoint ) {
 			return;
@@ -385,34 +466,34 @@ useEffect( () => {
 		} );
 	}, [ blocksEndpoint, debouncedSearchTerm, fetchBlockCatalog ] );
 
-	const blocksEnabled = useMemo(
-		() => settings?.blocks_enabled || {},
-		[ settings ]
+	const toggleBlock = useCallback(
+		( blockName ) => {
+			applySettingsChange( ( current ) => ( {
+				...current,
+				blocks_enabled: {
+					...current.blocks_enabled,
+					[ blockName ]: ! current.blocks_enabled?.[ blockName ],
+				},
+			} ) );
+		},
+		[ applySettingsChange ]
 	);
 
-	const dateNowApiKey = settings?.date_now_api_key || '';
-
-	const toggleBlock = useCallback( ( blockName ) => {
-		setSettings( ( current ) => ( {
-			...current,
-			blocks_enabled: {
-				...current.blocks_enabled,
-				[ blockName ]: ! current.blocks_enabled?.[ blockName ],
-			},
-		} ) );
-		setHasChanges( true );
-	}, [] );
-
-	const handleDateNowApiKeyChange = useCallback( ( value ) => {
-		setSettings( ( current ) => ( {
-			...current,
-			date_now_api_key: value,
-		} ) );
-		setHasChanges( true );
-	}, [] );
+	const handleDateNowApiKeyChange = useCallback(
+		( value ) => {
+			applySettingsChange( ( current ) => ( {
+				...current,
+				date_now_api_key: value,
+			} ) );
+		},
+		[ applySettingsChange ]
+	);
 
 	const hasMoreBlocks =
 		catalogMeta.page > 0 && catalogMeta.page < catalogMeta.totalPages;
+
+	const isDateNowEnabled =
+		blocksEnabled?.[ 'yokoi/date-now' ] ?? true;
 
 	const loadMoreBlocks = useCallback( () => {
 		if ( ! blocksEndpoint ) {
@@ -430,41 +511,36 @@ useEffect( () => {
 		} );
 	}, [ blocksEndpoint, catalogMeta, fetchBlockCatalog ] );
 
-	const saveSettings = useCallback( () => {
-		if ( ! restEndpoint ) {
+	const handleReset = useCallback( () => {
+		if ( ! isOptionReady ) {
 			return;
 		}
 
-		setIsSaving( true );
-		setError( null );
+		const baselineSource =
+			persistedOptionValue ??
+			bootstrap.settings ??
+			buildDefaultSettings( blockDefinitions );
 
-		apiFetch( {
-			url: restEndpoint,
-			method: 'POST',
-			data: {
-				blocks_enabled: settings.blocks_enabled,
-				default_configs: settings.default_configs,
-				visibility_controls: settings.visibility_controls,
-				date_now_api_key: settings.date_now_api_key || '',
-				nonce: bootstrap?.settingsNonce,
-			},
-		} )
-			.then( ( response ) => {
-				const nextSettings = ensureSettings(
-					response?.data || response
-				);
-				setSettings( nextSettings );
-				setHasChanges( false );
-				setSavedNotice( true );
-				setTimeout( () => setSavedNotice( false ), 3000 );
-			} )
-			.catch( ( err ) => {
-				setError( err );
-			} )
-			.finally( () => {
-				setIsSaving( false );
-			} );
-	}, [ restEndpoint, settings, ensureSettings ] );
+		const baseline = sanitizeSettingsWithDefinitions(
+			baselineSource,
+			blockDefinitions
+		);
+
+		editEntityRecord( 'root', 'option', optionName, {
+			value: baseline,
+		} );
+	}, [
+		persistedOptionValue,
+		editEntityRecord,
+		optionName,
+		blockDefinitions,
+		isOptionReady,
+		bootstrap,
+	] );
+
+	const hasUnsavedChanges = optionDirty;
+	const isSavingChanges = optionSaving;
+	const isBusy = isSavingChanges || isBlockCatalogLoading;
 
 	if ( ! canManage ) {
 		return (
@@ -504,60 +580,116 @@ useEffect( () => {
 				title={ __( 'Yokoi Settings', 'yokoi' ) }
 				icon={ <YokoiSidebarIcon /> }
 			>
-				{ isLoading && (
-					<div className="yokoi-sidebar__loading">
-						<Spinner />
-						<p>{ __( 'Loading settings…', 'yokoi' ) }</p>
-					</div>
-				) }
+				<Flex direction="column" gap={ 6 }>
+					{ isInitialLoad ? (
+						<div className="yokoi-sidebar__loading-shell">
+							<div className="yokoi-sidebar__loading-panel">
+								<Spinner />
+								<p>{ __( 'Preparing Yokoi settings…', 'yokoi' ) }</p>
+								<div className="yokoi-sidebar__loading-bar" />
+								<div className="yokoi-sidebar__loading-bar yokoi-sidebar__loading-bar--short" />
+							</div>
+							<div className="yokoi-sidebar__loading-panel yokoi-sidebar__loading-panel--secondary">
+								<div className="yokoi-sidebar__loading-bar" />
+								<div className="yokoi-sidebar__loading-bar yokoi-sidebar__loading-bar--short" />
+							</div>
+						</div>
+					) : (
+						<>
+							{ isLoading && (
+								<Flex direction="column" gap={ 4 }>
+									<Spinner />
+									<p>{ __( 'Updating settings…', 'yokoi' ) }</p>
+								</Flex>
+							) }
 
-				{ savedNotice && (
-					<Notice status="success" isDismissible={ false }>
-						{ __( 'Settings saved successfully.', 'yokoi' ) }
-					</Notice>
-				) }
+							<Notice status="info" isDismissible={ false }>
+								{ __(
+									'Yokoi ships a suite of high-performance blocks built for modern WordPress sites. Use the controls below to enable blocks and fine-tune their behavior.',
+									'yokoi'
+								) }
+							</Notice>
 
-				{ error && (
-					<Notice status="error" onRemove={ () => setError( null ) }>
-						{ getErrorMessage( error ) }
-					</Notice>
-				) }
+							<TabPanel
+								initialTabName="catalog"
+								tabs={ [
+									{
+										name: 'catalog',
+										title: __( 'Blocks', 'yokoi' ),
+									},
+									{
+										name: 'settings',
+										title: __( 'Settings', 'yokoi' ),
+									},
+								] }
+							>
+								{ ( tab ) => {
+									if ( tab.name === 'settings' ) {
+										return (
+											<Flex direction="column" gap={ 4 }>
+												{ ! isDateNowEnabled ? (
+													<Notice status="info" isDismissible={ false }>
+														{ __(
+															'Enable the Date.now block to configure Google Calendar access.',
+															'yokoi'
+														) }
+													</Notice>
+												) : (
+													<TextControl
+														label={ __(
+															'Google Calendar API key',
+															'yokoi'
+														) }
+														value={ dateNowApiKey }
+														onChange={ handleDateNowApiKeyChange }
+														placeholder={ __(
+															'Paste your Google API key',
+															'yokoi'
+														) }
+														help={ __(
+															'Create a Maps Platform project, enable Calendar API access, and paste the key here.',
+															'yokoi'
+														) }
+														disabled={ ! isOptionReady || isBusy }
+													/>
+												) }
+											</Flex>
+										);
+									}
 
-				<BlockTogglePanel
-					isLoading={ isBlockCatalogLoading }
-					isLoadingMore={ isCatalogLoadingMore }
-					error={ blockCatalogError }
-					searchValue={ searchTerm }
-					onSearchChange={ setSearchTerm }
-					hasMore={ hasMoreBlocks }
-					onLoadMore={ loadMoreBlocks }
-					blocksEnabled={ blocksEnabled }
-					blockDefinitions={ blockDefinitions }
-					onToggle={ toggleBlock }
-					dateNowApiKey={ dateNowApiKey }
-					onDateNowApiKeyChange={ handleDateNowApiKeyChange }
-				/>
+									return (
+										<BlockTogglePanel
+											isLoading={ isBlockCatalogLoading }
+											isLoadingMore={ isCatalogLoadingMore }
+											error={ blockCatalogError }
+											searchValue={ searchTerm }
+											onSearchChange={ setSearchTerm }
+											hasMore={ hasMoreBlocks }
+											onLoadMore={ loadMoreBlocks }
+											blocksEnabled={ blocksEnabled }
+											blockDefinitions={ blockDefinitions }
+											onToggle={ toggleBlock }
+											disabled={ ! isOptionReady || isBusy }
+										/>
+									);
+								} }
+							</TabPanel>
 
-				<div className="yokoi-sidebar__footer">
-					<Button
-						variant="secondary"
-						onClick={ fetchLatestSettings }
-						isBusy={ isLoading }
-						disabled={ isSaving }
-					>
-						{ __( 'Reset', 'yokoi' ) }
-					</Button>
-					<Button
-						variant="primary"
-						onClick={ saveSettings }
-						isBusy={ isSaving }
-						disabled={ ! hasChanges || isSaving }
-					>
-						{ isSaving
-							? __( 'Saving…', 'yokoi' )
-							: __( 'Save Settings', 'yokoi' ) }
-					</Button>
-				</div>
+							<Flex justify="flex-end" gap={ 2 }>
+								<Button
+									variant="secondary"
+									onClick={ handleReset }
+									isBusy={ isBusy }
+									disabled={
+										isBusy || ! hasUnsavedChanges || ! isOptionReady
+									}
+								>
+									{ __( 'Reset', 'yokoi' ) }
+								</Button>
+							</Flex>
+						</>
+					) }
+				</Flex>
 			</SitePluginSidebar>
 		</Fragment>
 	);

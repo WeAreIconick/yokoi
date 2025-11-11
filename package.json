@@ -4,7 +4,7 @@
   "description": "Modular WordPress block plugin with PluginSidebar settings.",
   "main": "yokoi.php",
   "scripts": {
-    "test": "php tests/run.php",
+    "test": "node scripts/check-components.js && php tests/run.php",
     "clean": "node scripts/clean.js",
     "start": "wp-scripts start --webpack-copy-php --hot",
     "build": "npm run clean && wp-scripts build --webpack-copy-php --blocks-manifest",

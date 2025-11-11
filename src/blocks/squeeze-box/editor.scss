@@ -35,9 +35,21 @@
 		text-align: center;
 	}
 
-	.components-card__header .components-flex {
-		justify-content: space-between;
-		align-items: center;
+	.squeeze-box-panel {
+		background: #fff;
+		border: 1px solid #dcdcde;
+		border-radius: 6px;
+		padding: 16px;
+		margin-bottom: 16px;
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+	}
+
+	.squeeze-box-panel__header {
+		margin-bottom: 12px;
+	}
+
+	.squeeze-box-panel__body > .components-base-control {
+		margin-bottom: 12px;
 	}
 
 	&.alignleft,
