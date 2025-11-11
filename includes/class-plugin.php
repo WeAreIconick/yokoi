@@ -8,16 +8,23 @@
 namespace Yokoi;
 
 use WP_Block_Editor_Context;
+use WP_Block_Type_Registry;
 use Yokoi\Date_Now\Service as Date_Now_Service;
 use function __;
-use function array_unique;
 use function add_action;
 use function add_filter;
+use function add_query_arg;
+use function admin_url;
+use function array_unique;
 use function current_user_can;
+use function delete_option;
 use function esc_html;
+use function esc_url;
 use function file_exists;
 use function get_current_screen;
+use function get_option;
 use function is_admin;
+use function plugin_basename;
 use function rest_url;
 use function wp_add_inline_script;
 use function wp_create_nonce;
@@ -26,7 +33,9 @@ use function wp_enqueue_style;
 use function wp_json_encode;
 use function wp_list_filter;
 use function wp_register_script;
+use function wp_safe_redirect;
 use function wp_script_is;
+use function wp_doing_ajax;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -123,7 +132,13 @@ class Plugin {
 		add_action( 'enqueue_block_editor_assets', array( $this, 'localize_editor_settings' ), 10 );
 		add_filter( 'block_categories_all', array( $this, 'register_block_category' ), 10, 2 );
 		add_filter( 'block_categories', array( $this, 'register_block_category_legacy' ), 10, 2 );
+		add_filter( 'allowed_block_types_all', array( $this, 'filter_allowed_block_types' ), 10, 2 );
 		add_filter( 'render_block', array( $this, 'maybe_disable_block_output' ), 10, 2 );
+		add_action( 'admin_init', array( $this, 'maybe_redirect_to_site_editor' ) );
+		add_filter(
+			'plugin_action_links_' . plugin_basename( YOKOI_PLUGIN_FILE ),
+			array( $this, 'add_plugin_action_link' )
+		);
 	}
 
 	/**
@@ -416,5 +431,118 @@ class Plugin {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Retrieve disabled Yokoi block names.
+	 *
+	 * @return array<int,string>
+	 */
+	private function get_disabled_block_names(): array {
+		if ( null === $this->block_enabled_cache ) {
+			$this->is_block_enabled( '' );
+		}
+
+		if ( empty( $this->block_enabled_cache ) ) {
+			return array();
+		}
+
+		$disabled = array();
+
+		foreach ( $this->block_enabled_cache as $name => $enabled ) {
+			if ( 0 === strpos( $name, 'yokoi/' ) && ! $enabled ) {
+				$disabled[] = $name;
+			}
+		}
+
+		return $disabled;
+	}
+
+	/**
+	 * Remove disabled blocks from the inserter.
+	 *
+	 * @param bool|array $allowed_block_types Current allowed block types.
+	 * @param array      $editor_context      Editor context.
+	 *
+	 * @return bool|array
+	 */
+	public function filter_allowed_block_types( $allowed_block_types, array $editor_context ) {
+		unset( $editor_context );
+
+		$disabled = $this->get_disabled_block_names();
+
+		if ( empty( $disabled ) ) {
+			return $allowed_block_types;
+		}
+
+		if ( true === $allowed_block_types ) {
+			$registry = WP_Block_Type_Registry::get_instance();
+			$all      = array_keys( $registry->get_all_registered() );
+
+			return array_values( array_diff( $all, $disabled ) );
+		}
+
+		if ( is_array( $allowed_block_types ) ) {
+			return array_values( array_diff( $allowed_block_types, $disabled ) );
+		}
+
+		return $allowed_block_types;
+	}
+
+	/**
+	 * Redirect administrators to the Site Editor after activation.
+	 *
+	 * @return void
+	 */
+	public function maybe_redirect_to_site_editor(): void {
+		if ( 'yes' !== get_option( 'yokoi_redirect_to_site_editor' ) ) {
+			return;
+		}
+
+		if ( wp_doing_ajax() || ! current_user_can( 'edit_theme_options' ) ) {
+			delete_option( 'yokoi_redirect_to_site_editor' );
+			return;
+		}
+
+		$redirect_url = add_query_arg(
+			array(
+				'path'          => rawurlencode( '/' ),
+				'yokoi_sidebar' => '1',
+			),
+			admin_url( 'site-editor.php' )
+		);
+
+		delete_option( 'yokoi_redirect_to_site_editor' );
+
+		wp_safe_redirect( $redirect_url );
+		exit;
+	}
+
+	/**
+	 * Add a Settings link on the Plugins screen.
+	 *
+	 * @param array<int,string> $links Existing action links.
+	 *
+	 * @return array<int,string>
+	 */
+	public function add_plugin_action_link( array $links ): array {
+		$settings_url = add_query_arg(
+			array(
+				'path'          => rawurlencode( '/' ),
+				'yokoi_sidebar' => '1',
+			),
+			admin_url( 'site-editor.php' )
+		);
+
+		array_unshift(
+			$links,
+			sprintf(
+				'<a href="%s">%s</a>',
+				esc_url( $settings_url ),
+				__( 'Settings', 'yokoi' )
+			)
+		);
+
+		return $links;
 	}
 }

@@ -19,6 +19,41 @@ import BlockTogglePanel from './components/BlockTogglePanel';
 const bootstrap = window.yokoiSettings || {};
 const initialBlockList = Array.isArray( bootstrap.blocks ) ? bootstrap.blocks : [];
 const CATALOG_PAGE_SIZE = 100;
+const SIDEBAR_PLUGIN_SLUG = 'yokoi-settings-sidebar';
+
+const shouldAutoOpenSidebar = () => {
+	try {
+		const params = new URLSearchParams( window.location.search );
+		return params.get( 'yokoi_sidebar' ) === '1';
+	} catch ( error ) {
+		return false;
+	}
+};
+
+const openSidebar = () => {
+	const data = window?.wp?.data;
+
+	if ( ! data?.dispatch ) {
+		return;
+	}
+
+	const editSiteDispatch = data.dispatch( 'core/edit-site' );
+
+	if ( editSiteDispatch?.openGeneralSidebar ) {
+		editSiteDispatch.openGeneralSidebar(
+			`edit-site/plugin-sidebar/${ SIDEBAR_PLUGIN_SLUG }`
+		);
+		return;
+	}
+
+	const editPostDispatch = data.dispatch( 'core/edit-post' );
+
+	if ( editPostDispatch?.openGeneralSidebar ) {
+		editPostDispatch.openGeneralSidebar(
+			`edit-post/plugin-sidebar/${ SIDEBAR_PLUGIN_SLUG }`
+		);
+	}
+};
 
 const toDefinitionMap = ( list = [] ) =>
 	list.reduce( ( acc, block ) => {
@@ -538,4 +573,8 @@ domReady( () => {
 		render: YokoiSidebar,
 		icon: YokoiSidebarIcon,
 	} );
+
+	if ( shouldAutoOpenSidebar() ) {
+		window.setTimeout( openSidebar, 250 );
+	}
 } );

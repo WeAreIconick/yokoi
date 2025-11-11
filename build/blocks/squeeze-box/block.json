@@ -1,16 +1,79 @@
 {
-	"$schema": "https://schemas.wp.org/trunk/block.json",
-	"apiVersion": 3,
-	"name": "yokoi/squeeze-box",
-	"version": "1.0.0",
-	"title": "Squeeze Box",
-	"category": "yokoi",
-	"icon": "admin-collapse",
-	"description": "Create accordion-style sections with single or multiple panels open at once.",
-	"textdomain": "yokoi",
-	"style": "file:./style-index.css",
-	"editorStyle": "file:./index.css",
-	"editorScript": "file:./index.js",
-	"viewScript": "file:./view.js"
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yokoi/squeeze-box",
+  "version": "1.0.0",
+  "title": "Squeeze Box",
+  "category": "yokoi",
+  "icon": {
+    "src": "<svg viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M7 8h10v2H7V8Zm0 4h10v2H7v-2Zm0 4h10v2H7v-2Z\" fill=\"currentColor\"/></svg>"
+  },
+  "description": "Create accordion-style sections with single or multiple panels open at once.",
+  "keywords": [
+    "accordion",
+    "collapsible",
+    "tabs",
+    "faq"
+  ],
+  "example": {
+    "attributes": {
+      "items": [
+        {
+          "title": "What's behind door #1?",
+          "content": "This humble text box is ready to become whatever you need it to be. Go ahead, make it shine!",
+          "isOpen": true
+        },
+        {
+          "title": "Plot twist revealed here",
+          "content": "This humble text box is ready to become whatever you need it to be. Go ahead, make it shine!",
+          "isOpen": false
+        }
+      ],
+      "mode": "multiple"
+    }
+  },
+  "attributes": {
+    "items": {
+      "type": "array",
+      "default": [
+        {
+          "title": "",
+          "content": "",
+          "isOpen": false
+        },
+        {
+          "title": "",
+          "content": "",
+          "isOpen": false
+        }
+      ]
+    },
+    "mode": {
+      "type": "string",
+      "default": "multiple",
+      "enum": [
+        "multiple",
+        "single"
+      ]
+    },
+    "primaryColor": {
+      "type": "string",
+      "default": "#227093"
+    },
+    "uniqueId": {
+      "type": "string"
+    }
+  },
+  "supports": {
+    "html": false,
+    "spacing": {
+      "margin": true,
+      "padding": true
+    }
+  },
+  "textdomain": "yokoi",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./editor.css",
+  "style": "file:./style-index.css",
+  "viewScript": "file:./view.js"
 }
-

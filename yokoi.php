@@ -64,6 +64,8 @@ function yokoi_activate(): void {
 	}
 
 	Yokoi\Settings_API::seed_defaults();
+
+	add_option( 'yokoi_redirect_to_site_editor', 'yes', '', 'no' );
 }
 
 register_deactivation_hook( __FILE__, 'yokoi_deactivate' );
