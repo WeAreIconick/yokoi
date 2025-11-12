@@ -18,10 +18,62 @@ import isEqual from 'lodash/isEqual';
 import BlockTogglePanel from './components/BlockTogglePanel';
 import './style.scss';
 
+const DEBUG_STORAGE_KEY = 'YOKOI_DEBUG';
+
+const ensureDebugFlag = () => {
+	if ( typeof window === 'undefined' ) {
+		return false;
+	}
+
+	let storedValue = null;
+	try {
+		storedValue = window.localStorage?.getItem( DEBUG_STORAGE_KEY );
+	} catch ( error ) {
+		// Fail silently if storage is unavailable.
+	}
+
+	if ( typeof window.YOKOI_DEBUG === 'undefined' ) {
+		window.YOKOI_DEBUG =
+			storedValue !== null ? storedValue === 'true' : true;
+	}
+
+	if ( window.YOKOI_DEBUG && storedValue !== 'true' ) {
+		try {
+			window.localStorage?.setItem( DEBUG_STORAGE_KEY, 'true' );
+		} catch ( error ) {
+			// Fail silently if storage is unavailable.
+		}
+	}
+
+	return Boolean( window.YOKOI_DEBUG );
+};
+
+const recordDebugLog = ( args ) => {
+	if ( typeof window === 'undefined' ) {
+		return;
+	}
+
+	if ( ! Array.isArray( window.YOKOI_DEBUG_LOGS ) ) {
+		window.YOKOI_DEBUG_LOGS = [];
+	}
+
+	window.YOKOI_DEBUG_LOGS.push( args );
+};
+
+ensureDebugFlag();
+
 const logDebug = ( ...args ) => {
-	if ( window?.YOKOI_DEBUG ) {
+	recordDebugLog( args );
+
+	if ( ensureDebugFlag() ) {
+		try {
+			window.localStorage?.setItem( DEBUG_STORAGE_KEY, 'true' );
+		} catch ( error ) {
+			// Fail silently if storage is unavailable.
+		}
+
 		// eslint-disable-next-line no-console
-		console.info( '[Yokoi]', ...args );
+		console.log( '[Yokoi]', ...args );
 	}
 };
 
@@ -29,6 +81,7 @@ const bootstrap = window.yokoiSettings || {};
 const initialBlockList = Array.isArray( bootstrap.blocks ) ? bootstrap.blocks : [];
 const CATALOG_PAGE_SIZE = 100;
 const SIDEBAR_PLUGIN_SLUG = 'yokoi-settings-sidebar';
+const INITIAL_LOAD_DELAY_MS = 2000;
 
 const shouldAutoOpenSidebar = () => {
 	try {
@@ -201,26 +254,70 @@ const YokoiSidebar = () => {
 	const [ isBlockCatalogLoading, setIsBlockCatalogLoading ] = useState( false );
 	const [ blockCatalogError, setBlockCatalogError ] = useState( null );
 	const [ searchTerm, setSearchTerm ] = useState( '' );
-const [ debouncedSearchTerm, setDebouncedSearchTerm ] = useState( '' );
-const [ catalogMeta, setCatalogMeta ] = useState( {
-	page: 0,
-	totalPages: 0,
-	search: '',
-} );
-const [ isCatalogLoadingMore, setIsCatalogLoadingMore ] = useState( false );
+	const [ debouncedSearchTerm, setDebouncedSearchTerm ] = useState( '' );
+	const [ catalogMeta, setCatalogMeta ] = useState( {
+		page: 0,
+		totalPages: 0,
+		search: '',
+	} );
+	const [ isCatalogLoadingMore, setIsCatalogLoadingMore ] = useState( false );
+	const [ hasInitialLoadDelayElapsed, setInitialLoadDelayElapsed ] =
+		useState( false );
 
-useEffect( () => {
-	const handle = setTimeout( () => {
-		setDebouncedSearchTerm( searchTerm );
-	}, 300 );
+	useEffect( () => {
+		const handle = setTimeout( () => {
+			setDebouncedSearchTerm( searchTerm );
+		}, 300 );
 
-	return () => clearTimeout( handle );
-}, [ searchTerm ] );
+		return () => clearTimeout( handle );
+	}, [ searchTerm ] );
+
+	useEffect( () => {
+		const timer = window.setTimeout( () => {
+			setInitialLoadDelayElapsed( true );
+		}, INITIAL_LOAD_DELAY_MS );
+
+		return () => {
+			window.clearTimeout( timer );
+		};
+	}, [] );
 
 	const optionName = bootstrap?.settingsOption || 'yokoi_settings';
 	const canManage = bootstrap?.capabilities?.canManage !== false;
 	const blocksEndpoint = bootstrap?.blocksEndpoint;
-	const { editEntityRecord } = useDispatch( 'core' );
+	const { editEntityRecord, receiveEntityRecords } = useDispatch( 'core' );
+	const {
+		__experimentalResolveSelect: resolveSelect,
+		invalidateResolution,
+	} = useDispatch( 'core/data' );
+	const resolveEntityConfig = useCallback(
+		( { invalidate = false } = {} ) => {
+			if ( ! resolveSelect ) {
+				return Promise.resolve();
+			}
+
+			const args = [ 'root', 'option', optionName ];
+
+			if ( invalidate && invalidateResolution ) {
+				invalidateResolution( 'core', 'getEntityRecord', args );
+			}
+
+			return resolveSelect( 'core', 'getEntityRecord', args ).catch(
+				( error ) => {
+					logDebug( 'Failed to resolve entity config', error );
+				}
+			);
+		},
+		[ resolveSelect, optionName, invalidateResolution ]
+	);
+	const {
+		addEntities,
+		receiveEntityRecords: receiveEntities,
+		receiveEntityConfig,
+	} = useDispatch( 'core' );
+	const entityRegisteredRef = useRef( false );
+	const settingsFetchRef = useRef( false );
+	const pendingSeedRef = useRef( null );
 
 	const {
 		optionValue,
@@ -228,6 +325,8 @@ useEffect( () => {
 		optionDirty,
 		optionResolving,
 		optionSaving,
+		entityConfig,
+		hasEntityConfigSelector,
 	} = useSelect(
 		( select ) => {
 			const coreStore = select( 'core' );
@@ -272,6 +371,15 @@ useEffect( () => {
 							optionName
 					  )
 					: false,
+				entityConfig: coreStore.getEntityConfig
+					? coreStore.getEntityConfig(
+							'root',
+							'option',
+							optionName
+					  )
+					: null,
+				hasEntityConfigSelector:
+					typeof coreStore.getEntityConfig === 'function',
 			};
 		},
 		[ optionName ]
@@ -295,6 +403,193 @@ useEffect( () => {
 	);
 
 	const hasSeededFromPersistedRef = useRef( false );
+	const hasSeededFallbackRef = useRef( false );
+	const supportsEntityConfigSelector = hasEntityConfigSelector;
+	const isEntityConfigReady = supportsEntityConfigSelector
+		? Boolean( entityConfig )
+		: true;
+	const retrySeed = useCallback(
+		( value, attempt = 0 ) => {
+			const nextAttempt = attempt + 1;
+			const delay = Math.min( 5000, nextAttempt * 1000 );
+			window.setTimeout( () => {
+				try {
+					editEntityRecord( 'root', 'option', optionName, {
+						value,
+					} );
+					logDebug(
+						'Delayed seed succeeded',
+						{ attempt: nextAttempt }
+					);
+					pendingSeedRef.current = null;
+				} catch ( err ) {
+					logDebug(
+						'Delayed seed attempt failed',
+						err,
+						{ attempt: nextAttempt }
+					);
+					if ( nextAttempt < 5 ) {
+						retrySeed( value, nextAttempt );
+					}
+				}
+			}, delay );
+		},
+		[ editEntityRecord, optionName ]
+	);
+
+	useEffect( () => {
+		if ( ! supportsEntityConfigSelector ) {
+			logDebug(
+				'Entity config selector unavailable; assuming ready state'
+			);
+			return;
+		}
+
+		if ( isEntityConfigReady ) {
+			return;
+		}
+
+		logDebug( 'Resolving entity config for option', optionName );
+
+		if ( addEntities && receiveEntityConfig && ! entityRegisteredRef.current ) {
+			receiveEntityConfig(
+				'root',
+				'option',
+				optionName,
+				{
+					name: optionName,
+					kind: 'root',
+					label: optionName,
+					rest_base: optionName,
+				}
+			);
+			addEntities( [
+				{
+					name: optionName,
+					kind: 'root',
+					baseURL: '/wp/v2/settings',
+					key: optionName,
+					plural: optionName,
+					label: optionName,
+				},
+			] );
+			entityRegisteredRef.current = true;
+		}
+
+		if ( receiveEntities ) {
+			receiveEntities(
+				'root',
+				'option',
+				[
+					{
+						id: optionName,
+						name: optionName,
+						value: bootstrap.settings ?? {},
+					},
+				],
+				{
+					name: optionName,
+				}
+			);
+		}
+
+		resolveEntityConfig( { invalidate: true } );
+
+		if ( ! settingsFetchRef.current ) {
+			settingsFetchRef.current = true;
+			logDebug( 'Priming WP settings endpoint' );
+			apiFetch( {
+				path: '/wp/v2/settings',
+				method: 'GET',
+			} ).catch( ( error ) => {
+				logDebug( 'Failed to prime settings endpoint', error );
+			} );
+		}
+
+		const retry = window.setTimeout( () => {
+			if ( ! isEntityConfigReady ) {
+				logDebug(
+					'Retrying entity config resolution for option',
+					optionName
+				);
+				resolveEntityConfig( { invalidate: true } );
+			}
+		}, 1000 );
+
+		return () => window.clearTimeout( retry );
+	}, [
+		isEntityConfigReady,
+		optionName,
+		addEntities,
+		resolveEntityConfig,
+		receiveEntities,
+		supportsEntityConfigSelector,
+	] );
+
+	useEffect( () => {
+		if ( isEntityConfigReady && pendingSeedRef.current ) {
+			const value = pendingSeedRef.current;
+			pendingSeedRef.current = null;
+			try {
+				editEntityRecord( 'root', 'option', optionName, {
+					value,
+				} );
+				logDebug( 'Pending seed applied after entity ready' );
+			} catch ( err ) {
+				logDebug(
+					'Pending seed failed after entity ready; retrying',
+					err
+				);
+				retrySeed( value );
+			}
+		}
+	}, [
+		isEntityConfigReady,
+		editEntityRecord,
+		optionName,
+		retrySeed,
+	] );
+
+	useEffect( () => {
+		if (
+			! supportsEntityConfigSelector &&
+			! hasFetchedOption &&
+			Object.keys( blockDefinitions ).length > 0 &&
+			! hasSeededFallbackRef.current
+		) {
+			const fallbackValue = sanitizeSettingsWithDefinitions(
+				bootstrap.settings ??
+					buildDefaultSettings( blockDefinitions ),
+				blockDefinitions
+			);
+			logDebug(
+				'Seeding fallback option (no entity selector available)',
+				fallbackValue
+			);
+			hasSeededFallbackRef.current = true;
+			if ( receiveEntityRecords ) {
+				receiveEntityRecords(
+					'root',
+					'option',
+					[
+						{
+							id: optionName,
+							name: optionName,
+							value: fallbackValue,
+						},
+					],
+					{ name: optionName }
+				);
+			}
+		}
+	}, [
+		supportsEntityConfigSelector,
+		hasFetchedOption,
+		blockDefinitions,
+		bootstrap.settings,
+		optionName,
+		receiveEntityRecords,
+	] );
 
 	useEffect( () => {
 		logDebug( 'Option status', {
@@ -305,6 +600,49 @@ useEffect( () => {
 	}, [ optionValue, persistedOptionValue, hasFetchedOption ] );
 
 	useEffect( () => {
+	if ( ! isEntityConfigReady ) {
+		logDebug( 'Entity config not ready; proceeding with fallback seeding' );
+	}
+
+		if (
+			! hasFetchedOption &&
+			! hasSeededFallbackRef.current &&
+			Object.keys( blockDefinitions ).length > 0
+		) {
+			const fallbackValue = sanitizeSettingsWithDefinitions(
+				bootstrap.settings ??
+					buildDefaultSettings( blockDefinitions ),
+				blockDefinitions
+			);
+
+			logDebug( 'Seeding fallback option value', fallbackValue );
+			hasSeededFallbackRef.current = true;
+			if ( isEntityConfigReady ) {
+				editEntityRecord( 'root', 'option', optionName, {
+					value: fallbackValue,
+				} );
+			} else if ( receiveEntityRecords ) {
+				logDebug(
+					'Entity config missing; seeding via receiveEntityRecords'
+				);
+				pendingSeedRef.current = fallbackValue;
+				receiveEntityRecords(
+					'root',
+					'option',
+					[
+						{
+							id: optionName,
+							name: optionName,
+							value: fallbackValue,
+						},
+					],
+					{ name: optionName }
+				);
+				retrySeed( fallbackValue );
+			}
+			return;
+		}
+
 		if (
 			! hasSeededFromPersistedRef.current &&
 			typeof optionValue === 'undefined' &&
@@ -323,14 +661,15 @@ useEffect( () => {
 			return;
 		}
 
-		if (
-			typeof optionValue !== 'undefined' &&
-			! isEqual( optionValue, normalizedOptionValue )
-		) {
-			logDebug( 'Syncing edited option to normalized snapshot' );
-			editEntityRecord( 'root', 'option', optionName, {
-				value: normalizedOptionValue,
-			} );
+	if (
+		isEntityConfigReady &&
+		typeof optionValue !== 'undefined' &&
+		! isEqual( optionValue, normalizedOptionValue )
+	) {
+		logDebug( 'Syncing edited option to normalized snapshot' );
+		editEntityRecord( 'root', 'option', optionName, {
+			value: normalizedOptionValue,
+		} );
 		}
 	}, [
 		optionValue,
@@ -338,7 +677,9 @@ useEffect( () => {
 		normalizedOptionValue,
 		optionName,
 		editEntityRecord,
+		receiveEntityRecords,
 		blockDefinitions,
+		isEntityConfigReady,
 	] );
 
 	useEffect( () => {
@@ -346,6 +687,8 @@ useEffect( () => {
 	}, [ normalizedOptionValue ] );
 
 	const isInitialLoad = ! hasFetchedOption;
+	const shouldShowInitialLoading =
+		isInitialLoad || ! hasInitialLoadDelayElapsed;
 	const isOptionReady = hasFetchedOption;
 	const isLoading = isBlockCatalogLoading && isOptionReady;
 	const blocksEnabled = normalizedOptionValue.blocks_enabled || {};
@@ -353,6 +696,11 @@ useEffect( () => {
 
 	const applySettingsChange = useCallback(
 		( updater ) => {
+			if ( ! isEntityConfigReady ) {
+				logDebug( 'applySettingsChange bail: entity config not ready' );
+				return;
+			}
+
 			if ( ! isOptionReady ) {
 				logDebug( 'applySettingsChange bail: option not ready' );
 				return;
@@ -373,6 +721,7 @@ useEffect( () => {
 			normalizedOptionValue,
 			blockDefinitions,
 			isOptionReady,
+			isEntityConfigReady,
 		]
 	);
 
@@ -581,19 +930,16 @@ useEffect( () => {
 				icon={ <YokoiSidebarIcon /> }
 			>
 				<Flex direction="column" gap={ 6 }>
-					{ isInitialLoad ? (
-						<div className="yokoi-sidebar__loading-shell">
-							<div className="yokoi-sidebar__loading-panel">
-								<Spinner />
-								<p>{ __( 'Preparing Yokoi settings…', 'yokoi' ) }</p>
-								<div className="yokoi-sidebar__loading-bar" />
-								<div className="yokoi-sidebar__loading-bar yokoi-sidebar__loading-bar--short" />
-							</div>
-							<div className="yokoi-sidebar__loading-panel yokoi-sidebar__loading-panel--secondary">
-								<div className="yokoi-sidebar__loading-bar" />
-								<div className="yokoi-sidebar__loading-bar yokoi-sidebar__loading-bar--short" />
-							</div>
-						</div>
+					{ shouldShowInitialLoading ? (
+						<Flex
+							direction="column"
+							gap={ 4 }
+							align="center"
+							justify="center"
+						>
+							<Spinner />
+							<p>{ __( 'Preparing Yokoi settings…', 'yokoi' ) }</p>
+						</Flex>
 					) : (
 						<>
 							{ isLoading && (
