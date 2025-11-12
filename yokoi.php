@@ -62,8 +62,17 @@ function yokoi_activate(): void {
 	if ( ! class_exists( 'Yokoi\\Settings_API' ) ) {
 		require_once YOKOI_PLUGIN_DIR . 'includes/class-settings-api.php';
 	}
+	if ( ! function_exists( 'Yokoi\\get_block_catalog_entries' ) ) {
+		require_once YOKOI_PLUGIN_DIR . 'includes/block-utils.php';
+	}
 
 	Yokoi\Settings_API::seed_defaults();
+
+	// Warm cache on activation.
+	$catalog = Yokoi\get_block_catalog_entries();
+	if ( ! empty( $catalog ) ) {
+		// Cache is automatically set by get_block_catalog_entries().
+	}
 
 	add_option( 'yokoi_redirect_to_site_editor', 'yes', '', 'no' );
 }

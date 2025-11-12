@@ -24,6 +24,11 @@ use function wp_parse_url;
 use function wp_remote_get;
 use function wp_remote_retrieve_body;
 use function wp_remote_retrieve_response_code;
+use function apply_filters;
+use function error_log;
+use function defined;
+use function sanitize_email;
+use function filter_var;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -33,7 +38,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Handles Google Calendar API communication.
  */
 class Google_Calendar_API {
-	private const OPTION_KEY = 'yokoi_date_now_api_key';
 
 	/**
 	 * @var string
@@ -46,7 +50,8 @@ class Google_Calendar_API {
 	private $cache;
 
 	public function __construct( Calendar_Cache $cache = null ) {
-		$this->api_key = sanitize_text_field( (string) get_option( self::OPTION_KEY, '' ) );
+		require_once YOKOI_PLUGIN_DIR . 'includes/class-api-key-encryption.php';
+		$this->api_key = API_Key_Encryption::retrieve_and_decrypt();
 		$this->cache   = $cache instanceof Calendar_Cache ? $cache : new Calendar_Cache();
 	}
 
@@ -61,33 +66,51 @@ class Google_Calendar_API {
 			return '';
 		}
 
+		// If it already contains @, validate it's a valid email format.
 		if ( false !== strpos( $input, '@' ) ) {
-			return $input;
+			// Validate email format.
+			if ( filter_var( $input, FILTER_VALIDATE_EMAIL ) || preg_match( '/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i', $input ) ) {
+				return sanitize_email( $input );
+			}
+			return '';
 		}
 
+		// Validate Google Calendar URL.
 		if ( false !== strpos( $input, 'calendar.google.com' ) ) {
 			$parsed = wp_parse_url( $input );
+
+			// Validate domain whitelist.
+			if ( ! isset( $parsed['host'] ) || ! in_array( $parsed['host'], array( 'calendar.google.com', 'www.calendar.google.com' ), true ) ) {
+				return '';
+			}
 
 			if ( isset( $parsed['query'] ) ) {
 				parse_str( $parsed['query'], $query );
 
-				if ( isset( $query['cid'] ) ) {
+				if ( isset( $query['cid'] ) && is_string( $query['cid'] ) ) {
 					$decoded = base64_decode( $query['cid'], true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 
 					if ( $decoded && false !== strpos( $decoded, '@' ) ) {
-						return $decoded;
+						// Validate decoded email.
+						if ( filter_var( $decoded, FILTER_VALIDATE_EMAIL ) || preg_match( '/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i', $decoded ) ) {
+							return sanitize_email( $decoded );
+						}
 					}
 				}
 			}
 		}
 
+		// Try base64 decode.
 		$decoded = base64_decode( $input, true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 
 		if ( $decoded && false !== strpos( $decoded, '@' ) ) {
-			return $decoded;
+			// Validate decoded email.
+			if ( filter_var( $decoded, FILTER_VALIDATE_EMAIL ) || preg_match( '/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i', $decoded ) ) {
+				return sanitize_email( $decoded );
+			}
 		}
 
-		return $input;
+		return '';
 	}
 
 	/**
@@ -134,10 +157,13 @@ class Google_Calendar_API {
 			'https://www.googleapis.com/calendar/v3/calendars/' . rawurlencode( $calendar_id ) . '/events'
 		);
 
+		// Allow timeout to be filtered.
+		$timeout = apply_filters( 'yokoi_calendar_timeout', 15 );
+
 		$response = wp_remote_get(
 			$request_url,
 			array(
-				'timeout' => 15,
+				'timeout' => $timeout,
 				'headers' => array(
 					'Accept' => 'application/json',
 				),
@@ -145,6 +171,10 @@ class Google_Calendar_API {
 		);
 
 		if ( is_wp_error( $response ) ) {
+			// Log error for debugging.
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi Calendar API Error: ' . $response->get_error_message() );
+			}
 			return $response;
 		}
 

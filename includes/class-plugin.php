@@ -74,6 +74,13 @@ class Plugin {
 	private ?Date_Now_Service $date_now_service = null;
 
 	/**
+	 * Block statistics tracker.
+	 *
+	 * @var Block_Statistics|null
+	 */
+	private ?Block_Statistics $block_statistics = null;
+
+	/**
 	 * Cached block enabled state map.
 	 *
 	 * @var array<string,bool>|null
@@ -97,11 +104,13 @@ class Plugin {
 		require_once YOKOI_PLUGIN_DIR . 'includes/class-settings-api.php';
 		require_once YOKOI_PLUGIN_DIR . 'includes/class-block-registry.php';
 		require_once YOKOI_PLUGIN_DIR . 'includes/class-block-catalog-api.php';
+		require_once YOKOI_PLUGIN_DIR . 'includes/class-block-statistics.php';
 
 		$this->settings_api      = new Settings_API();
 		$this->block_registry    = new Block_Registry( $this->settings_api );
 		$this->block_catalog_api = new Block_Catalog_API();
 		$this->date_now_service  = new Date_Now_Service();
+		$this->block_statistics  = new Block_Statistics();
 	}
 
 	/**
@@ -126,6 +135,10 @@ class Plugin {
 
 		if ( $this->date_now_service instanceof Date_Now_Service ) {
 			$this->date_now_service->register();
+		}
+
+		if ( $this->block_statistics instanceof Block_Statistics ) {
+			$this->block_statistics->register();
 		}
 
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_editor_assets' ), 5 );
@@ -198,11 +211,7 @@ class Plugin {
 		$style_path = $style_file;
 
 		if ( file_exists( $style_path ) ) {
-			$style_version = $version;
-
-			if ( file_exists( $style_path ) ) {
-				$style_version .= '.' . filemtime( $style_path );
-			}
+			$style_version = $version . '.' . filemtime( $style_path );
 
 			wp_enqueue_style(
 				'yokoi-sidebar',
@@ -384,6 +393,13 @@ class Plugin {
 		}
 
 		if ( $this->is_block_enabled( $block_name ) ) {
+			// Track block usage.
+			if ( $this->block_statistics instanceof Block_Statistics ) {
+				$post_id = get_the_ID();
+				if ( $post_id ) {
+					$this->block_statistics->track_post_blocks( $post_id, get_post( $post_id ) );
+				}
+			}
 			return $content;
 		}
 

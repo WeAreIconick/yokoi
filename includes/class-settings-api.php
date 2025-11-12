@@ -25,6 +25,12 @@ use function update_option;
 use function wp_parse_args;
 use function __;
 use function wp_verify_nonce;
+use function get_current_user_id;
+use function get_transient;
+use function set_transient;
+use function delete_transient;
+use function do_action;
+use function wp_unslash;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -45,16 +51,34 @@ class Settings_API {
 	public const REST_NAMESPACE = 'yokoi/v1';
 
 	/**
+	 * Rate limit: max requests per hour.
+	 */
+	private const RATE_LIMIT_REQUESTS = 100;
+
+	/**
+	 * Rate limit: time window in seconds.
+	 */
+	private const RATE_LIMIT_WINDOW = 3600;
+
+	/**
+	 * Static cache for settings.
+	 *
+	 * @var array<string,mixed>|null
+	 */
+	private static $settings_cache = null;
+
+	/**
 	 * Default settings structure.
 	 *
 	 * @return array<string,mixed>
 	 */
 	public static function get_default_settings(): array {
+		require_once YOKOI_PLUGIN_DIR . 'includes/class-api-key-encryption.php';
 		return array(
 			'blocks_enabled'      => get_block_default_states(),
 			'default_configs'     => array(),
 			'visibility_controls' => array(),
-			'date_now_api_key'    => sanitize_text_field( (string) get_option( 'yokoi_date_now_api_key', '' ) ),
+			'date_now_api_key'    => API_Key_Encryption::retrieve_and_decrypt(),
 		);
 	}
 
@@ -174,7 +198,64 @@ class Settings_API {
 	 * @return bool
 	 */
 	public function can_manage_settings(): bool {
-		return current_user_can( 'manage_options' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return false;
+		}
+
+		// Check rate limiting.
+		if ( ! $this->check_rate_limit() ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Check if current request is within rate limit.
+	 *
+	 * @return bool True if within limits, false if exceeded.
+	 */
+	private function check_rate_limit(): bool {
+		$user_id = get_current_user_id();
+		$ip      = $this->get_client_ip();
+		$key     = 'yokoi_rate_limit_' . md5( (string) $user_id . $ip );
+
+		$attempts = (int) get_transient( $key );
+		if ( $attempts >= self::RATE_LIMIT_REQUESTS ) {
+			return false;
+		}
+
+		set_transient( $key, $attempts + 1, self::RATE_LIMIT_WINDOW );
+		return true;
+	}
+
+	/**
+	 * Get client IP address.
+	 *
+	 * @return string
+	 */
+	private function get_client_ip(): string {
+		$ip_keys = array(
+			'HTTP_CF_CONNECTING_IP',
+			'HTTP_X_REAL_IP',
+			'HTTP_X_FORWARDED_FOR',
+			'REMOTE_ADDR',
+		);
+
+		foreach ( $ip_keys as $key ) {
+			if ( isset( $_SERVER[ $key ] ) && ! empty( $_SERVER[ $key ] ) ) {
+				$ip = sanitize_text_field( wp_unslash( $_SERVER[ $key ] ) );
+				// Handle comma-separated IPs (X-Forwarded-For).
+				if ( false !== strpos( $ip, ',' ) ) {
+					$ip = trim( explode( ',', $ip )[0] );
+				}
+				if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+					return $ip;
+				}
+			}
+		}
+
+		return '0.0.0.0';
 	}
 
 	/**
@@ -183,6 +264,11 @@ class Settings_API {
 	 * @return array<string,mixed>
 	 */
 	public function get_stored_settings(): array {
+		// Return cached settings if available.
+		if ( null !== self::$settings_cache ) {
+			return self::$settings_cache;
+		}
+
 		$stored = get_option( self::OPTION_NAME, array() );
 
 		if ( ! is_array( $stored ) ) {
@@ -195,9 +281,29 @@ class Settings_API {
 		$settings['blocks_enabled']      = wp_parse_args( $settings['blocks_enabled'], $defaults['blocks_enabled'] );
 		$settings['default_configs']     = wp_parse_args( $settings['default_configs'], $defaults['default_configs'] );
 		$settings['visibility_controls'] = wp_parse_args( $settings['visibility_controls'], $defaults['visibility_controls'] );
-		$settings['date_now_api_key']    = sanitize_text_field( (string) $settings['date_now_api_key'] );
+		
+		// Decrypt API key if stored encrypted.
+		if ( isset( $settings['date_now_api_key'] ) && '' !== $settings['date_now_api_key'] ) {
+			require_once YOKOI_PLUGIN_DIR . 'includes/class-api-key-encryption.php';
+			$decrypted = API_Key_Encryption::retrieve_and_decrypt();
+			$settings['date_now_api_key'] = $decrypted;
+		} else {
+			$settings['date_now_api_key'] = '';
+		}
+
+		// Cache the settings.
+		self::$settings_cache = $settings;
 
 		return $settings;
+	}
+
+	/**
+	 * Clear settings cache.
+	 *
+	 * @return void
+	 */
+	public static function clear_cache(): void {
+		self::$settings_cache = null;
 	}
 
 	/**
@@ -246,11 +352,19 @@ class Settings_API {
 		}
 
 		if ( null !== $request->get_param( 'date_now_api_key' ) ) {
-			$new_settings['date_now_api_key'] = sanitize_text_field( (string) $request->get_param( 'date_now_api_key' ) );
-			update_option( 'yokoi_date_now_api_key', $new_settings['date_now_api_key'], 'yes' );
+			require_once YOKOI_PLUGIN_DIR . 'includes/class-api-key-encryption.php';
+			$api_key = sanitize_text_field( (string) $request->get_param( 'date_now_api_key' ) );
+			API_Key_Encryption::encrypt_and_store( $api_key );
+			$new_settings['date_now_api_key'] = $api_key; // Store decrypted for response (not persisted).
 		}
 
 		update_option( self::OPTION_NAME, $new_settings, 'yes' );
+
+		// Clear cache after update.
+		self::clear_cache();
+
+		// Fire action hook for extensibility.
+		do_action( 'yokoi_settings_updated', $new_settings );
 
 		$response = array(
 			'data'    => $new_settings,
@@ -289,8 +403,10 @@ class Settings_API {
 		}
 
 		if ( array_key_exists( 'date_now_api_key', $value ) ) {
-			$sanitized['date_now_api_key'] = sanitize_text_field( (string) $value['date_now_api_key'] );
-			update_option( 'yokoi_date_now_api_key', $sanitized['date_now_api_key'], 'yes' );
+			require_once YOKOI_PLUGIN_DIR . 'includes/class-api-key-encryption.php';
+			$api_key = sanitize_text_field( (string) $value['date_now_api_key'] );
+			API_Key_Encryption::encrypt_and_store( $api_key );
+			$sanitized['date_now_api_key'] = $api_key; // Store decrypted for response.
 		}
 
 		return $sanitized;

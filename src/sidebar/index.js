@@ -20,62 +20,9 @@ import './style.scss';
 
 const DEBUG_STORAGE_KEY = 'YOKOI_DEBUG';
 
-const ensureDebugFlag = () => {
-	if ( typeof window === 'undefined' ) {
-		return false;
-	}
-
-	let storedValue = null;
-	try {
-		storedValue = window.localStorage?.getItem( DEBUG_STORAGE_KEY );
-	} catch ( error ) {
-		// Fail silently if storage is unavailable.
-	}
-
-	if ( typeof window.YOKOI_DEBUG === 'undefined' ) {
-		window.YOKOI_DEBUG =
-			storedValue !== null ? storedValue === 'true' : false;
-	}
-
-	if ( window.YOKOI_DEBUG && storedValue !== 'true' ) {
-		try {
-			window.localStorage?.setItem( DEBUG_STORAGE_KEY, 'true' );
-		} catch ( error ) {
-			// Fail silently if storage is unavailable.
-		}
-	}
-
-	return Boolean( window.YOKOI_DEBUG );
-};
-
-const recordDebugLog = ( args ) => {
-	if ( typeof window === 'undefined' ) {
-		return;
-	}
-
-	if ( ! Array.isArray( window.YOKOI_DEBUG_LOGS ) ) {
-		window.YOKOI_DEBUG_LOGS = [];
-	}
-
-	window.YOKOI_DEBUG_LOGS.push( args );
-};
-
-ensureDebugFlag();
-
-const logDebug = ( ...args ) => {
-	recordDebugLog( args );
-
-	if ( ensureDebugFlag() ) {
-		try {
-			window.localStorage?.setItem( DEBUG_STORAGE_KEY, 'true' );
-		} catch ( error ) {
-			// Fail silently if storage is unavailable.
-		}
-
-		// eslint-disable-next-line no-console
-		console.log( '[Yokoi]', ...args );
-	}
-};
+const ensureDebugFlag = () => false;
+const recordDebugLog = () => {};
+const logDebug = () => {};
 
 const bootstrap = window.yokoiSettings || {};
 const initialBlockList = Array.isArray( bootstrap.blocks ) ? bootstrap.blocks : [];
@@ -262,13 +209,36 @@ const YokoiSidebar = () => {
 	} );
 	const [ isCatalogLoadingMore, setIsCatalogLoadingMore ] = useState( false );
 	const [ isSimpleDelayActive, setIsSimpleDelayActive ] = useState( true );
+	const [ togglingBlocks, setTogglingBlocks ] = useState( new Set() );
+	const [ favoriteBlocks, setFavoriteBlocks ] = useState( new Set() );
+	const [ searchHistory, setSearchHistory ] = useState( [] );
+	const [ settingsHistory, setSettingsHistory ] = useState( [] );
+	const [ historyIndex, setHistoryIndex ] = useState( -1 );
+	const [ blockStatistics, setBlockStatistics ] = useState( {} );
+	const [ validationErrors, setValidationErrors ] = useState( {} );
+	const abortControllerRef = useRef( null );
+	const pendingUpdatesRef = useRef( {} );
+	const saveTimeoutRef = useRef( null );
+	const activeRequestsRef = useRef( new Map() );
+	const optimisticStateRef = useRef( null );
 
 	useEffect( () => {
+		// Cancel previous request if it exists.
+		if ( abortControllerRef.current ) {
+			abortControllerRef.current.abort();
+		}
+
+		const controller = new AbortController();
+		abortControllerRef.current = controller;
+
 		const handle = setTimeout( () => {
 			setDebouncedSearchTerm( searchTerm );
 		}, 300 );
 
-		return () => clearTimeout( handle );
+		return () => {
+			clearTimeout( handle );
+			controller.abort();
+		};
 	}, [ searchTerm ] );
 
 	useEffect( () => {
@@ -281,10 +251,127 @@ const YokoiSidebar = () => {
 		};
 	}, [] );
 
+	// Load favorites from localStorage.
+	useEffect( () => {
+		try {
+			const stored = localStorage.getItem( 'yokoi_favorites' );
+			if ( stored ) {
+				setFavoriteBlocks( new Set( JSON.parse( stored ) ) );
+			}
+		} catch ( e ) {
+			// Ignore errors.
+		}
+	}, [] );
+
+	// Save favorites to localStorage.
+	useEffect( () => {
+		try {
+			localStorage.setItem( 'yokoi_favorites', JSON.stringify( Array.from( favoriteBlocks ) ) );
+		} catch ( e ) {
+			// Ignore errors.
+		}
+	}, [ favoriteBlocks ] );
+
+	// Fetch block statistics.
+	useEffect( () => {
+		if ( ! blocksEndpoint || ! isOptionReady ) {
+			return;
+		}
+
+		const fetchStats = async () => {
+			try {
+				const statsEndpoint = blocksEndpoint.replace( '/blocks', '/blocks/statistics' );
+				const response = await apiFetch( { url: statsEndpoint } );
+				if ( response && response.usage ) {
+					const statsMap = {};
+					Object.keys( response.usage ).forEach( ( blockName ) => {
+						statsMap[ blockName ] = {
+							usage_count: response.usage[ blockName ],
+							last_used: response.last_used[ blockName ],
+							post_count: response.post_count[ blockName ] ? response.post_count[ blockName ].length : 0,
+						};
+					} );
+					setBlockStatistics( statsMap );
+				}
+			} catch ( err ) {
+				// Ignore errors - statistics are optional.
+			}
+		};
+
+		fetchStats();
+	}, [ blocksEndpoint, isOptionReady ] );
+
+	// Keyboard shortcuts.
+	useEffect( () => {
+		const handleKeyDown = ( e ) => {
+			// Cmd/Ctrl + K to focus search.
+			if ( ( e.metaKey || e.ctrlKey ) && e.key === 'k' ) {
+				e.preventDefault();
+				const searchInput = document.querySelector( 'input[placeholder*="Search blocks"]' );
+				if ( searchInput ) {
+					searchInput.focus();
+				}
+			}
+
+			// Escape to clear search.
+			if ( e.key === 'Escape' && searchTerm ) {
+				setSearchTerm( '' );
+			}
+		};
+
+		window.addEventListener( 'keydown', handleKeyDown );
+		return () => window.removeEventListener( 'keydown', handleKeyDown );
+	}, [ searchTerm ] );
+
 	const optionName = bootstrap?.settingsOption || 'yokoi_settings';
 	const canManage = bootstrap?.capabilities?.canManage !== false;
 	const blocksEndpoint = bootstrap?.blocksEndpoint;
 	const { editEntityRecord, receiveEntityRecords } = useDispatch( 'core' );
+
+	// Undo/Redo handlers.
+	const handleUndo = useCallback( () => {
+		if ( historyIndex > 0 && settingsHistory[ historyIndex - 1 ] ) {
+			const previousState = settingsHistory[ historyIndex - 1 ];
+			setHistoryIndex( ( prev ) => prev - 1 );
+			editEntityRecord( 'root', 'option', optionName, {
+				value: previousState,
+			} );
+		}
+	}, [ historyIndex, settingsHistory, editEntityRecord, optionName ] );
+
+	const handleRedo = useCallback( () => {
+		if ( historyIndex < settingsHistory.length - 1 && settingsHistory[ historyIndex + 1 ] ) {
+			const nextState = settingsHistory[ historyIndex + 1 ];
+			setHistoryIndex( ( prev ) => prev + 1 );
+			editEntityRecord( 'root', 'option', optionName, {
+				value: nextState,
+			} );
+		}
+	}, [ historyIndex, settingsHistory, editEntityRecord, optionName ] );
+
+	// Undo/Redo keyboard shortcuts.
+	useEffect( () => {
+		const handleUndoRedo = ( e ) => {
+			// Cmd/Ctrl + Z for undo.
+			if ( ( e.metaKey || e.ctrlKey ) && e.key === 'z' && ! e.shiftKey ) {
+				e.preventDefault();
+				if ( historyIndex > 0 ) {
+					handleUndo();
+				}
+			}
+
+			// Cmd/Ctrl + Shift + Z for redo.
+			if ( ( e.metaKey || e.ctrlKey ) && e.shiftKey && e.key === 'Z' ) {
+				e.preventDefault();
+				if ( historyIndex < settingsHistory.length - 1 ) {
+					handleRedo();
+				}
+			}
+		};
+
+		window.addEventListener( 'keydown', handleUndoRedo );
+		return () => window.removeEventListener( 'keydown', handleUndoRedo );
+	}, [ historyIndex, settingsHistory.length, handleUndo, handleRedo ] );
 	const {
 		__experimentalResolveSelect: resolveSelect,
 		invalidateResolution,
@@ -727,6 +814,12 @@ const YokoiSidebar = () => {
 				return;
 			}
 
+			// Request deduplication: check if same request is already in flight.
+			const requestKey = `${ search }_${ page }`;
+			if ( activeRequestsRef.current.has( requestKey ) ) {
+				return activeRequestsRef.current.get( requestKey );
+			}
+
 			setBlockCatalogError( null );
 
 			if ( append ) {
@@ -735,68 +828,95 @@ const YokoiSidebar = () => {
 				setIsBlockCatalogLoading( true );
 			}
 
-			try {
-				const requestUrl = addQueryArgs( blocksEndpoint, {
-					per_page: CATALOG_PAGE_SIZE,
-					page,
-					...( search ? { search } : {} ),
-				} );
+			const requestPromise = ( async () => {
+				try {
+					const requestUrl = addQueryArgs( blocksEndpoint, {
+						per_page: CATALOG_PAGE_SIZE,
+						page,
+						...( search ? { search } : {} ),
+					} );
 
-				const response = await apiFetch( {
-					url: requestUrl,
-					method: 'GET',
-					parse: false,
-				} );
+					// Use abort signal if available.
+					const fetchOptions = {
+						url: requestUrl,
+						method: 'GET',
+						parse: false,
+					};
 
-				const payload = await response.json();
+					// Add signal if abort controller exists.
+					if ( abortControllerRef.current ) {
+						fetchOptions.signal = abortControllerRef.current.signal;
+					}
 
-				if ( ! response.ok ) {
-					throw payload;
-				}
-				const total = parseInt(
-					response.headers.get( 'X-WP-Total' ),
-					10
-				) || payload.length || 0;
-				const totalPages =
-					parseInt(
-						response.headers.get( 'X-WP-TotalPages' ),
+					const response = await apiFetch( fetchOptions );
+
+					const payload = await response.json();
+
+					if ( ! response.ok ) {
+						throw payload;
+					}
+					const total = parseInt(
+						response.headers.get( 'X-WP-Total' ),
 						10
-					) || Math.max( 1, Math.ceil( total / CATALOG_PAGE_SIZE ) );
-				const mapped = toDefinitionMap(
-					Array.isArray( payload ) ? payload : []
-				);
+					) || payload.length || 0;
+					const totalPages =
+						parseInt(
+							response.headers.get( 'X-WP-TotalPages' ),
+							10
+						) || Math.max( 1, Math.ceil( total / CATALOG_PAGE_SIZE ) );
+					const mapped = toDefinitionMap(
+						Array.isArray( payload ) ? payload : []
+					);
 
-				let mergedDefinitions = mapped;
-				setBlockDefinitions( ( previous ) => {
-					mergedDefinitions = append
-						? { ...previous, ...mapped }
-						: mapped;
-					return mergedDefinitions;
-				} );
+					let mergedDefinitions = mapped;
+					setBlockDefinitions( ( previous ) => {
+						mergedDefinitions = append
+							? { ...previous, ...mapped }
+							: mapped;
+						return mergedDefinitions;
+					} );
 
-				setCatalogMeta( {
-					page,
-					totalPages,
-					search,
-				} );
-			} catch ( err ) {
-				setBlockCatalogError( err );
-				if ( ! append ) {
 					setCatalogMeta( {
-						page: 0,
-						totalPages: 0,
+						page,
+						totalPages,
 						search,
 					} );
+
+					// Save to search history.
+					if ( search && ! searchHistory.includes( search ) ) {
+						setSearchHistory( ( prev ) => [ search, ...prev.slice( 0, 9 ) ] );
+					}
+
+					return { success: true };
+				} catch ( err ) {
+					// Don't set error if request was aborted.
+					if ( err?.name !== 'AbortError' ) {
+						setBlockCatalogError( err );
+						if ( ! append ) {
+							setCatalogMeta( {
+								page: 0,
+								totalPages: 0,
+								search,
+							} );
+						}
+					}
+					throw err;
+				} finally {
+					// Remove from active requests.
+					activeRequestsRef.current.delete( requestKey );
+					if ( append ) {
+						setIsCatalogLoadingMore( false );
+					} else {
+						setIsBlockCatalogLoading( false );
+					}
 				}
-			} finally {
-				if ( append ) {
-					setIsCatalogLoadingMore( false );
-				} else {
-					setIsBlockCatalogLoading( false );
-				}
-			}
+			} )();
+
+			// Store promise for deduplication.
+			activeRequestsRef.current.set( requestKey, requestPromise );
+			return requestPromise;
 		},
-		[ blocksEndpoint ]
+		[ blocksEndpoint, searchHistory ]
 	);
 
 	useEffect( () => {
@@ -813,15 +933,119 @@ const YokoiSidebar = () => {
 
 	const toggleBlock = useCallback(
 		( blockName ) => {
-			applySettingsChange( ( current ) => ( {
-				...current,
+			// Optimistic update: update UI immediately.
+			const newState = ! blocksEnabled?.[ blockName ];
+			const currentState = normalizedOptionValue;
+
+			// Save to history for undo/redo.
+			if ( settingsHistory.length === 0 || settingsHistory[ settingsHistory.length - 1 ] !== currentState ) {
+				setSettingsHistory( ( prev ) => {
+					const newHistory = prev.slice( 0, historyIndex + 1 );
+					newHistory.push( JSON.parse( JSON.stringify( currentState ) ) );
+					return newHistory.slice( -50 ); // Keep last 50 states.
+				} );
+				setHistoryIndex( ( prev ) => Math.min( prev + 1, 49 ) );
+			}
+
+			// Optimistic UI update.
+			optimisticStateRef.current = {
+				...currentState,
 				blocks_enabled: {
-					...current.blocks_enabled,
-					[ blockName ]: ! current.blocks_enabled?.[ blockName ],
+					...currentState.blocks_enabled,
+					[ blockName ]: newState,
 				},
-			} ) );
+			};
+
+			// Add to toggling set for visual feedback.
+			setTogglingBlocks( ( prev ) => new Set( prev ).add( blockName ) );
+
+			// Add to pending updates.
+			pendingUpdatesRef.current[ blockName ] = newState;
+
+			// Clear existing timeout.
+			if ( saveTimeoutRef.current ) {
+				clearTimeout( saveTimeoutRef.current );
+			}
+
+			// Batch updates: wait 500ms before saving.
+			saveTimeoutRef.current = setTimeout( () => {
+				applySettingsChange( ( current ) => {
+					const updated = {
+						...current,
+						blocks_enabled: {
+							...current.blocks_enabled,
+							...pendingUpdatesRef.current,
+						},
+					};
+					
+					// Validate before applying.
+					if ( ! validateSettings( updated ) ) {
+						// Revert optimistic update on validation error.
+						optimisticStateRef.current = null;
+						return current;
+					}
+					
+					pendingUpdatesRef.current = {};
+					optimisticStateRef.current = null;
+					setValidationErrors( {} );
+					return updated;
+				} );
+
+				// Remove from toggling set after a short delay.
+				setTimeout( () => {
+					setTogglingBlocks( ( prev ) => {
+						const next = new Set( prev );
+						next.delete( blockName );
+						return next;
+					} );
+				}, 300 );
+			}, 500 );
 		},
-		[ applySettingsChange ]
+		[ applySettingsChange, blocksEnabled, normalizedOptionValue, settingsHistory, historyIndex ]
+	);
+
+	const toggleFavorite = useCallback( ( blockName ) => {
+		setFavoriteBlocks( ( prev ) => {
+			const next = new Set( prev );
+			if ( next.has( blockName ) ) {
+				next.delete( blockName );
+			} else {
+				next.add( blockName );
+			}
+			return next;
+		} );
+	}, [] );
+
+	const toggleAllBlocks = useCallback(
+		( enable ) => {
+			const allBlockNames = Object.keys( blockDefinitions );
+			allBlockNames.forEach( ( blockName ) => {
+				setTogglingBlocks( ( prev ) => new Set( prev ).add( blockName ) );
+				pendingUpdatesRef.current[ blockName ] = enable;
+			} );
+
+			if ( saveTimeoutRef.current ) {
+				clearTimeout( saveTimeoutRef.current );
+			}
+
+			saveTimeoutRef.current = setTimeout( () => {
+				applySettingsChange( ( current ) => {
+					const updated = {
+						...current,
+						blocks_enabled: Object.fromEntries(
+							allBlockNames.map( ( name ) => [ name, enable ] )
+						),
+					};
+					pendingUpdatesRef.current = {};
+					return updated;
+				} );
+
+				setTimeout( () => {
+					setTogglingBlocks( new Set() );
+				}, 300 );
+			}, 500 );
+		},
+		[ applySettingsChange, blockDefinitions ]
 	);
 
 	const handleDateNowApiKeyChange = useCallback(
@@ -833,6 +1057,123 @@ const YokoiSidebar = () => {
 		},
 		[ applySettingsChange ]
 	);
+
+	const handleExportSettings = useCallback( () => {
+		const settings = normalizedOptionValue;
+		const exportData = {
+			version: '1.0',
+			exported: new Date().toISOString(),
+			settings: {
+				blocks_enabled: settings.blocks_enabled,
+				default_configs: settings.default_configs,
+				visibility_controls: settings.visibility_controls,
+				// Note: API keys are not exported for security.
+			},
+		};
+		const blob = new Blob( [ JSON.stringify( exportData, null, 2 ) ], { type: 'application/json' } );
+		const url = URL.createObjectURL( blob );
+		const a = document.createElement( 'a' );
+		a.href = url;
+		a.download = `yokoi-settings-${ new Date().toISOString().split( 'T' )[0] }.json`;
+		document.body.appendChild( a );
+		a.click();
+		document.body.removeChild( a );
+		URL.revokeObjectURL( url );
+	}, [ normalizedOptionValue ] );
+
+	const handleImportSettings = useCallback( () => {
+		const input = document.createElement( 'input' );
+		input.type = 'file';
+		input.accept = 'application/json';
+		input.onchange = ( e ) => {
+			const file = e.target.files[0];
+			if ( ! file ) {
+				return;
+			}
+			const reader = new FileReader();
+			reader.onload = ( event ) => {
+				try {
+					const importData = JSON.parse( event.target.result );
+					if ( importData.settings && importData.version === '1.0' ) {
+						applySettingsChange( ( current ) => ( {
+							...current,
+							blocks_enabled: {
+								...current.blocks_enabled,
+								...( importData.settings.blocks_enabled || {} ),
+							},
+							default_configs: {
+								...current.default_configs,
+								...( importData.settings.default_configs || {} ),
+							},
+							visibility_controls: {
+								...current.visibility_controls,
+								...( importData.settings.visibility_controls || {} ),
+							},
+						} ) );
+					}
+				} catch ( err ) {
+					// Handle error.
+					console.error( 'Failed to import settings:', err );
+				}
+			};
+			reader.readAsText( file );
+		};
+		input.click();
+	}, [ applySettingsChange ] );
+
+	const applyPreset = useCallback( ( preset ) => {
+		if ( preset === 'all' ) {
+			toggleAllBlocks( true );
+		} else if ( preset === 'none' ) {
+			toggleAllBlocks( false );
+		} else if ( preset === 'favorites' ) {
+			const favoriteNames = Array.from( favoriteBlocks );
+			favoriteNames.forEach( ( blockName ) => {
+				if ( ! blocksEnabled[ blockName ] ) {
+					toggleBlock( blockName );
+				}
+			} );
+		}
+	}, [ toggleAllBlocks, toggleBlock, favoriteBlocks, blocksEnabled ] );
+
+	const handlePreviewBlock = useCallback( ( blockName ) => {
+		// Open block inserter and search for the block.
+		const data = window?.wp?.data;
+		if ( data?.dispatch ) {
+			const editSiteDispatch = data.dispatch( 'core/edit-site' );
+			if ( editSiteDispatch?.openGeneralSidebar ) {
+				// Close settings sidebar and open inserter.
+				editSiteDispatch.closeGeneralSidebar();
+				setTimeout( () => {
+					// Trigger block inserter search.
+					const inserterDispatch = data.dispatch( 'core/block-editor' );
+					if ( inserterDispatch?.setInserterOpened ) {
+						inserterDispatch.setInserterOpened( true );
+					}
+					// Fire analytics event.
+					window.dispatchEvent( new CustomEvent( 'yokoi:block-previewed', { detail: { blockName } } ) );
+				}, 100 );
+			}
+		}
+	}, [] );
+
+	// Validate settings changes.
+	const validateSettings = useCallback( ( settings ) => {
+		const errors = {};
+		
+		// Validate blocks_enabled structure.
+		if ( settings.blocks_enabled && typeof settings.blocks_enabled !== 'object' ) {
+			errors.blocks_enabled = __( 'Blocks enabled must be an object.', 'yokoi' );
+		}
+
+		// Validate date_now_api_key format if provided.
+		if ( settings.date_now_api_key && typeof settings.date_now_api_key !== 'string' ) {
+			errors.date_now_api_key = __( 'API key must be a string.', 'yokoi' );
+		}
+
+		setValidationErrors( errors );
+		return Object.keys( errors ).length === 0;
+	}, [] );
 
 	const hasMoreBlocks =
 		catalogMeta.page > 0 && catalogMeta.page < catalogMeta.totalPages;
@@ -995,6 +1336,56 @@ const YokoiSidebar = () => {
 														disabled={ ! isOptionReady || isBusy }
 													/>
 												) }
+
+												<Flex direction="column" gap={ 2 }>
+													<Button
+														variant="secondary"
+														onClick={ handleExportSettings }
+														disabled={ ! isOptionReady || isBusy }
+													>
+														{ __( 'Export Settings', 'yokoi' ) }
+													</Button>
+													<Button
+														variant="secondary"
+														onClick={ handleImportSettings }
+														disabled={ ! isOptionReady || isBusy }
+													>
+														{ __( 'Import Settings', 'yokoi' ) }
+													</Button>
+													<Flex direction="column" gap={ 1 } style={ { marginTop: '8px' } }>
+														<span style={ { fontSize: '12px', fontWeight: 600 } }>
+															{ __( 'Quick Presets', 'yokoi' ) }
+														</span>
+														<Flex gap={ 1 } wrap>
+															<Button
+																variant="tertiary"
+																size="small"
+																onClick={ () => applyPreset( 'all' ) }
+																disabled={ ! isOptionReady || isBusy }
+															>
+																{ __( 'Enable All', 'yokoi' ) }
+															</Button>
+															<Button
+																variant="tertiary"
+																size="small"
+																onClick={ () => applyPreset( 'none' ) }
+																disabled={ ! isOptionReady || isBusy }
+															>
+																{ __( 'Disable All', 'yokoi' ) }
+															</Button>
+															{ favoriteBlocks.size > 0 && (
+																<Button
+																	variant="tertiary"
+																	size="small"
+																	onClick={ () => applyPreset( 'favorites' ) }
+																	disabled={ ! isOptionReady || isBusy }
+																>
+																	{ __( 'Enable Favorites', 'yokoi' ) }
+																</Button>
+															) }
+														</Flex>
+													</Flex>
+												</Flex>
 											</Flex>
 										);
 									}
@@ -1006,12 +1397,32 @@ const YokoiSidebar = () => {
 											error={ blockCatalogError }
 											searchValue={ searchTerm }
 											onSearchChange={ setSearchTerm }
+											searchHistory={ searchHistory }
 											hasMore={ hasMoreBlocks }
 											onLoadMore={ loadMoreBlocks }
-											blocksEnabled={ blocksEnabled }
+											blocksEnabled={ optimisticStateRef.current?.blocks_enabled || blocksEnabled }
 											blockDefinitions={ blockDefinitions }
 											onToggle={ toggleBlock }
+											onToggleAll={ toggleAllBlocks }
+											onToggleFavorite={ toggleFavorite }
+											favoriteBlocks={ favoriteBlocks }
+											togglingBlocks={ togglingBlocks }
+											blockStatistics={ blockStatistics }
+											onPreviewBlock={ handlePreviewBlock }
+											validationErrors={ validationErrors }
 											disabled={ ! isOptionReady || isBusy }
+											canUndo={ historyIndex > 0 }
+											canRedo={ historyIndex < settingsHistory.length - 1 }
+											onUndo={ handleUndo }
+											onRedo={ handleRedo }
+											onRetry={ () => {
+												setBlockCatalogError( null );
+												fetchBlockCatalog( {
+													search: catalogMeta.search,
+													page: catalogMeta.page || 1,
+													append: false,
+												} );
+											} }
 										/>
 									);
 								} }
