@@ -34,7 +34,7 @@ const ensureDebugFlag = () => {
 
 	if ( typeof window.YOKOI_DEBUG === 'undefined' ) {
 		window.YOKOI_DEBUG =
-			storedValue !== null ? storedValue === 'true' : true;
+			storedValue !== null ? storedValue === 'true' : false;
 	}
 
 	if ( window.YOKOI_DEBUG && storedValue !== 'true' ) {
@@ -81,7 +81,7 @@ const bootstrap = window.yokoiSettings || {};
 const initialBlockList = Array.isArray( bootstrap.blocks ) ? bootstrap.blocks : [];
 const CATALOG_PAGE_SIZE = 100;
 const SIDEBAR_PLUGIN_SLUG = 'yokoi-settings-sidebar';
-const INITIAL_LOAD_DELAY_MS = 2000;
+const SIMPLE_LOAD_DELAY_MS = 2000;
 
 const shouldAutoOpenSidebar = () => {
 	try {
@@ -261,8 +261,7 @@ const YokoiSidebar = () => {
 		search: '',
 	} );
 	const [ isCatalogLoadingMore, setIsCatalogLoadingMore ] = useState( false );
-	const [ hasInitialLoadDelayElapsed, setInitialLoadDelayElapsed ] =
-		useState( false );
+	const [ isSimpleDelayActive, setIsSimpleDelayActive ] = useState( true );
 
 	useEffect( () => {
 		const handle = setTimeout( () => {
@@ -274,8 +273,8 @@ const YokoiSidebar = () => {
 
 	useEffect( () => {
 		const timer = window.setTimeout( () => {
-			setInitialLoadDelayElapsed( true );
-		}, INITIAL_LOAD_DELAY_MS );
+			setIsSimpleDelayActive( false );
+		}, SIMPLE_LOAD_DELAY_MS );
 
 		return () => {
 			window.clearTimeout( timer );
@@ -686,9 +685,6 @@ const YokoiSidebar = () => {
 		broadcastSettingsUpdate( normalizedOptionValue );
 	}, [ normalizedOptionValue ] );
 
-	const isInitialLoad = ! hasFetchedOption;
-	const shouldShowInitialLoading =
-		isInitialLoad || ! hasInitialLoadDelayElapsed;
 	const isOptionReady = hasFetchedOption;
 	const isLoading = isBlockCatalogLoading && isOptionReady;
 	const blocksEnabled = normalizedOptionValue.blocks_enabled || {};
@@ -930,7 +926,7 @@ const YokoiSidebar = () => {
 				icon={ <YokoiSidebarIcon /> }
 			>
 				<Flex direction="column" gap={ 6 }>
-					{ shouldShowInitialLoading ? (
+					{ isSimpleDelayActive ? (
 						<Flex
 							direction="column"
 							gap={ 4 }
