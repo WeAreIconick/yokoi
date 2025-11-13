@@ -9,15 +9,12 @@ import {
 	Flex,
 	ToolbarButton,
 	ToolbarGroup,
-	Popover,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { star, starFilled, undo, redo, external } from '@wordpress/icons';
+import { starEmpty, starFilled, undo, redo } from '@wordpress/icons';
 import { useState } from '@wordpress/element';
 
 const BlockTogglePanel = ( {
-	isLoading = false,
-	isLoadingMore = false,
 	error = null,
 	searchValue = '',
 	onSearchChange = () => {},
@@ -37,7 +34,6 @@ const BlockTogglePanel = ( {
 	onUndo = null,
 	onRedo = null,
 	blockStatistics = {},
-	onPreviewBlock = null,
 	validationErrors = {},
 	disabled = false,
 } ) => {
@@ -142,7 +138,7 @@ const BlockTogglePanel = ( {
 								variant="secondary"
 								size="small"
 								onClick={ () => onToggleAll( true ) }
-								disabled={ disabled || allEnabled || isLoading }
+								disabled={ disabled || allEnabled }
 							>
 								{ __( 'Enable All', 'yokoi' ) }
 							</Button>
@@ -150,7 +146,7 @@ const BlockTogglePanel = ( {
 								variant="secondary"
 								size="small"
 								onClick={ () => onToggleAll( false ) }
-								disabled={ disabled || allDisabled || isLoading }
+								disabled={ disabled || allDisabled }
 							>
 								{ __( 'Disable All', 'yokoi' ) }
 							</Button>
@@ -162,23 +158,7 @@ const BlockTogglePanel = ( {
 						</Flex>
 					) }
 
-					{ isLoading && (
-						<Flex direction="column" gap={ 2 }>
-							<Flex align="center" gap={ 2 }>
-								<Spinner />
-								<span>{ __( 'Loading block catalog…', 'yokoi' ) }</span>
-							</Flex>
-							{ /* Loading skeleton */ }
-							{ [ 1, 2, 3 ].map( ( i ) => (
-								<Flex key={ i } align="center" gap={ 2 } style={ { opacity: 0.5 } }>
-									<div style={ { width: '40px', height: '20px', background: '#ddd', borderRadius: '2px' } } />
-									<div style={ { flex: 1, height: '16px', background: '#eee', borderRadius: '2px' } } />
-								</Flex>
-							) ) }
-						</Flex>
-					) }
-
-					{ error && ! isLoading && (
+					{ error && (
 						<Notice
 							status="error"
 							isDismissible={ false }
@@ -203,15 +183,13 @@ const BlockTogglePanel = ( {
 					</p>
 				) }
 
-				{ ! isLoading &&
-					filteredEntries.length === 0 &&
+				{ filteredEntries.length === 0 &&
 					entries.length > 0 && (
 						<p>{ __( 'No blocks match your search.', 'yokoi' ) }</p>
 					) }
 
 					{ filteredEntries.map( ( [ blockName, enabled ] ) => {
 						const BlockItem = ( { blockName: name, enabled: isEnabled } ) => {
-							const [ showPreview, setShowPreview ] = useState( false );
 							const label = blockDefinitions[ name ]?.title || name;
 							const description = blockDefinitions[ name ]?.description;
 							const isToggling = togglingBlocks.has( name );
@@ -224,7 +202,7 @@ const BlockTogglePanel = ( {
 								<Flex key={ name } align="center" gap={ 2 } style={ { position: 'relative' } }>
 									{ onToggleFavorite && (
 										<Button
-											icon={ isFavorite ? starFilled : star }
+											icon={ isFavorite ? starFilled : starEmpty }
 											label={ isFavorite ? __( 'Remove from favorites', 'yokoi' ) : __( 'Add to favorites', 'yokoi' ) }
 											onClick={ () => onToggleFavorite( name ) }
 											variant="tertiary"
@@ -265,41 +243,7 @@ const BlockTogglePanel = ( {
 													{ postCount } { __( 'posts', 'yokoi' ) }
 												</span>
 											) }
-											{ onPreviewBlock && (
-												<Button
-													icon={ external }
-													label={ __( 'Preview block', 'yokoi' ) }
-													onClick={ () => setShowPreview( ! showPreview ) }
-													variant="tertiary"
-													size="small"
-													style={ { height: '20px', padding: '2px 4px' } }
-													aria-expanded={ showPreview }
-													aria-controls={ `yokoi-preview-${ name }` }
-												/>
-											) }
 										</Flex>
-										{ showPreview && onPreviewBlock && (
-											<Popover
-												id={ `yokoi-preview-${ name }` }
-												onClose={ () => setShowPreview( false ) }
-												role="dialog"
-												aria-label={ __( 'Block preview', 'yokoi' ) }
-											>
-												<div style={ { padding: '16px', minWidth: '300px', maxWidth: '500px' } }>
-													<h3 style={ { marginTop: 0 } }>{ label }</h3>
-													<p>{ description || __( 'No description available.', 'yokoi' ) }</p>
-													<Button
-														variant="primary"
-														onClick={ () => {
-															onPreviewBlock( name );
-															setShowPreview( false );
-														} }
-													>
-														{ __( 'View Demo', 'yokoi' ) }
-													</Button>
-												</div>
-											</Popover>
-										) }
 									</Flex>
 									{ isToggling && <Spinner size={ 16 } aria-label={ __( 'Saving…', 'yokoi' ) } /> }
 								</Flex>
@@ -310,16 +254,13 @@ const BlockTogglePanel = ( {
 					} ) }
 				</Flex>
 
-				{ hasMore && ! isLoading && (
+				{ hasMore && (
 					<Button
 						variant="secondary"
 						onClick={ onLoadMore }
-						isBusy={ isLoadingMore }
-						disabled={ isLoadingMore || disabled }
+						disabled={ disabled }
 					>
-						{ isLoadingMore
-							? __( 'Loading…', 'yokoi' )
-							: __( 'Load more blocks', 'yokoi' ) }
+						{ __( 'Load more blocks', 'yokoi' ) }
 					</Button>
 				) }
 			</PanelBody>

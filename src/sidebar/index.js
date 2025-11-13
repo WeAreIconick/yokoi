@@ -28,7 +28,6 @@ const bootstrap = window.yokoiSettings || {};
 const initialBlockList = Array.isArray( bootstrap.blocks ) ? bootstrap.blocks : [];
 const CATALOG_PAGE_SIZE = 100;
 const SIDEBAR_PLUGIN_SLUG = 'yokoi-settings-sidebar';
-const SIMPLE_LOAD_DELAY_MS = 2000;
 
 const shouldAutoOpenSidebar = () => {
 	try {
@@ -198,7 +197,6 @@ const YokoiSidebar = () => {
 	const [ blockDefinitions, setBlockDefinitions ] = useState( () =>
 		toDefinitionMap( initialBlockList )
 	);
-	const [ isBlockCatalogLoading, setIsBlockCatalogLoading ] = useState( false );
 	const [ blockCatalogError, setBlockCatalogError ] = useState( null );
 	const [ searchTerm, setSearchTerm ] = useState( '' );
 	const [ debouncedSearchTerm, setDebouncedSearchTerm ] = useState( '' );
@@ -207,8 +205,6 @@ const YokoiSidebar = () => {
 		totalPages: 0,
 		search: '',
 	} );
-	const [ isCatalogLoadingMore, setIsCatalogLoadingMore ] = useState( false );
-	const [ isSimpleDelayActive, setIsSimpleDelayActive ] = useState( true );
 	const [ togglingBlocks, setTogglingBlocks ] = useState( new Set() );
 	const [ favoriteBlocks, setFavoriteBlocks ] = useState( new Set() );
 	const [ searchHistory, setSearchHistory ] = useState( [] );
@@ -216,11 +212,16 @@ const YokoiSidebar = () => {
 	const [ historyIndex, setHistoryIndex ] = useState( -1 );
 	const [ blockStatistics, setBlockStatistics ] = useState( {} );
 	const [ validationErrors, setValidationErrors ] = useState( {} );
+	const [ localBlocksEnabled, setLocalBlocksEnabled ] = useState( null );
 	const abortControllerRef = useRef( null );
 	const pendingUpdatesRef = useRef( {} );
 	const saveTimeoutRef = useRef( null );
 	const activeRequestsRef = useRef( new Map() );
-	const optimisticStateRef = useRef( null );
+
+	// Define bootstrap variables early so they can be used in effects.
+	const optionName = bootstrap?.settingsOption || 'yokoi_settings';
+	const canManage = bootstrap?.capabilities?.canManage !== false;
+	const blocksEndpoint = bootstrap?.blocksEndpoint;
 
 	useEffect( () => {
 		// Cancel previous request if it exists.
@@ -241,15 +242,6 @@ const YokoiSidebar = () => {
 		};
 	}, [ searchTerm ] );
 
-	useEffect( () => {
-		const timer = window.setTimeout( () => {
-			setIsSimpleDelayActive( false );
-		}, SIMPLE_LOAD_DELAY_MS );
-
-		return () => {
-			window.clearTimeout( timer );
-		};
-	}, [] );
 
 	// Load favorites from localStorage.
 	useEffect( () => {
@@ -274,7 +266,7 @@ const YokoiSidebar = () => {
 
 	// Fetch block statistics.
 	useEffect( () => {
-		if ( ! blocksEndpoint || ! isOptionReady ) {
+		if ( ! blocksEndpoint ) {
 			return;
 		}
 
@@ -299,7 +291,7 @@ const YokoiSidebar = () => {
 		};
 
 		fetchStats();
-	}, [ blocksEndpoint, isOptionReady ] );
+	}, [ blocksEndpoint ] );
 
 	// Keyboard shortcuts.
 	useEffect( () => {
@@ -323,10 +315,7 @@ const YokoiSidebar = () => {
 		return () => window.removeEventListener( 'keydown', handleKeyDown );
 	}, [ searchTerm ] );
 
-	const optionName = bootstrap?.settingsOption || 'yokoi_settings';
-	const canManage = bootstrap?.capabilities?.canManage !== false;
-	const blocksEndpoint = bootstrap?.blocksEndpoint;
-	const { editEntityRecord, receiveEntityRecords } = useDispatch( 'core' );
+	const { editEntityRecord, receiveEntityRecords, saveEditedEntityRecord } = useDispatch( 'core' );
 
 	// Undo/Redo handlers.
 	const handleUndo = useCallback( () => {
@@ -404,6 +393,7 @@ const YokoiSidebar = () => {
 	const entityRegisteredRef = useRef( false );
 	const settingsFetchRef = useRef( false );
 	const pendingSeedRef = useRef( null );
+	const pendingUpdatesQueueRef = useRef( [] );
 
 	const {
 		optionValue,
@@ -613,25 +603,52 @@ const YokoiSidebar = () => {
 	] );
 
 	useEffect( () => {
-		if ( isEntityConfigReady && pendingSeedRef.current ) {
-			const value = pendingSeedRef.current;
-			pendingSeedRef.current = null;
-			try {
-				editEntityRecord( 'root', 'option', optionName, {
-					value,
+		if ( isEntityConfigReady ) {
+			// Apply pending seed if any
+			if ( pendingSeedRef.current ) {
+				const value = pendingSeedRef.current;
+				pendingSeedRef.current = null;
+				try {
+					editEntityRecord( 'root', 'option', optionName, {
+						value,
+					} );
+					if ( saveEditedEntityRecord ) {
+						saveEditedEntityRecord( 'root', 'option', optionName ).catch( () => {} );
+					}
+					logDebug( 'Pending seed applied after entity ready' );
+				} catch ( err ) {
+					logDebug(
+						'Pending seed failed after entity ready; retrying',
+						err
+					);
+					retrySeed( value );
+				}
+			}
+
+			// Apply any queued updates
+			if ( pendingUpdatesQueueRef.current.length > 0 ) {
+				const updates = [ ...pendingUpdatesQueueRef.current ];
+				pendingUpdatesQueueRef.current = [];
+				updates.forEach( ( value ) => {
+					try {
+						editEntityRecord( 'root', 'option', optionName, {
+							value,
+						} );
+						if ( saveEditedEntityRecord ) {
+							saveEditedEntityRecord( 'root', 'option', optionName ).catch( () => {} );
+						}
+						logDebug( 'Queued update applied after entity ready' );
+					} catch ( err ) {
+						logDebug( 'Queued update failed, re-queuing', err );
+						pendingUpdatesQueueRef.current.push( value );
+					}
 				} );
-				logDebug( 'Pending seed applied after entity ready' );
-			} catch ( err ) {
-				logDebug(
-					'Pending seed failed after entity ready; retrying',
-					err
-				);
-				retrySeed( value );
 			}
 		}
 	}, [
 		isEntityConfigReady,
 		editEntityRecord,
+		saveEditedEntityRecord,
 		optionName,
 		retrySeed,
 	] );
@@ -686,9 +703,9 @@ const YokoiSidebar = () => {
 	}, [ optionValue, persistedOptionValue, hasFetchedOption ] );
 
 	useEffect( () => {
-	if ( ! isEntityConfigReady ) {
-		logDebug( 'Entity config not ready; proceeding with fallback seeding' );
-	}
+		if ( ! isEntityConfigReady ) {
+			logDebug( 'Entity config not ready; proceeding with fallback seeding' );
+		}
 
 		if (
 			! hasFetchedOption &&
@@ -747,15 +764,15 @@ const YokoiSidebar = () => {
 			return;
 		}
 
-	if (
-		isEntityConfigReady &&
-		typeof optionValue !== 'undefined' &&
-		! isEqual( optionValue, normalizedOptionValue )
-	) {
-		logDebug( 'Syncing edited option to normalized snapshot' );
-		editEntityRecord( 'root', 'option', optionName, {
-			value: normalizedOptionValue,
-		} );
+		if (
+			isEntityConfigReady &&
+			typeof optionValue !== 'undefined' &&
+			! isEqual( optionValue, normalizedOptionValue )
+		) {
+			logDebug( 'Syncing edited option to normalized snapshot' );
+			editEntityRecord( 'root', 'option', optionName, {
+				value: normalizedOptionValue,
+			} );
 		}
 	}, [
 		optionValue,
@@ -766,6 +783,7 @@ const YokoiSidebar = () => {
 		receiveEntityRecords,
 		blockDefinitions,
 		isEntityConfigReady,
+		retrySeed,
 	] );
 
 	useEffect( () => {
@@ -773,29 +791,75 @@ const YokoiSidebar = () => {
 	}, [ normalizedOptionValue ] );
 
 	const isOptionReady = hasFetchedOption;
-	const isLoading = isBlockCatalogLoading && isOptionReady;
-	const blocksEnabled = normalizedOptionValue.blocks_enabled || {};
+	const baseBlocksEnabled = normalizedOptionValue.blocks_enabled || {};
+	const blocksEnabled = localBlocksEnabled || baseBlocksEnabled;
 	const dateNowApiKey = normalizedOptionValue.date_now_api_key || '';
+	
+	// Allow toggling even if option isn't fully ready - we'll use fallback values.
+	const canToggle = true;
+
+	// Sync local state when normalizedOptionValue changes.
+	useEffect( () => {
+		if ( normalizedOptionValue?.blocks_enabled ) {
+			setLocalBlocksEnabled( normalizedOptionValue.blocks_enabled );
+		}
+	}, [ normalizedOptionValue ] );
 
 	const applySettingsChange = useCallback(
 		( updater ) => {
-			if ( ! isEntityConfigReady ) {
-				logDebug( 'applySettingsChange bail: entity config not ready' );
-				return;
-			}
-
-			if ( ! isOptionReady ) {
-				logDebug( 'applySettingsChange bail: option not ready' );
-				return;
-			}
-
+			// Use current normalized value or fallback to defaults
+			const currentValue = normalizedOptionValue || buildDefaultSettings( blockDefinitions );
+			
 			const nextValue = sanitizeSettingsWithDefinitions(
-				updater( normalizedOptionValue ),
+				updater( currentValue ),
 				blockDefinitions
 			);
 
-			editEntityRecord( 'root', 'option', optionName, {
-				value: nextValue,
+			// Update local entity store for immediate UI feedback
+			try {
+				editEntityRecord( 'root', 'option', optionName, {
+					value: nextValue,
+				} );
+			} catch ( error ) {
+				logDebug( 'applySettingsChange: error editing entity record', error );
+			}
+
+			// Save via REST API to persist changes
+			// Extract path from full URL if needed
+			let settingsPath = bootstrap?.restEndpoint || 'yokoi/v1/settings';
+			if ( settingsPath.startsWith( 'http' ) ) {
+				// Extract path from full URL
+				const url = new URL( settingsPath );
+				settingsPath = url.pathname.replace( '/wp-json/', '' );
+			} else if ( settingsPath.startsWith( '/' ) ) {
+				// Remove leading slash for apiFetch
+				settingsPath = settingsPath.substring( 1 );
+			}
+			
+			apiFetch( {
+				path: settingsPath,
+				method: 'POST',
+				data: {
+					blocks_enabled: nextValue.blocks_enabled,
+					default_configs: nextValue.default_configs,
+					visibility_controls: nextValue.visibility_controls,
+					date_now_api_key: nextValue.date_now_api_key,
+					nonce: bootstrap?.settingsNonce || bootstrap?.nonce || '',
+				},
+			} ).then( () => {
+				logDebug( 'Settings saved successfully' );
+			} ).catch( ( error ) => {
+				logDebug( 'applySettingsChange: error saving via REST API', error );
+				// Revert local change on error
+				if ( normalizedOptionValue ) {
+					try {
+						editEntityRecord( 'root', 'option', optionName, {
+							value: normalizedOptionValue,
+						} );
+					} catch ( err ) {
+						// Ignore revert errors
+					}
+				}
 			} );
 		},
 		[
@@ -803,8 +867,7 @@ const YokoiSidebar = () => {
 			optionName,
 			normalizedOptionValue,
 			blockDefinitions,
-			isOptionReady,
-			isEntityConfigReady,
+			bootstrap,
 		]
 	);
 
@@ -821,12 +884,6 @@ const YokoiSidebar = () => {
 			}
 
 			setBlockCatalogError( null );
-
-			if ( append ) {
-				setIsCatalogLoadingMore( true );
-			} else {
-				setIsBlockCatalogLoading( true );
-			}
 
 			const requestPromise = ( async () => {
 				try {
@@ -904,11 +961,6 @@ const YokoiSidebar = () => {
 				} finally {
 					// Remove from active requests.
 					activeRequestsRef.current.delete( requestKey );
-					if ( append ) {
-						setIsCatalogLoadingMore( false );
-					} else {
-						setIsBlockCatalogLoading( false );
-					}
 				}
 			} )();
 
@@ -931,30 +983,45 @@ const YokoiSidebar = () => {
 		} );
 	}, [ blocksEndpoint, debouncedSearchTerm, fetchBlockCatalog ] );
 
+	// Validate settings changes.
+	const validateSettings = useCallback( ( settings ) => {
+		const errors = {};
+		
+		// Validate blocks_enabled structure.
+		if ( settings.blocks_enabled && typeof settings.blocks_enabled !== 'object' ) {
+			errors.blocks_enabled = __( 'Blocks enabled must be an object.', 'yokoi' );
+		}
+
+		// Validate date_now_api_key format if provided.
+		if ( settings.date_now_api_key && typeof settings.date_now_api_key !== 'string' ) {
+			errors.date_now_api_key = __( 'API key must be a string.', 'yokoi' );
+		}
+
+		setValidationErrors( errors );
+		return Object.keys( errors ).length === 0;
+	}, [] );
+
 	const toggleBlock = useCallback(
 		( blockName ) => {
-			// Optimistic update: update UI immediately.
-			const newState = ! blocksEnabled?.[ blockName ];
+			const currentEnabled = localBlocksEnabled || baseBlocksEnabled;
+			const newState = ! currentEnabled?.[ blockName ];
 			const currentState = normalizedOptionValue;
+
+			// Update local state immediately for instant UI feedback.
+			setLocalBlocksEnabled( ( prev ) => ( {
+				...( prev || baseBlocksEnabled ),
+				[ blockName ]: newState,
+			} ) );
 
 			// Save to history for undo/redo.
 			if ( settingsHistory.length === 0 || settingsHistory[ settingsHistory.length - 1 ] !== currentState ) {
 				setSettingsHistory( ( prev ) => {
 					const newHistory = prev.slice( 0, historyIndex + 1 );
 					newHistory.push( JSON.parse( JSON.stringify( currentState ) ) );
-					return newHistory.slice( -50 ); // Keep last 50 states.
+					return newHistory.slice( -50 );
 				} );
 				setHistoryIndex( ( prev ) => Math.min( prev + 1, 49 ) );
 			}
-
-			// Optimistic UI update.
-			optimisticStateRef.current = {
-				...currentState,
-				blocks_enabled: {
-					...currentState.blocks_enabled,
-					[ blockName ]: newState,
-				},
-			};
 
 			// Add to toggling set for visual feedback.
 			setTogglingBlocks( ( prev ) => new Set( prev ).add( blockName ) );
@@ -967,7 +1034,7 @@ const YokoiSidebar = () => {
 				clearTimeout( saveTimeoutRef.current );
 			}
 
-			// Batch updates: wait 500ms before saving.
+			// Batch updates: wait 300ms before saving.
 			saveTimeoutRef.current = setTimeout( () => {
 				applySettingsChange( ( current ) => {
 					const updated = {
@@ -980,28 +1047,27 @@ const YokoiSidebar = () => {
 					
 					// Validate before applying.
 					if ( ! validateSettings( updated ) ) {
-						// Revert optimistic update on validation error.
-						optimisticStateRef.current = null;
+						// Revert local state on validation error.
+						setLocalBlocksEnabled( baseBlocksEnabled );
 						return current;
 					}
 					
 					pendingUpdatesRef.current = {};
-					optimisticStateRef.current = null;
 					setValidationErrors( {} );
 					return updated;
 				} );
 
-				// Remove from toggling set after a short delay.
+				// Remove from toggling set after save completes.
 				setTimeout( () => {
 					setTogglingBlocks( ( prev ) => {
 						const next = new Set( prev );
 						next.delete( blockName );
 						return next;
 					} );
-				}, 300 );
-			}, 500 );
+				}, 200 );
+			}, 300 );
 		},
-		[ applySettingsChange, blocksEnabled, normalizedOptionValue, settingsHistory, historyIndex ]
+		[ applySettingsChange, baseBlocksEnabled, localBlocksEnabled, normalizedOptionValue, settingsHistory, historyIndex, validateSettings ]
 	);
 
 	const toggleFavorite = useCallback( ( blockName ) => {
@@ -1136,44 +1202,6 @@ const YokoiSidebar = () => {
 		}
 	}, [ toggleAllBlocks, toggleBlock, favoriteBlocks, blocksEnabled ] );
 
-	const handlePreviewBlock = useCallback( ( blockName ) => {
-		// Open block inserter and search for the block.
-		const data = window?.wp?.data;
-		if ( data?.dispatch ) {
-			const editSiteDispatch = data.dispatch( 'core/edit-site' );
-			if ( editSiteDispatch?.openGeneralSidebar ) {
-				// Close settings sidebar and open inserter.
-				editSiteDispatch.closeGeneralSidebar();
-				setTimeout( () => {
-					// Trigger block inserter search.
-					const inserterDispatch = data.dispatch( 'core/block-editor' );
-					if ( inserterDispatch?.setInserterOpened ) {
-						inserterDispatch.setInserterOpened( true );
-					}
-					// Fire analytics event.
-					window.dispatchEvent( new CustomEvent( 'yokoi:block-previewed', { detail: { blockName } } ) );
-				}, 100 );
-			}
-		}
-	}, [] );
-
-	// Validate settings changes.
-	const validateSettings = useCallback( ( settings ) => {
-		const errors = {};
-		
-		// Validate blocks_enabled structure.
-		if ( settings.blocks_enabled && typeof settings.blocks_enabled !== 'object' ) {
-			errors.blocks_enabled = __( 'Blocks enabled must be an object.', 'yokoi' );
-		}
-
-		// Validate date_now_api_key format if provided.
-		if ( settings.date_now_api_key && typeof settings.date_now_api_key !== 'string' ) {
-			errors.date_now_api_key = __( 'API key must be a string.', 'yokoi' );
-		}
-
-		setValidationErrors( errors );
-		return Object.keys( errors ).length === 0;
-	}, [] );
 
 	const hasMoreBlocks =
 		catalogMeta.page > 0 && catalogMeta.page < catalogMeta.totalPages;
@@ -1226,7 +1254,7 @@ const YokoiSidebar = () => {
 
 	const hasUnsavedChanges = optionDirty;
 	const isSavingChanges = optionSaving;
-	const isBusy = isSavingChanges || isBlockCatalogLoading;
+	const isBusy = isSavingChanges;
 
 	if ( ! canManage ) {
 		return (
@@ -1267,26 +1295,7 @@ const YokoiSidebar = () => {
 				icon={ <YokoiSidebarIcon /> }
 			>
 				<Flex direction="column" gap={ 6 }>
-					{ isSimpleDelayActive ? (
-						<Flex
-							direction="column"
-							gap={ 4 }
-							align="center"
-							justify="center"
-						>
-							<Spinner />
-							<p>{ __( 'Preparing Yokoi settings…', 'yokoi' ) }</p>
-						</Flex>
-					) : (
-						<>
-							{ isLoading && (
-								<Flex direction="column" gap={ 4 }>
-									<Spinner />
-									<p>{ __( 'Updating settings…', 'yokoi' ) }</p>
-								</Flex>
-							) }
-
-							<Notice status="info" isDismissible={ false }>
+					<Notice status="info" isDismissible={ false }>
 								{ __(
 									'Yokoi ships a suite of high-performance blocks built for modern WordPress sites. Use the controls below to enable blocks and fine-tune their behavior.',
 									'yokoi'
@@ -1392,15 +1401,13 @@ const YokoiSidebar = () => {
 
 									return (
 										<BlockTogglePanel
-											isLoading={ isBlockCatalogLoading }
-											isLoadingMore={ isCatalogLoadingMore }
 											error={ blockCatalogError }
 											searchValue={ searchTerm }
 											onSearchChange={ setSearchTerm }
 											searchHistory={ searchHistory }
 											hasMore={ hasMoreBlocks }
 											onLoadMore={ loadMoreBlocks }
-											blocksEnabled={ optimisticStateRef.current?.blocks_enabled || blocksEnabled }
+											blocksEnabled={ blocksEnabled }
 											blockDefinitions={ blockDefinitions }
 											onToggle={ toggleBlock }
 											onToggleAll={ toggleAllBlocks }
@@ -1408,9 +1415,8 @@ const YokoiSidebar = () => {
 											favoriteBlocks={ favoriteBlocks }
 											togglingBlocks={ togglingBlocks }
 											blockStatistics={ blockStatistics }
-											onPreviewBlock={ handlePreviewBlock }
 											validationErrors={ validationErrors }
-											disabled={ ! isOptionReady || isBusy }
+											disabled={ ! canToggle || isBusy }
 											canUndo={ historyIndex > 0 }
 											canRedo={ historyIndex < settingsHistory.length - 1 }
 											onUndo={ handleUndo }
@@ -1440,8 +1446,6 @@ const YokoiSidebar = () => {
 									{ __( 'Reset', 'yokoi' ) }
 								</Button>
 							</Flex>
-						</>
-					) }
 				</Flex>
 			</SitePluginSidebar>
 		</Fragment>
