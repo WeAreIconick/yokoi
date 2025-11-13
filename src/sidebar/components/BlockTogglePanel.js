@@ -11,7 +11,7 @@ import {
 	ToolbarGroup,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { starEmpty, starFilled, undo, redo } from '@wordpress/icons';
+import { Star, StarOff, Undo2, Redo2 } from 'lucide-react';
 import { useState } from '@wordpress/element';
 
 const BlockTogglePanel = ( {
@@ -115,7 +115,7 @@ const BlockTogglePanel = ( {
 						<ToolbarGroup>
 							{ onUndo && (
 								<ToolbarButton
-									icon={ undo }
+									icon={ <Undo2 size={ 16 } /> }
 									label={ __( 'Undo', 'yokoi' ) }
 									onClick={ onUndo }
 									disabled={ ! canUndo || disabled }
@@ -123,7 +123,7 @@ const BlockTogglePanel = ( {
 							) }
 							{ onRedo && (
 								<ToolbarButton
-									icon={ redo }
+									icon={ <Redo2 size={ 16 } /> }
 									label={ __( 'Redo', 'yokoi' ) }
 									onClick={ onRedo }
 									disabled={ ! canRedo || disabled }
@@ -197,21 +197,34 @@ const BlockTogglePanel = ( {
 							const stats = blockStatistics[ name ] || {};
 							const usageCount = stats.usage_count || 0;
 							const postCount = stats.post_count || 0;
-
+							
 							return (
-								<Flex key={ name } align="center" gap={ 2 } style={ { position: 'relative' } }>
+								<Flex key={ name } align="flex-start" gap={ 2 } style={ { position: 'relative' } }>
 									{ onToggleFavorite && (
-										<Button
-											icon={ isFavorite ? starFilled : starEmpty }
-											label={ isFavorite ? __( 'Remove from favorites', 'yokoi' ) : __( 'Add to favorites', 'yokoi' ) }
+										<button
+											type="button"
 											onClick={ () => onToggleFavorite( name ) }
-											variant="tertiary"
-											size="small"
-											style={ { minWidth: '32px', padding: '4px' } }
+											className="components-button is-tertiary is-small"
+											style={ { 
+												minWidth: '24px', 
+												width: '24px',
+												height: '24px',
+												padding: '2px',
+												marginTop: '2px',
+												flexShrink: 0,
+												display: 'flex',
+												alignItems: 'center',
+												justifyContent: 'center',
+												border: 'none',
+												background: 'transparent',
+												cursor: 'pointer'
+											} }
 											aria-label={ isFavorite ? __( 'Remove from favorites', 'yokoi' ) : __( 'Add to favorites', 'yokoi' ) }
-										/>
+										>
+											{ isFavorite ? <Star size={ 20 } fill="currentColor" /> : <StarOff size={ 20 } /> }
+										</button>
 									) }
-									<Flex direction="column" gap={ 0 } style={ { flex: 1 } }>
+									<Flex direction="column" gap={ 0 } style={ { flex: 1, minWidth: 0 } }>
 										<ToggleControl
 											label={ label }
 											checked={ Boolean( isEnabled ) }

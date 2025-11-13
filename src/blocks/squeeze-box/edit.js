@@ -17,7 +17,7 @@ import {
 	ExternalLink,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { plus } from '@wordpress/icons';
+import { Plus } from 'lucide-react';
 import { useEffect } from '@wordpress/element';
 
 import './editor.scss';
@@ -227,7 +227,7 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 			<BlockControls>
 				<ToolbarGroup>
 					<ToolbarButton
-						icon={ plus }
+						icon={ <Plus size={ 16 } /> }
 						label={ __( 'Add Panel', 'yokoi' ) }
 						onClick={ addItem }
 						disabled={ items.length >= MAX_ITEMS }

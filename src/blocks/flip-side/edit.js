@@ -21,12 +21,12 @@ import {
 	ToggleControl,
 } from '@wordpress/components';
 import {
-	plus,
-	trash,
-	arrowLeft,
-	arrowRight,
-	upload,
-} from '@wordpress/icons';
+	Plus,
+	Trash2,
+	ChevronLeft,
+	ChevronRight,
+	Upload,
+} from 'lucide-react';
 import { useState } from '@wordpress/element';
 
 import './editor.scss';
@@ -240,7 +240,7 @@ const FlipSideEdit = ( { attributes, setAttributes } ) => {
 					>
 						<div className="card-management-buttons">
 							<Button
-								icon={ plus }
+								icon={ <Plus size={ 16 } /> }
 								variant="primary"
 								onClick={ addCard }
 							>
@@ -248,7 +248,7 @@ const FlipSideEdit = ( { attributes, setAttributes } ) => {
 							</Button>
 							{ safeCards.length > 1 && (
 								<Button
-									icon={ trash }
+									icon={ <Trash2 size={ 16 } /> }
 									variant="secondary"
 									isDestructive
 									onClick={ () =>
@@ -391,7 +391,7 @@ const FlipSideEdit = ( { attributes, setAttributes } ) => {
 														] && (
 															<Button
 																variant="secondary"
-																icon={ upload }
+																icon={ <Upload size={ 16 } /> }
 																onClick={ open }
 															>
 																{ __(
@@ -622,7 +622,7 @@ const FlipSideEdit = ( { attributes, setAttributes } ) => {
 							className="carousel-nav prev"
 							onClick={ () => navigateCard( 'prev' ) }
 							aria-label={ __( 'Previous card', 'yokoi' ) }
-							icon={ arrowLeft }
+							icon={ <ChevronLeft size={ 20 } /> }
 							size="large"
 							variant="secondary"
 						/>
@@ -692,7 +692,7 @@ const FlipSideEdit = ( { attributes, setAttributes } ) => {
 							className="carousel-nav next"
 							onClick={ () => navigateCard( 'next' ) }
 							aria-label={ __( 'Next card', 'yokoi' ) }
-							icon={ arrowRight }
+							icon={ <ChevronRight size={ 20 } /> }
 							size="large"
 							variant="secondary"
 						/>
