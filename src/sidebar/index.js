@@ -1003,17 +1003,19 @@ const YokoiSidebar = () => {
 
 	const toggleBlock = useCallback(
 		( blockName ) => {
-			const currentEnabled = localBlocksEnabled || baseBlocksEnabled;
-			const newState = ! currentEnabled?.[ blockName ];
+			// Read current state, including any pending updates
+			const currentEnabled = { ...( localBlocksEnabled || baseBlocksEnabled ), ...pendingUpdatesRef.current };
+			const newState = ! currentEnabled[ blockName ];
 			const currentState = normalizedOptionValue;
 
 			// Update local state immediately for instant UI feedback.
 			setLocalBlocksEnabled( ( prev ) => ( {
 				...( prev || baseBlocksEnabled ),
+				...pendingUpdatesRef.current,
 				[ blockName ]: newState,
 			} ) );
 
-			// Save to history for undo/redo.
+			// Save to history for undo/redo (only once per batch).
 			if ( settingsHistory.length === 0 || settingsHistory[ settingsHistory.length - 1 ] !== currentState ) {
 				setSettingsHistory( ( prev ) => {
 					const newHistory = prev.slice( 0, historyIndex + 1 );
@@ -1036,12 +1038,16 @@ const YokoiSidebar = () => {
 
 			// Batch updates: wait 300ms before saving.
 			saveTimeoutRef.current = setTimeout( () => {
+				// Capture all pending updates at the time of save
+				const updatesToApply = { ...pendingUpdatesRef.current };
+				const togglingBlocksToClear = Object.keys( updatesToApply );
+				
 				applySettingsChange( ( current ) => {
 					const updated = {
 						...current,
 						blocks_enabled: {
 							...current.blocks_enabled,
-							...pendingUpdatesRef.current,
+							...updatesToApply,
 						},
 					};
 					
@@ -1057,11 +1063,11 @@ const YokoiSidebar = () => {
 					return updated;
 				} );
 
-				// Remove from toggling set after save completes.
+				// Remove all toggling blocks after save completes.
 				setTimeout( () => {
 					setTogglingBlocks( ( prev ) => {
 						const next = new Set( prev );
-						next.delete( blockName );
+						togglingBlocksToClear.forEach( ( name ) => next.delete( name ) );
 						return next;
 					} );
 				}, 200 );

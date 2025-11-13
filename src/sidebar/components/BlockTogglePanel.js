@@ -11,7 +11,7 @@ import {
 	ToolbarGroup,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { Star, StarOff, Undo2, Redo2 } from 'lucide-react';
+import { starEmpty, starFilled, undo, redo } from '@wordpress/icons';
 import { useState } from '@wordpress/element';
 
 const BlockTogglePanel = ( {
@@ -115,7 +115,7 @@ const BlockTogglePanel = ( {
 						<ToolbarGroup>
 							{ onUndo && (
 								<ToolbarButton
-									icon={ <Undo2 size={ 16 } /> }
+									icon={ undo }
 									label={ __( 'Undo', 'yokoi' ) }
 									onClick={ onUndo }
 									disabled={ ! canUndo || disabled }
@@ -123,7 +123,7 @@ const BlockTogglePanel = ( {
 							) }
 							{ onRedo && (
 								<ToolbarButton
-									icon={ <Redo2 size={ 16 } /> }
+									icon={ redo }
 									label={ __( 'Redo', 'yokoi' ) }
 									onClick={ onRedo }
 									disabled={ ! canRedo || disabled }
@@ -201,28 +201,21 @@ const BlockTogglePanel = ( {
 							return (
 								<Flex key={ name } align="flex-start" gap={ 2 } style={ { position: 'relative' } }>
 									{ onToggleFavorite && (
-										<button
-											type="button"
+										<Button
+											icon={ isFavorite ? starFilled : starEmpty }
 											onClick={ () => onToggleFavorite( name ) }
-											className="components-button is-tertiary is-small"
+											variant="tertiary"
+											size="small"
 											style={ { 
 												minWidth: '24px', 
 												width: '24px',
 												height: '24px',
 												padding: '2px',
 												marginTop: '2px',
-												flexShrink: 0,
-												display: 'flex',
-												alignItems: 'center',
-												justifyContent: 'center',
-												border: 'none',
-												background: 'transparent',
-												cursor: 'pointer'
+												flexShrink: 0
 											} }
 											aria-label={ isFavorite ? __( 'Remove from favorites', 'yokoi' ) : __( 'Add to favorites', 'yokoi' ) }
-										>
-											{ isFavorite ? <Star size={ 20 } fill="currentColor" /> : <StarOff size={ 20 } /> }
-										</button>
+										/>
 									) }
 									<Flex direction="column" gap={ 0 } style={ { flex: 1, minWidth: 0 } }>
 										<ToggleControl

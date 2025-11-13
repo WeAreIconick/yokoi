@@ -16,7 +16,7 @@ import {
 	ToolbarButton,
 	ExternalLink,
 } from '@wordpress/components';
-import { Type, Bold } from 'lucide-react';
+import { formatUppercase, formatBold } from '@wordpress/icons';
 import { useEffect, useMemo, useState } from '@wordpress/element';
 
 import './editor.scss';
@@ -152,7 +152,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 				<ToolbarGroup>
 					<ToolbarButton
 						isPressed={ textTransform === 'uppercase' }
-						icon={ <Type size={ 16 } /> }
+						icon={ formatUppercase }
 						label={ __( 'Uppercase', 'yokoi' ) }
 						onClick={ () =>
 							setAttributes( {
@@ -163,7 +163,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 					/>
 					<ToolbarButton
 						isPressed={ fontWeight === 'bold' }
-						icon={ <Bold size={ 16 } /> }
+						icon={ formatBold }
 						label={ __( 'Bold', 'yokoi' ) }
 						onClick={ () =>
 							setAttributes( {
