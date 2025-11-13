@@ -217,6 +217,7 @@ const YokoiSidebar = () => {
 	const pendingUpdatesRef = useRef( {} );
 	const saveTimeoutRef = useRef( null );
 	const activeRequestsRef = useRef( new Map() );
+	const activeSaveRequestRef = useRef( null );
 
 	// Define bootstrap variables early so they can be used in effects.
 	const optionName = bootstrap?.settingsOption || 'yokoi_settings';
@@ -808,7 +809,15 @@ const YokoiSidebar = () => {
 	const applySettingsChange = useCallback(
 		( updater ) => {
 			// Use current normalized value or fallback to defaults
-			const currentValue = normalizedOptionValue || buildDefaultSettings( blockDefinitions );
+			// Merge with pending updates to ensure we have the latest state
+			const baseValue = normalizedOptionValue || buildDefaultSettings( blockDefinitions );
+			const currentValue = {
+				...baseValue,
+				blocks_enabled: {
+					...( baseValue.blocks_enabled || {} ),
+					...pendingUpdatesRef.current,
+				},
+			};
 			
 			const nextValue = sanitizeSettingsWithDefinitions(
 				updater( currentValue ),
@@ -823,6 +832,10 @@ const YokoiSidebar = () => {
 			} catch ( error ) {
 				logDebug( 'applySettingsChange: error editing entity record', error );
 			}
+
+			// Track save request ID to ignore stale responses
+			const saveRequestId = Date.now();
+			activeSaveRequestRef.current = saveRequestId;
 
 			// Save via REST API to persist changes
 			// Extract path from full URL if needed
@@ -847,8 +860,18 @@ const YokoiSidebar = () => {
 					nonce: bootstrap?.settingsNonce || bootstrap?.nonce || '',
 				},
 			} ).then( () => {
-				logDebug( 'Settings saved successfully' );
+				// Only process if this is still the active request
+				if ( activeSaveRequestRef.current === saveRequestId ) {
+					logDebug( 'Settings saved successfully' );
+					activeSaveRequestRef.current = null;
+				}
 			} ).catch( ( error ) => {
+				// Only process if this is still the active request
+				if ( activeSaveRequestRef.current !== saveRequestId ) {
+					return;
+				}
+				activeSaveRequestRef.current = null;
+				
 				logDebug( 'applySettingsChange: error saving via REST API', error );
 				// Revert local change on error
 				if ( normalizedOptionValue ) {
@@ -1042,12 +1065,19 @@ const YokoiSidebar = () => {
 				const updatesToApply = { ...pendingUpdatesRef.current };
 				const togglingBlocksToClear = Object.keys( updatesToApply );
 				
+				// Don't clear pendingUpdatesRef yet - let applySettingsChange use it
+				// We'll clear it after the save succeeds
+				
 				applySettingsChange( ( current ) => {
+					// current already includes pendingUpdatesRef.current from applySettingsChange
+					// But we also want to ensure updatesToApply is included
+					const allUpdates = { ...updatesToApply, ...pendingUpdatesRef.current };
+					
 					const updated = {
 						...current,
 						blocks_enabled: {
-							...current.blocks_enabled,
-							...updatesToApply,
+							...( current.blocks_enabled || {} ),
+							...allUpdates,
 						},
 					};
 					
@@ -1058,7 +1088,10 @@ const YokoiSidebar = () => {
 						return current;
 					}
 					
-					pendingUpdatesRef.current = {};
+					// Clear pending updates for blocks we're saving
+					Object.keys( updatesToApply ).forEach( ( key ) => {
+						delete pendingUpdatesRef.current[ key ];
+					} );
 					setValidationErrors( {} );
 					return updated;
 				} );
@@ -1091,6 +1124,16 @@ const YokoiSidebar = () => {
 	const toggleAllBlocks = useCallback(
 		( enable ) => {
 			const allBlockNames = Object.keys( blockDefinitions );
+			
+			// Update local state immediately for instant UI feedback
+			setLocalBlocksEnabled( ( prev ) => {
+				const updated = { ...( prev || baseBlocksEnabled ) };
+				allBlockNames.forEach( ( name ) => {
+					updated[ name ] = enable;
+				} );
+				return updated;
+			} );
+			
 			allBlockNames.forEach( ( blockName ) => {
 				setTogglingBlocks( ( prev ) => new Set( prev ).add( blockName ) );
 				pendingUpdatesRef.current[ blockName ] = enable;
@@ -1101,23 +1144,37 @@ const YokoiSidebar = () => {
 			}
 
 			saveTimeoutRef.current = setTimeout( () => {
+				// Capture all pending updates at the time of save
+				const updatesToApply = { ...pendingUpdatesRef.current };
+				const togglingBlocksToClear = Object.keys( updatesToApply );
+				
 				applySettingsChange( ( current ) => {
 					const updated = {
 						...current,
-						blocks_enabled: Object.fromEntries(
-							allBlockNames.map( ( name ) => [ name, enable ] )
-						),
+						blocks_enabled: {
+							...( current.blocks_enabled || {} ),
+							...updatesToApply,
+						},
 					};
-					pendingUpdatesRef.current = {};
+					
+					// Clear pending updates for blocks we're saving
+					Object.keys( updatesToApply ).forEach( ( key ) => {
+						delete pendingUpdatesRef.current[ key ];
+					} );
+					
 					return updated;
 				} );
 
 				setTimeout( () => {
-					setTogglingBlocks( new Set() );
+					setTogglingBlocks( ( prev ) => {
+						const next = new Set( prev );
+						togglingBlocksToClear.forEach( ( name ) => next.delete( name ) );
+						return next;
+					} );
 				}, 300 );
 			}, 500 );
 		},
-		[ applySettingsChange, blockDefinitions ]
+		[ applySettingsChange, blockDefinitions, baseBlocksEnabled ]
 	);
 
 	const handleDateNowApiKeyChange = useCallback(
@@ -1231,33 +1288,6 @@ const YokoiSidebar = () => {
 		} );
 	}, [ blocksEndpoint, catalogMeta, fetchBlockCatalog ] );
 
-	const handleReset = useCallback( () => {
-		if ( ! isOptionReady ) {
-			return;
-		}
-
-		const baselineSource =
-			persistedOptionValue ??
-			bootstrap.settings ??
-			buildDefaultSettings( blockDefinitions );
-
-		const baseline = sanitizeSettingsWithDefinitions(
-			baselineSource,
-			blockDefinitions
-		);
-
-		editEntityRecord( 'root', 'option', optionName, {
-			value: baseline,
-		} );
-	}, [
-		persistedOptionValue,
-		editEntityRecord,
-		optionName,
-		blockDefinitions,
-		isOptionReady,
-		bootstrap,
-	] );
-
 	const hasUnsavedChanges = optionDirty;
 	const isSavingChanges = optionSaving;
 	const isBusy = isSavingChanges;
@@ -1271,18 +1301,20 @@ const YokoiSidebar = () => {
 				>
 					{ __( 'Yokoi Settings', 'yokoi' ) }
 				</PluginSidebarMoreMenuItem>
-				<PluginSidebar
-					name="yokoi-settings-sidebar"
-					title={ __( 'Yokoi Settings', 'yokoi' ) }
-					icon="admin-settings"
-				>
+			<PluginSidebar
+				name="yokoi-settings-sidebar"
+				title={ __( 'Yokoi Settings', 'yokoi' ) }
+				icon="admin-settings"
+			>
+				<div className="yokoi-sidebar-content">
 					<p>
 						{ __(
 							'You do not have permission to manage Yokoi settings.',
 							'yokoi'
 						) }
 					</p>
-				</PluginSidebar>
+				</div>
+			</PluginSidebar>
 			</Fragment>
 		);
 	}
@@ -1423,10 +1455,6 @@ const YokoiSidebar = () => {
 											blockStatistics={ blockStatistics }
 											validationErrors={ validationErrors }
 											disabled={ ! canToggle || isBusy }
-											canUndo={ historyIndex > 0 }
-											canRedo={ historyIndex < settingsHistory.length - 1 }
-											onUndo={ handleUndo }
-											onRedo={ handleRedo }
 											onRetry={ () => {
 												setBlockCatalogError( null );
 												fetchBlockCatalog( {
@@ -1439,19 +1467,6 @@ const YokoiSidebar = () => {
 									);
 								} }
 							</TabPanel>
-
-							<Flex justify="flex-end" gap={ 2 }>
-								<Button
-									variant="secondary"
-									onClick={ handleReset }
-									isBusy={ isBusy }
-									disabled={
-										isBusy || ! hasUnsavedChanges || ! isOptionReady
-									}
-								>
-									{ __( 'Reset', 'yokoi' ) }
-								</Button>
-							</Flex>
 				</Flex>
 			</SitePluginSidebar>
 		</Fragment>

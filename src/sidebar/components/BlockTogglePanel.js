@@ -7,11 +7,9 @@ import {
 	Spinner,
 	ToggleControl,
 	Flex,
-	ToolbarButton,
-	ToolbarGroup,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { starEmpty, starFilled, undo, redo } from '@wordpress/icons';
+import { starEmpty, starFilled } from '@wordpress/icons';
 import { useState } from '@wordpress/element';
 
 const BlockTogglePanel = ( {
@@ -29,10 +27,6 @@ const BlockTogglePanel = ( {
 	hasMore = false,
 	onLoadMore = () => {},
 	onRetry = null,
-	canUndo = false,
-	canRedo = false,
-	onUndo = null,
-	onRedo = null,
 	blockStatistics = {},
 	validationErrors = {},
 	disabled = false,
@@ -111,27 +105,6 @@ const BlockTogglePanel = ( {
 						) }
 					</Flex>
 
-					{ ( onUndo || onRedo ) && (
-						<ToolbarGroup>
-							{ onUndo && (
-								<ToolbarButton
-									icon={ undo }
-									label={ __( 'Undo', 'yokoi' ) }
-									onClick={ onUndo }
-									disabled={ ! canUndo || disabled }
-								/>
-							) }
-							{ onRedo && (
-								<ToolbarButton
-									icon={ redo }
-									label={ __( 'Redo', 'yokoi' ) }
-									onClick={ onRedo }
-									disabled={ ! canRedo || disabled }
-								/>
-							) }
-						</ToolbarGroup>
-					) }
-
 					{ onToggleAll && totalCount > 0 && (
 						<Flex gap={ 2 }>
 							<Button
@@ -200,35 +173,39 @@ const BlockTogglePanel = ( {
 							
 							return (
 								<Flex key={ name } align="flex-start" gap={ 2 } style={ { position: 'relative' } }>
-									{ onToggleFavorite && (
-										<Button
-											icon={ isFavorite ? starFilled : starEmpty }
-											onClick={ () => onToggleFavorite( name ) }
-											variant="tertiary"
-											size="small"
-											style={ { 
-												minWidth: '24px', 
-												width: '24px',
-												height: '24px',
-												padding: '2px',
-												marginTop: '2px',
-												flexShrink: 0
-											} }
-											aria-label={ isFavorite ? __( 'Remove from favorites', 'yokoi' ) : __( 'Add to favorites', 'yokoi' ) }
-										/>
-									) }
 									<Flex direction="column" gap={ 0 } style={ { flex: 1, minWidth: 0 } }>
-										<ToggleControl
-											label={ label }
-											checked={ Boolean( isEnabled ) }
-											onChange={ () => onToggle( name ) }
-											help={ description }
-											__nextHasNoMarginBottom
-											disabled={ disabled || isToggling }
-											aria-describedby={ `yokoi-block-${ name }-description` }
-											aria-invalid={ validationErrors[ name ] ? 'true' : undefined }
-											aria-errormessage={ validationErrors[ name ] ? `yokoi-error-${ name }` : undefined }
-										/>
+										<Flex align="center" justify="space-between" gap={ 2 }>
+											<ToggleControl
+												label={ label }
+												checked={ Boolean( isEnabled ) }
+												onChange={ () => onToggle( name ) }
+												help={ description }
+												__nextHasNoMarginBottom
+												disabled={ disabled || isToggling }
+												aria-describedby={ `yokoi-block-${ name }-description` }
+												aria-invalid={ validationErrors[ name ] ? 'true' : undefined }
+												aria-errormessage={ validationErrors[ name ] ? `yokoi-error-${ name }` : undefined }
+											/>
+											{ onToggleFavorite && (
+												<Button
+													icon={ isFavorite ? starFilled : starEmpty }
+													onClick={ () => onToggleFavorite( name ) }
+													variant="tertiary"
+													size="small"
+													style={ { 
+														minWidth: '24px', 
+														width: '24px',
+														height: '24px',
+														padding: 0,
+														flexShrink: 0,
+														display: 'flex',
+														alignItems: 'center',
+														justifyContent: 'center'
+													} }
+													aria-label={ isFavorite ? __( 'Remove from favorites', 'yokoi' ) : __( 'Add to favorites', 'yokoi' ) }
+												/>
+											) }
+										</Flex>
 										{ validationErrors[ name ] && (
 											<span
 												id={ `yokoi-error-${ name }` }
