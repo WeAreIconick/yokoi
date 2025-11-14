@@ -347,6 +347,64 @@ return array(
 		'viewScript' => 'file:./view.js',
 		'render' => 'file:./render.php'
 	),
+	'navygator' => array(
+		'$schema' => 'https://schemas.wp.org/trunk/block.json',
+		'apiVersion' => 3,
+		'name' => 'yokoi/navygator',
+		'version' => '1.0.0',
+		'title' => 'NavyGator Table of Contents',
+		'category' => 'widgets',
+		'icon' => 'list-view',
+		'description' => 'Automatically generate a beautiful, floating table of contents from your page headings.',
+		'keywords' => array(
+			'toc',
+			'table of contents',
+			'navigation',
+			'headings',
+			'navygator'
+		),
+		'textdomain' => 'yokoi',
+		'supports' => array(
+			'html' => false,
+			'align' => false,
+			'multiple' => false,
+			'reusable' => true
+		),
+		'attributes' => array(
+			'headingLevels' => array(
+				'type' => 'array',
+				'default' => array(
+					2,
+					3,
+					4
+				),
+				'items' => array(
+					'type' => 'number'
+				)
+			),
+			'showNumbers' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'title' => array(
+				'type' => 'string',
+				'default' => 'Table of Contents'
+			),
+			'backgroundColor' => array(
+				'type' => 'string',
+				'default' => ''
+			),
+			'textColor' => array(
+				'type' => 'string',
+				'default' => ''
+			)
+		),
+		'editorScript' => 'file:./index.js',
+		'editorStyle' => 'file:./index.css',
+		'style' => 'file:./style-index.css',
+		'viewScript' => 'file:./view.js',
+		'render' => 'file:./render.php'
+	),
 	'poppit' => array(
 		'$schema' => 'https://schemas.wp.org/trunk/block.json',
 		'apiVersion' => 3,

@@ -1,0 +1,49 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "yokoi/navygator",
+	"version": "1.0.0",
+	"title": "NavyGator Table of Contents",
+	"category": "widgets",
+	"icon": "list-view",
+	"description": "Automatically generate a beautiful, floating table of contents from your page headings.",
+	"keywords": ["toc", "table of contents", "navigation", "headings", "navygator"],
+	"textdomain": "yokoi",
+	"supports": {
+		"html": false,
+		"align": false,
+		"multiple": false,
+		"reusable": true
+	},
+	"attributes": {
+		"headingLevels": {
+			"type": "array",
+			"default": [2, 3, 4],
+			"items": {
+				"type": "number"
+			}
+		},
+		"showNumbers": {
+			"type": "boolean",
+			"default": true
+		},
+		"title": {
+			"type": "string",
+			"default": "Table of Contents"
+		},
+		"backgroundColor": {
+			"type": "string",
+			"default": ""
+		},
+		"textColor": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css",
+	"viewScript": "file:./view.js",
+	"render": "file:./render.php"
+}
+

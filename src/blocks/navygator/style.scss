@@ -1,0 +1,335 @@
+/**
+ * NavyGator Table of Contents - Frontend Styles
+ */
+
+.navygator-toc-wrapper {
+	position: relative;
+	z-index: 1000;
+}
+
+/* Desktop Styles - Modern TOC Design */
+@media (min-width: 769px) {
+	.navygator-toc {
+		position: fixed;
+		top: calc(33vh + 80px);
+		right: 24px;
+		width: 320px;
+		max-height: calc(50vh - 60px);
+		overflow-y: auto;
+		background: rgba(255, 255, 255, 0.95);
+		backdrop-filter: blur(20px);
+		border: 1px solid rgba(0, 0, 0, 0.1);
+		border-radius: 16px;
+		padding: 24px;
+		box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+		z-index: 1000;
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		opacity: 0;
+		visibility: hidden;
+		transform: translateY(-20px) scale(0.95);
+
+		&.is-open {
+			opacity: 1;
+			visibility: visible;
+			transform: translateY(0) scale(1);
+		}
+	}
+
+	.navygator-toc-toggle {
+		/* Clean black and white button design */
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		white-space: nowrap;
+		text-align: center;
+		font-size: 14px;
+		font-weight: 500;
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		outline: none;
+		border: 1px solid #000000;
+		background: #ffffff;
+		color: #000000;
+		height: 36px;
+		padding: 8px 16px;
+		border-radius: 6px;
+		position: fixed;
+		top: 33vh;
+		right: 24px;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+		z-index: 10001;
+		cursor: pointer;
+
+		&:hover {
+			background: #000000;
+			color: #ffffff;
+			transform: translateY(-2px);
+			box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+		}
+
+		&:active {
+			background: #333333;
+			color: #ffffff;
+			transform: translateY(0);
+			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+		}
+
+		&:focus-visible {
+			border-color: #000000;
+			box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.3);
+		}
+
+		&:disabled {
+			pointer-events: none;
+			opacity: 0.5;
+		}
+
+		svg {
+			width: 16px;
+			height: 16px;
+			pointer-events: none;
+			transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		}
+
+		&:hover svg {
+			transform: rotate(180deg);
+		}
+
+		/* Dark mode support */
+		@media (prefers-color-scheme: dark) {
+			background: #000000;
+			border-color: #ffffff;
+			color: #ffffff;
+
+			&:hover {
+				background: #ffffff;
+				color: #000000;
+			}
+
+			&:active {
+				background: #cccccc;
+				color: #000000;
+			}
+		}
+	}
+
+	.navygator-toc-close {
+		position: absolute;
+		top: 16px;
+		right: 16px;
+		width: 32px;
+		height: 32px;
+		border-radius: 50%;
+		background: #f0f0f0;
+		border: none;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.2s ease;
+
+		&:hover {
+			background: #e0e0e0;
+		}
+
+		svg {
+			width: 20px;
+			height: 20px;
+		}
+	}
+
+	.navygator-toc-backdrop {
+		display: none;
+	}
+}
+
+/* Mobile Styles - Toggle Button & Drawer */
+@media (max-width: 768px) {
+	.navygator-toc {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		max-height: 80vh;
+		overflow-y: auto;
+		background: #ffffff;
+		border-radius: 20px 20px 0 0;
+		padding: 24px;
+		box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+		z-index: 10001;
+		transform: translateY(100%);
+		transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+		&.is-open {
+			transform: translateY(0);
+		}
+	}
+
+	.navygator-toc-toggle {
+		/* Hide button on mobile */
+		display: none;
+	}
+
+	.navygator-toc-close {
+		position: absolute;
+		top: 16px;
+		right: 16px;
+		width: 32px;
+		height: 32px;
+		border-radius: 50%;
+		background: #f0f0f0;
+		border: none;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.2s ease;
+
+		&:hover {
+			background: #e0e0e0;
+		}
+
+		svg {
+			width: 20px;
+			height: 20px;
+		}
+	}
+
+	.navygator-toc-backdrop {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.5);
+		z-index: 10000;
+		opacity: 0;
+		pointer-events: none;
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+		&.is-visible {
+			opacity: 1;
+			pointer-events: auto;
+		}
+	}
+}
+
+/* Common Styles */
+.navygator-toc-title {
+	font-size: 18px;
+	font-weight: 600;
+	margin: 0 0 16px 0;
+	color: #111827;
+}
+
+.navygator-toc-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.navygator-toc-item {
+	margin: 8px 0;
+	line-height: 1.5;
+}
+
+.navygator-toc-link {
+	color: #374151;
+	text-decoration: none;
+	display: block;
+	padding: 8px 12px;
+	margin: 2px 0;
+	border-radius: 8px;
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	cursor: pointer;
+	position: relative;
+	overflow: hidden;
+
+	&:hover {
+		color: #2563eb;
+		background: rgba(37, 99, 235, 0.1);
+		transform: translateX(4px);
+	}
+
+	&:active {
+		transform: translateX(2px) scale(0.98);
+	}
+
+	&.is-active {
+		color: #2563eb;
+		background: rgba(37, 99, 235, 0.15);
+		font-weight: 500;
+		
+		&::before {
+			content: '';
+			position: absolute;
+			left: 0;
+			top: 0;
+			bottom: 0;
+			width: 3px;
+			background: #2563eb;
+			border-radius: 0 2px 2px 0;
+		}
+	}
+}
+
+/* Smooth scrolling */
+html {
+	scroll-behavior: smooth;
+}
+
+/* Empty state */
+.navygator-toc-empty {
+	padding: 20px;
+	text-align: center;
+	color: #666;
+	font-style: italic;
+	background: #f9f9f9;
+	border-radius: 8px;
+	margin: 0;
+}
+
+/* Custom scrollbar for TOC */
+.navygator-toc {
+	scrollbar-width: thin;
+	scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+	scroll-behavior: smooth;
+
+	&::-webkit-scrollbar {
+		width: 6px;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: rgba(0, 0, 0, 0.2);
+		border-radius: 3px;
+
+		&:hover {
+			background: rgba(0, 0, 0, 0.3);
+		}
+	}
+}
+
+/* Prevent body scroll when mobile drawer is open */
+body.navygator-toc-open {
+	overflow: hidden;
+}
+
+/* Accessibility - Focus styles */
+.navygator-toc-link:focus,
+.navygator-toc-toggle:focus,
+.navygator-toc-close:focus {
+	outline: 2px solid #0073aa;
+	outline-offset: 2px;
+}
+
+/* Print styles - hide TOC when printing */
+@media print {
+	.navygator-toc-wrapper {
+		display: none;
+	}
+}
+

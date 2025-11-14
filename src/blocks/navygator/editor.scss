@@ -1,0 +1,83 @@
+/**
+ * NavyGator Table of Contents - Editor Styles
+ */
+
+.navygator-toc-editor-preview {
+	margin: 20px 0;
+}
+
+.navygator-toc-preview {
+	max-width: 400px;
+	padding: 24px;
+	border-radius: 12px;
+	border: 2px dashed #ccc;
+	background: rgba(255, 255, 255, 0.95);
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.navygator-toc-title {
+	font-size: 18px;
+	font-weight: 700;
+	margin: 0 0 16px 0;
+	padding-bottom: 12px;
+	border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.navygator-toc-preview-content {
+	p {
+		margin: 12px 0;
+		font-size: 14px;
+	}
+}
+
+.navygator-toc-info {
+	color: #666;
+	font-style: italic;
+}
+
+.navygator-toc-list-preview {
+	margin: 16px 0;
+	padding-left: 24px;
+	
+	li {
+		margin: 8px 0;
+		line-height: 1.6;
+	}
+
+	ol, ul {
+		margin-top: 8px;
+		padding-left: 20px;
+	}
+}
+
+.navygator-toc-note {
+	margin-top: 16px;
+	padding: 12px;
+	background: #f0f6fc;
+	border-left: 3px solid #0073aa;
+	border-radius: 4px;
+	font-size: 13px;
+	line-height: 1.6;
+	color: #1e4e6e;
+}
+
+.navygator-toc-empty {
+	padding: 16px;
+	text-align: center;
+	color: #d63638;
+	background: #fcf0f1;
+	border-radius: 4px;
+	font-size: 14px;
+}
+
+/* Inspector Controls Styling */
+.components-panel__body {
+	.components-base-control {
+		margin-bottom: 16px;
+	}
+
+	.components-checkbox-control {
+		margin-bottom: 8px;
+	}
+}
+

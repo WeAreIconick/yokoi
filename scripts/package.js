@@ -50,11 +50,11 @@ async function copyRecursive(source, destination) {
 		} catch (error) {
 			// Skip missing directories, but warn for unexpected errors.
 			if (error.code !== 'ENOENT') {
-				console.warn(`date.now packaging: unable to copy ${entry}:`, error.message);
+				console.warn(`Yokoi packaging: unable to copy ${entry}:`, error.message);
 			}
 		}
 	}
 
-	console.log('Date.now package created in dist/');
+	console.log('Yokoi package created in dist/');
 })();
 

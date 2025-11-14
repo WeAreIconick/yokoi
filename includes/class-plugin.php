@@ -10,6 +10,7 @@ namespace Yokoi;
 use WP_Block_Editor_Context;
 use WP_Block_Type_Registry;
 use Yokoi\Date_Now\Service as Date_Now_Service;
+use Yokoi\Navygator\Service as Navygator_Service;
 use function __;
 use function add_action;
 use function add_filter;
@@ -74,6 +75,13 @@ class Plugin {
 	private ?Date_Now_Service $date_now_service = null;
 
 	/**
+	 * NavyGator integration.
+	 *
+	 * @var Navygator_Service|null
+	 */
+	private ?Navygator_Service $navygator_service = null;
+
+	/**
 	 * Block statistics tracker.
 	 *
 	 * @var Block_Statistics|null
@@ -105,12 +113,22 @@ class Plugin {
 		require_once YOKOI_PLUGIN_DIR . 'includes/class-block-registry.php';
 		require_once YOKOI_PLUGIN_DIR . 'includes/class-block-catalog-api.php';
 		require_once YOKOI_PLUGIN_DIR . 'includes/class-block-statistics.php';
+		require_once YOKOI_PLUGIN_DIR . 'includes/class-block-isolation.php';
+		require_once YOKOI_PLUGIN_DIR . 'includes/class-block-monitor.php';
+		require_once YOKOI_PLUGIN_DIR . 'includes/class-z-index-manager.php';
+		require_once YOKOI_PLUGIN_DIR . 'includes/Navygator/Service.php';
 
 		$this->settings_api      = new Settings_API();
 		$this->block_registry    = new Block_Registry( $this->settings_api );
 		$this->block_catalog_api = new Block_Catalog_API();
 		$this->date_now_service  = new Date_Now_Service();
+		$this->navygator_service = new Navygator_Service();
 		$this->block_statistics  = new Block_Statistics();
+
+		// Initialize block isolation and monitoring systems.
+		new Block_Isolation();
+		new Block_Monitor();
+		new Z_Index_Manager();
 	}
 
 	/**
@@ -135,6 +153,10 @@ class Plugin {
 
 		if ( $this->date_now_service instanceof Date_Now_Service ) {
 			$this->date_now_service->register();
+		}
+
+		if ( $this->navygator_service instanceof Navygator_Service ) {
+			$this->navygator_service->register();
 		}
 
 		if ( $this->block_statistics instanceof Block_Statistics ) {

@@ -80,5 +80,14 @@ class Service {
 			$asset['version'],
 			true
 		);
+
+		// Only enable debug logging in debug mode
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			wp_add_inline_script(
+				'yokoi-date-now-view',
+				'window.yokoiDebug = true;',
+				'before'
+			);
+		}
 	}
 }
