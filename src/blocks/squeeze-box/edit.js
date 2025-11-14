@@ -6,6 +6,7 @@ import {
 } from '@wordpress/block-editor';
 import {
 	BaseControl,
+	Button,
 	Flex,
 	FlexItem,
 	PanelBody,

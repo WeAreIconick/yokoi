@@ -16,6 +16,8 @@ import { addQueryArgs } from '@wordpress/url';
 import isEqual from 'lodash/isEqual';
 
 import BlockTogglePanel from './components/BlockTogglePanel';
+import { ToggleQueue } from '../utils/toggle-queue';
+import { updateBlocks } from '../utils/block-registry-manager';
 import './style.scss';
 
 const DEBUG_STORAGE_KEY = 'YOKOI_DEBUG';
@@ -218,6 +220,15 @@ const YokoiSidebar = () => {
 	const saveTimeoutRef = useRef( null );
 	const activeRequestsRef = useRef( new Map() );
 	const activeSaveRequestRef = useRef( null );
+	
+	// Initialize toggle queue
+	const toggleQueueRef = useRef( null );
+	if ( ! toggleQueueRef.current ) {
+		toggleQueueRef.current = new ToggleQueue( {
+			debounceDelay: 300,
+			maxBatchSize: 50,
+		} );
+	}
 
 	// Define bootstrap variables early so they can be used in effects.
 	const optionName = bootstrap?.settingsOption || 'yokoi_settings';
@@ -859,11 +870,18 @@ const YokoiSidebar = () => {
 					date_now_api_key: nextValue.date_now_api_key,
 					nonce: bootstrap?.settingsNonce || bootstrap?.nonce || '',
 				},
+				headers: {
+					'X-WP-Nonce': bootstrap?.nonce || '',
+				},
 			} ).then( () => {
 				// Only process if this is still the active request
 				if ( activeSaveRequestRef.current === saveRequestId ) {
 					logDebug( 'Settings saved successfully' );
 					activeSaveRequestRef.current = null;
+					
+					// Update block registry and refresh inserter
+					broadcastSettingsUpdate( nextValue );
+					updateBlocks( nextValue );
 				}
 			} ).catch( ( error ) => {
 				// Only process if this is still the active request
@@ -1024,89 +1042,73 @@ const YokoiSidebar = () => {
 		return Object.keys( errors ).length === 0;
 	}, [] );
 
+	// Set up toggle queue processing callback - must be after validateSettings and applySettingsChange are defined
+	useEffect( () => {
+		const queue = toggleQueueRef.current;
+		
+		queue.setProcessCallback( async ( updates ) => {
+			// Merge updates into current state
+			const currentState = normalizedOptionValue || buildDefaultSettings( blockDefinitions );
+			const updatedState = {
+				...currentState,
+				blocks_enabled: {
+					...( currentState.blocks_enabled || {} ),
+					...updates,
+				},
+			};
+
+			// Validate
+			if ( ! validateSettings( updatedState ) ) {
+				// Revert local state on validation error
+				setLocalBlocksEnabled( baseBlocksEnabled );
+				return;
+			}
+
+			// Apply settings change
+			applySettingsChange( () => updatedState );
+
+			// Clear toggling indicators for updated blocks
+			const updatedBlockNames = Object.keys( updates );
+			setTimeout( () => {
+				setTogglingBlocks( ( prev ) => {
+					const next = new Set( prev );
+					updatedBlockNames.forEach( ( name ) => next.delete( name ) );
+					return next;
+				} );
+			}, 200 );
+		} );
+
+		return () => {
+			queue.clear();
+		};
+	}, [ normalizedOptionValue, blockDefinitions, applySettingsChange, validateSettings, baseBlocksEnabled ] );
+
 	const toggleBlock = useCallback(
 		( blockName ) => {
-			// Read current state, including any pending updates
-			const currentEnabled = { ...( localBlocksEnabled || baseBlocksEnabled ), ...pendingUpdatesRef.current };
+			// Read current state, including any pending updates from queue
+			const queueUpdates = toggleQueueRef.current.getPendingUpdates();
+			const currentEnabled = { 
+				...( localBlocksEnabled || baseBlocksEnabled ), 
+				...pendingUpdatesRef.current,
+				...queueUpdates,
+			};
 			const newState = ! currentEnabled[ blockName ];
-			const currentState = normalizedOptionValue;
 
-			// Update local state immediately for instant UI feedback.
+			// Update local state immediately for instant UI feedback
 			setLocalBlocksEnabled( ( prev ) => ( {
 				...( prev || baseBlocksEnabled ),
 				...pendingUpdatesRef.current,
+				...queueUpdates,
 				[ blockName ]: newState,
 			} ) );
 
-			// Save to history for undo/redo (only once per batch).
-			if ( settingsHistory.length === 0 || settingsHistory[ settingsHistory.length - 1 ] !== currentState ) {
-				setSettingsHistory( ( prev ) => {
-					const newHistory = prev.slice( 0, historyIndex + 1 );
-					newHistory.push( JSON.parse( JSON.stringify( currentState ) ) );
-					return newHistory.slice( -50 );
-				} );
-				setHistoryIndex( ( prev ) => Math.min( prev + 1, 49 ) );
-			}
-
-			// Add to toggling set for visual feedback.
+			// Add to toggling set for visual feedback
 			setTogglingBlocks( ( prev ) => new Set( prev ).add( blockName ) );
 
-			// Add to pending updates.
-			pendingUpdatesRef.current[ blockName ] = newState;
-
-			// Clear existing timeout.
-			if ( saveTimeoutRef.current ) {
-				clearTimeout( saveTimeoutRef.current );
-			}
-
-			// Batch updates: wait 300ms before saving.
-			saveTimeoutRef.current = setTimeout( () => {
-				// Capture all pending updates at the time of save
-				const updatesToApply = { ...pendingUpdatesRef.current };
-				const togglingBlocksToClear = Object.keys( updatesToApply );
-				
-				// Don't clear pendingUpdatesRef yet - let applySettingsChange use it
-				// We'll clear it after the save succeeds
-				
-				applySettingsChange( ( current ) => {
-					// current already includes pendingUpdatesRef.current from applySettingsChange
-					// But we also want to ensure updatesToApply is included
-					const allUpdates = { ...updatesToApply, ...pendingUpdatesRef.current };
-					
-					const updated = {
-						...current,
-						blocks_enabled: {
-							...( current.blocks_enabled || {} ),
-							...allUpdates,
-						},
-					};
-					
-					// Validate before applying.
-					if ( ! validateSettings( updated ) ) {
-						// Revert local state on validation error.
-						setLocalBlocksEnabled( baseBlocksEnabled );
-						return current;
-					}
-					
-					// Clear pending updates for blocks we're saving
-					Object.keys( updatesToApply ).forEach( ( key ) => {
-						delete pendingUpdatesRef.current[ key ];
-					} );
-					setValidationErrors( {} );
-					return updated;
-				} );
-
-				// Remove all toggling blocks after save completes.
-				setTimeout( () => {
-					setTogglingBlocks( ( prev ) => {
-						const next = new Set( prev );
-						togglingBlocksToClear.forEach( ( name ) => next.delete( name ) );
-						return next;
-					} );
-				}, 200 );
-			}, 300 );
+			// Add to queue for batch processing
+			toggleQueueRef.current.enqueue( blockName, newState );
 		},
-		[ applySettingsChange, baseBlocksEnabled, localBlocksEnabled, normalizedOptionValue, settingsHistory, historyIndex, validateSettings ]
+		[ localBlocksEnabled, baseBlocksEnabled ]
 	);
 
 	const toggleFavorite = useCallback( ( blockName ) => {

@@ -53,7 +53,7 @@ class Settings_API {
 	/**
 	 * Rate limit: max requests per hour.
 	 */
-	private const RATE_LIMIT_REQUESTS = 100;
+	private const RATE_LIMIT_REQUESTS = 1000;
 
 	/**
 	 * Rate limit: time window in seconds.
@@ -195,16 +195,32 @@ class Settings_API {
 	/**
 	 * Determine if the current user may manage settings.
 	 *
-	 * @return bool
+	 * @return bool|WP_Error
 	 */
-	public function can_manage_settings(): bool {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return false;
+	public function can_manage_settings() {
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error(
+				'yokoi_not_logged_in',
+				__( 'You must be logged in to manage settings.', 'yokoi' ),
+				array( 'status' => 401 )
+			);
 		}
 
-		// Check rate limiting.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return new WP_Error(
+				'yokoi_insufficient_permissions',
+				__( 'You do not have permission to manage settings.', 'yokoi' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		// Check rate limiting (administrators always bypass)
 		if ( ! $this->check_rate_limit() ) {
-			return false;
+			return new WP_Error(
+				'yokoi_rate_limit_exceeded',
+				__( 'Rate limit exceeded. Please try again later.', 'yokoi' ),
+				array( 'status' => 429 )
+			);
 		}
 
 		return true;
@@ -216,7 +232,17 @@ class Settings_API {
 	 * @return bool True if within limits, false if exceeded.
 	 */
 	private function check_rate_limit(): bool {
+		// Always skip rate limiting for administrators
+		if ( current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+
 		$user_id = get_current_user_id();
+		if ( ! $user_id ) {
+			// Not logged in, skip rate limiting (will fail permission check anyway)
+			return true;
+		}
+
 		$ip      = $this->get_client_ip();
 		$key     = 'yokoi_rate_limit_' . md5( (string) $user_id . $ip );
 

@@ -22,6 +22,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once YOKOI_PLUGIN_DIR . 'includes/class-settings-api.php';
+
 /**
  * Main service class responsible for wiring hooks.
  */
@@ -30,13 +32,14 @@ class Service {
 	 * Register hooks.
 	 */
 	public function register(): void {
-		add_action( 'init', array( $this, 'on_init' ) );
+		add_action( 'init', array( $this, 'on_init' ), 5 ); // Priority 5 to run before Block_Registry (default 10)
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_frontend' ) );
 		add_filter( 'the_content', array( $this, 'add_heading_ids' ), 10 );
 	}
 
 	/**
 	 * Register block type via metadata.
+	 * Always register the block - filtering happens via allowed_block_types_all filter.
 	 */
 	public function on_init(): void {
 		$registry = WP_Block_Type_Registry::get_instance();
@@ -51,6 +54,7 @@ class Service {
 			return;
 		}
 
+		// Always register the block - filtering happens via allowed_block_types_all filter
 		register_block_type(
 			$block_dir,
 			array(

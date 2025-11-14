@@ -60,21 +60,16 @@ class Block_Registry {
 
 	/**
 	 * Register enabled blocks with WordPress.
+	 * Always register all blocks - filtering happens via allowed_block_types_all filter.
 	 *
 	 * @return void
 	 */
 	public function register_blocks(): void {
-		$blocks           = $this->get_block_definitions();
-		$settings         = $this->settings_api->get_stored_settings();
-		$enabled_settings = $settings['blocks_enabled'] ?? array();
+		$blocks = $this->get_block_definitions();
 
 		foreach ( $blocks as $name => $definition ) {
-			$is_enabled = $enabled_settings[ $name ] ?? true;
-
-			if ( ! $is_enabled ) {
-				continue;
-			}
-
+			// Always register blocks - filtering happens via allowed_block_types_all filter
+			// This ensures blocks are available for client-side filtering
 			if ( empty( $definition['path'] ) || ! is_dir( $definition['path'] ) ) {
 				continue;
 			}

@@ -484,7 +484,8 @@ class Plugin {
 
 		wp_add_inline_script(
 			'yokoi-sidebar',
-			'window.yokoiSettings = ' . wp_json_encode( $data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP ) . ';',
+			'window.yokoiSettings = ' . wp_json_encode( $data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP ) . ';' .
+			'window.yokoiBootstrap = ' . wp_json_encode( array( 'blockDefinitions' => $data['blockDefinitions'] ?? array() ), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP ) . ';',
 			'before'
 		);
 	}
@@ -502,15 +503,21 @@ class Plugin {
 		}
 
 		$blocks = array();
+		$block_definitions = array();
+
+		if ( $this->block_registry instanceof Block_Registry ) {
+			$block_definitions = $this->block_registry->get_block_definitions();
+		}
 
 		return array(
-			'settings'       => $settings,
-			'blocks'         => array(),
-			'restEndpoint'   => rest_url( Settings_API::REST_NAMESPACE . '/settings' ),
-			'blocksEndpoint' => rest_url( Settings_API::REST_NAMESPACE . '/blocks' ),
-			'nonce'          => wp_create_nonce( 'wp_rest' ),
-			'settingsNonce'  => wp_create_nonce( 'yokoi_settings' ),
-			'capabilities'   => array(
+			'settings'        => $settings,
+			'blocks'          => array(),
+			'blockDefinitions' => $block_definitions,
+			'restEndpoint'    => rest_url( Settings_API::REST_NAMESPACE . '/settings' ),
+			'blocksEndpoint'  => rest_url( Settings_API::REST_NAMESPACE . '/blocks' ),
+			'nonce'           => wp_create_nonce( 'wp_rest' ),
+			'settingsNonce'   => wp_create_nonce( 'yokoi_settings' ),
+			'capabilities'    => array(
 				'canManage' => current_user_can( 'manage_options' ),
 			),
 		);

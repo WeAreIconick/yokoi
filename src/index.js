@@ -1,40 +1,24 @@
 import domReady from '@wordpress/dom-ready';
+import { updateBlocks } from './utils/block-registry-manager';
 
-const UNREGISTERED_BLOCKS = new Set();
-
-const getDisabledBlocks = ( settings ) => {
-	if ( ! settings || ! settings.blocks_enabled ) {
-		return [];
-	}
-
-	return Object.entries( settings.blocks_enabled )
-		.filter( ( [ , enabled ] ) => ! enabled )
-		.map( ( [ name ] ) => name );
-};
-
-const unregisterBlocks = ( settings ) => {
-	if ( ! window?.wp?.blocks ) {
-		return;
-	}
-
-	const { unregisterBlockType, getBlockType } = window.wp.blocks;
-
-	getDisabledBlocks( settings ).forEach( ( blockName ) => {
-		if ( UNREGISTERED_BLOCKS.has( blockName ) ) {
-			return;
-		}
-
-		if ( getBlockType( blockName ) ) {
-			unregisterBlockType( blockName );
-			UNREGISTERED_BLOCKS.add( blockName );
-		}
-	} );
-};
-
+// Wait for WordPress to be ready
 domReady( () => {
-	unregisterBlocks( window?.yokoiSettings?.settings );
+	// Wait a bit for WordPress data stores to be ready
+	setTimeout( () => {
+		const settings = window?.yokoiSettings?.settings;
+		if ( settings ) {
+			updateBlocks( settings );
+		}
+	}, 100 );
 } );
 
+// Listen for settings updates
 window.addEventListener( 'yokoi:settings-updated', ( event ) => {
-	unregisterBlocks( event?.detail );
+	const settings = event?.detail;
+	if ( settings ) {
+		// Small delay to ensure WordPress is ready
+		setTimeout( () => {
+			updateBlocks( settings );
+		}, 50 );
+	}
 } );

@@ -78,8 +78,9 @@ class Block_Catalog_API {
 	 * @return WP_REST_Response
 	 */
 	public function get_blocks( WP_REST_Request $request ): WP_REST_Response {
-		// Build cache key from request parameters.
-		$cache_key = 'yokoi_catalog_' . md5( serialize( $request->get_params() ) );
+		// Build cache key from request parameters and block signature to auto-invalidate on changes.
+		$signature = yokoi_get_block_signature();
+		$cache_key = 'yokoi_catalog_' . md5( serialize( $request->get_params() ) . $signature );
 
 		// Try to get from cache.
 		$cached = get_transient( $cache_key );
