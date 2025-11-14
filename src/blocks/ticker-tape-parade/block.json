@@ -12,7 +12,7 @@
 	"example": {
 		"attributes": {
 			"content": "Breaking News: New Product Launch • Special Offer: 50% Off This Week • Update: Server Maintenance Tonight",
-			"speed": 30,
+			"speed": 50,
 			"textColor": "#111827",
 			"backgroundColor": "#ffffff",
 			"fontSize": 18,
@@ -26,7 +26,7 @@
 		},
 		"speed": {
 			"type": "number",
-			"default": 30
+			"default": 50
 		},
 		"textColor": {
 			"type": "string",

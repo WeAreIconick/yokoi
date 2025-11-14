@@ -35,7 +35,12 @@ const fontWeightOptions = [
 	{ label: __( 'Semi Bold', 'yokoi' ), value: '600' },
 ];
 
-const getAnimationDuration = ( speed ) => `${ Math.max( 10, 60 - speed ) }s`;
+// Convert speed (1-100) to animation duration in seconds
+// Speed 1 = slowest (60s), Speed 100 = fastest (5s)
+const getAnimationDuration = ( speed ) => {
+	const duration = Math.max( 5, 60 - ( ( speed - 1 ) * 55 / 99 ) );
+	return `${ Math.round( duration ) }s`;
+};
 
 const splitContent = ( content = '' ) => {
 	if ( ! content ) {
@@ -62,8 +67,22 @@ const PreviewTicker = ( {
 	hasBackground,
 	speed,
 	isAnimating,
+	pauseOnHover,
 } ) => {
 	const items = splitContent( content );
+	const originalText = items.length
+		? items.join( ' • ' )
+		: __(
+				'Enter your ticker text… Use bullet points (•) or line breaks to separate items.',
+				'yokoi'
+		  );
+	
+	// Duplicate content multiple times for seamless scrolling (matching frontend behavior)
+	// Use a ref to measure container width, but for editor preview, use a reasonable default
+	// The editor preview container is typically narrower, so we'll use a conservative multiplier
+	const separator = ' • ';
+	const duplicatesNeeded = 8; // Enough duplicates for editor preview (typically narrower than frontend)
+	const duplicatedContent = Array( duplicatesNeeded ).fill( originalText ).join( separator );
 
 	return (
 		<div className="yokoi-ticker-preview">
@@ -85,24 +104,18 @@ const PreviewTicker = ( {
 					} }
 				>
 					<span className="yokoi-ticker-preview__text">
-						{ items.length
-							? items.join( ' • ' )
-							: __(
-									'Enter your ticker text… Use bullet points (•) or line breaks to separate items.',
-									'yokoi'
-							  ) }
+						{ duplicatedContent }
 					</span>
 				</div>
 				<div className="yokoi-ticker-preview__scrim" aria-hidden="true" />
 			</div>
 			<div className="yokoi-ticker-preview__meta">
 				<span>
-					{ __( 'Speed:', 'yokoi' ) } { speed } (
-					{ getAnimationDuration( speed ) })
+					{ __( 'Speed:', 'yokoi' ) } { speed }/100
 				</span>
 				<span>
 					{ __( 'Hover to pause is', 'yokoi' ) }{' '}
-					<strong>{ __( 'enabled', 'yokoi' ) }</strong>
+					<strong>{ pauseOnHover ? __( 'enabled', 'yokoi' ) : __( 'disabled', 'yokoi' ) }</strong>
 				</span>
 			</div>
 		</div>
@@ -136,11 +149,6 @@ const Edit = ( { attributes, setAttributes } ) => {
 			color: textColor,
 		},
 	} );
-
-	const duration = useMemo(
-		() => getAnimationDuration( speed ),
-		[ speed ]
-	);
 
 	useEffect( () => {
 		setIsAnimating( true );
@@ -221,10 +229,10 @@ const Edit = ( { attributes, setAttributes } ) => {
 						label={ __( 'Scroll Speed', 'yokoi' ) }
 						value={ speed }
 						onChange={ ( value ) => setAttributes( { speed: value } ) }
-						min={ 5 }
-						max={ 50 }
+						min={ 1 }
+						max={ 100 }
 						help={ __(
-							`Higher values scroll faster. Current duration: ${ duration }`,
+							'Higher values scroll faster (1 = slowest, 100 = fastest)',
 							'yokoi'
 						) }
 					/>
@@ -261,18 +269,6 @@ const Edit = ( { attributes, setAttributes } ) => {
 						onChange={ ( value ) => setAttributes( { hasBackground: value } ) }
 					/>
 				</PanelColorSettings>
-
-				<PanelBody title={ __( 'Powered by Yokoi', 'yokoi' ) } initialOpen={ false }>
-					<p className="yokoi-ticker__about">
-						{ __(
-							'Ticker Tape Parade delivers a classic newsroom crawl with modern typography and accessibility features.',
-							'yokoi'
-						) }
-					</p>
-					<ExternalLink href="https://iconick.io/blocks">
-						{ __( 'Discover more Yokoi ideas →', 'yokoi' ) }
-					</ExternalLink>
-				</PanelBody>
 			</InspectorControls>
 
 			<div { ...blockProps }>
@@ -286,6 +282,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 					hasBackground={ hasBackground }
 					speed={ speed }
 					isAnimating={ pauseOnHover ? isAnimating : true }
+					pauseOnHover={ pauseOnHover }
 				/>
 			</div>
 		</>

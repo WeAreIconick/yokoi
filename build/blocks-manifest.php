@@ -662,7 +662,7 @@ return array(
 		'example' => array(
 			'attributes' => array(
 				'content' => 'Breaking News: New Product Launch • Special Offer: 50% Off This Week • Update: Server Maintenance Tonight',
-				'speed' => 30,
+				'speed' => 50,
 				'textColor' => '#111827',
 				'backgroundColor' => '#ffffff',
 				'fontSize' => 18,
@@ -676,7 +676,7 @@ return array(
 			),
 			'speed' => array(
 				'type' => 'number',
-				'default' => 30
+				'default' => 50
 			),
 			'textColor' => array(
 				'type' => 'string',

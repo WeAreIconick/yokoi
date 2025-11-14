@@ -34,20 +34,21 @@
 	}
 
 	.yokoi-ticker-preview__content {
-		position: relative;
 		display: inline-flex;
 		align-items: center;
 		white-space: nowrap;
 		padding-left: 24px;
+		gap: 32px;
 		animation: yokoi-ticker-scroll 25s linear infinite;
 		will-change: transform; // Optimize animation performance
+		min-width: 200%; // Ensure enough content for seamless scroll (matching frontend)
 	}
 
 	.yokoi-ticker-preview__text {
 		display: inline-flex;
 		align-items: center;
 		gap: 32px;
-		letter-spacing: 0.03em;
+		white-space: nowrap;
 	}
 
 	.yokoi-ticker-preview__scrim {

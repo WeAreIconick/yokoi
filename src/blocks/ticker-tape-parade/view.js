@@ -18,16 +18,48 @@ const initializeTicker = ( ticker ) => {
 		return;
 	}
 
-	// Set up seamless scroll
-	const speed = parseInt( ticker.dataset.speed, 10 ) || 30;
-	const textContent = text.textContent.trim();
-
-	if ( textContent ) {
-		text.setAttribute( 'data-duplicate', textContent );
+	// Set up seamless scroll with multiple duplicates
+	const speed = parseInt( ticker.dataset.speed, 10 ) || 50;
+	
+	// Get original content (stored in dataset or from text)
+	const originalContent = text.dataset.original || text.textContent.trim();
+	
+	if ( ! originalContent ) {
+		return;
 	}
+	
+	// Store original content if not already stored
+	if ( ! text.dataset.original ) {
+		text.dataset.original = originalContent;
+	}
+	
+	// Measure container and text width
+	const containerWidth = ticker.offsetWidth || ticker.parentElement?.offsetWidth || window.innerWidth;
+	
+	// Temporarily set original content to measure its width
+	text.textContent = originalContent;
+	const textWidth = text.offsetWidth || text.scrollWidth || 200; // Fallback to 200px
+	
+	// Calculate duplicates needed: ensure we have enough to cover container width + buffer
+	// For seamless scrolling, we need at least 2x container width worth of content
+	// Use at least 3 duplicates, more for wider screens
+	const minContentWidth = containerWidth * 2.5; // 2.5x container width for seamless scroll
+	const duplicatesNeeded = Math.max( 3, Math.ceil( minContentWidth / textWidth ) + 1 );
+	
+	// Create multiple duplicates with separator
+	const separator = ' • ';
+	const duplicatedContent = Array( duplicatesNeeded ).fill( originalContent ).join( separator );
+	
+	// Update text content with duplicates
+	text.textContent = duplicatedContent;
+	
+	// Also set data-duplicate for CSS fallback
+	text.setAttribute( 'data-duplicate', originalContent );
 
-	// Set animation duration
-	const duration = `${ Math.max( 10, 60 - speed ) }s`;
+	// Convert speed (1-100) to animation duration in seconds
+	// Speed 1 = slowest (60s), Speed 100 = fastest (5s)
+	const durationSeconds = Math.max( 5, 60 - ( ( speed - 1 ) * 55 / 99 ) );
+	const duration = `${ Math.round( durationSeconds ) }s`;
 	content.style.animationDuration = duration;
 	content.style.animationName = 'yokoi-ticker-scroll';
 	content.style.animationPlayState = 'running';
@@ -75,6 +107,18 @@ const handleVisibilityChange = () => {
 	} );
 };
 
+// Debounced resize handler to recalculate duplicates on window resize
+let resizeTimeout = null;
+const handleResize = () => {
+	if ( resizeTimeout ) {
+		clearTimeout( resizeTimeout );
+	}
+	resizeTimeout = setTimeout( () => {
+		const tickers = document.querySelectorAll( '.yokoi-ticker-block' );
+		tickers.forEach( initializeTicker );
+	}, 250 );
+};
+
 // Scoped setup function - prevents global conflicts
 const setupTickers = () => {
 	const tickers = document.querySelectorAll( '.yokoi-ticker-block' );
@@ -101,6 +145,12 @@ const setupTickers = () => {
 		};
 		mediaQuery.addEventListener( 'change', handleChange, { passive: true } );
 		window.yokoiTickerMotionListener = true;
+	}
+	
+	// Listen for window resize to recalculate duplicates (only once)
+	if ( ! window.yokoiTickerResizeListener ) {
+		window.addEventListener( 'resize', handleResize, { passive: true } );
+		window.yokoiTickerResizeListener = true;
 	}
 };
 
