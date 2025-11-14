@@ -13,100 +13,100 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$yokoi_logos                 = isset( $attributes['logos'] ) && is_array( $attributes['logos'] ) ? $attributes['logos'] : array();
-$yokoi_rotation_speed        = isset( $attributes['rotationSpeed'] ) ? absint( $attributes['rotationSpeed'] ) : 3000;
-$yokoi_transition_duration   = isset( $attributes['transitionDuration'] ) ? absint( $attributes['transitionDuration'] ) : 500;
-$yokoi_pause_on_hover        = isset( $attributes['pauseOnHover'] ) ? (bool) $attributes['pauseOnHover'] : true;
-$yokoi_logos_per_view        = isset( $attributes['logosPerView'] ) ? max( 1, min( 8, absint( $attributes['logosPerView'] ) ) ) : 4;
-$yokoi_mobile_logos_per_view = isset( $attributes['mobileLogosPerView'] ) ? max( 1, min( 4, absint( $attributes['mobileLogosPerView'] ) ) ) : 2;
-$yokoi_hide_on_mobile        = ! empty( $attributes['hideOnMobile'] );
-$yokoi_logo_height           = isset( $attributes['logoHeight'] ) ? sanitize_text_field( $attributes['logoHeight'] ) : '60px';
-$yokoi_gap_between_logos     = isset( $attributes['gapBetweenLogos'] ) ? absint( $attributes['gapBetweenLogos'] ) : 40;
-$yokoi_background_color      = isset( $attributes['backgroundColor'] ) ? sanitize_text_field( $attributes['backgroundColor'] ) : '';
-$yokoi_alignment             = isset( $attributes['alignment'] ) ? sanitize_text_field( $attributes['alignment'] ) : 'center';
+$logos                 = isset( $attributes['logos'] ) && is_array( $attributes['logos'] ) ? $attributes['logos'] : array();
+$rotation_speed        = isset( $attributes['rotationSpeed'] ) ? absint( $attributes['rotationSpeed'] ) : 3000;
+$transition_duration   = isset( $attributes['transitionDuration'] ) ? absint( $attributes['transitionDuration'] ) : 500;
+$pause_on_hover        = isset( $attributes['pauseOnHover'] ) ? (bool) $attributes['pauseOnHover'] : true;
+$logos_per_view        = isset( $attributes['logosPerView'] ) ? max( 1, min( 8, absint( $attributes['logosPerView'] ) ) ) : 4;
+$mobile_logos_per_view = isset( $attributes['mobileLogosPerView'] ) ? max( 1, min( 4, absint( $attributes['mobileLogosPerView'] ) ) ) : 2;
+$hide_on_mobile        = ! empty( $attributes['hideOnMobile'] );
+$logo_height           = isset( $attributes['logoHeight'] ) ? sanitize_text_field( $attributes['logoHeight'] ) : '60px';
+$gap_between_logos     = isset( $attributes['gapBetweenLogos'] ) ? absint( $attributes['gapBetweenLogos'] ) : 40;
+$background_color      = isset( $attributes['backgroundColor'] ) ? sanitize_text_field( $attributes['backgroundColor'] ) : '';
+$alignment             = isset( $attributes['alignment'] ) ? sanitize_text_field( $attributes['alignment'] ) : 'center';
 
-if ( ! in_array( $yokoi_alignment, array( 'left', 'center', 'right' ), true ) ) {
-	$yokoi_alignment = 'center';
+if ( ! in_array( $alignment, array( 'left', 'center', 'right' ), true ) ) {
+	$alignment = 'center';
 }
 
-$yokoi_valid_logos = array();
+$valid_logos = array();
 
-foreach ( $yokoi_logos as $yokoi_logo ) {
-	if ( ! is_array( $yokoi_logo ) || empty( $yokoi_logo['url'] ) ) {
+foreach ( $logos as $logo ) {
+	if ( ! is_array( $logo ) || empty( $logo['url'] ) ) {
 		continue;
 	}
 
-	$yokoi_url = esc_url_raw( $yokoi_logo['url'] );
+	$url = esc_url_raw( $logo['url'] );
 
-	if ( '' === $yokoi_url ) {
+	if ( '' === $url ) {
 		continue;
 	}
 
-	$yokoi_valid_logos[] = array(
-		'id'      => isset( $yokoi_logo['id'] ) ? absint( $yokoi_logo['id'] ) : 0,
-		'url'     => $yokoi_url,
-		'alt'     => isset( $yokoi_logo['alt'] ) ? sanitize_text_field( $yokoi_logo['alt'] ) : '',
-		'linkUrl' => isset( $yokoi_logo['linkUrl'] ) ? esc_url_raw( $yokoi_logo['linkUrl'] ) : '',
-		'newTab'  => ! empty( $yokoi_logo['newTab'] ),
+	$valid_logos[] = array(
+		'id'      => isset( $logo['id'] ) ? absint( $logo['id'] ) : 0,
+		'url'     => $url,
+		'alt'     => isset( $logo['alt'] ) ? sanitize_text_field( $logo['alt'] ) : '',
+		'linkUrl' => isset( $logo['linkUrl'] ) ? esc_url_raw( $logo['linkUrl'] ) : '',
+		'newTab'  => ! empty( $logo['newTab'] ),
 	);
 }
 
-if ( empty( $yokoi_valid_logos ) ) {
+if ( empty( $valid_logos ) ) {
 	return '<!-- Yokoi Logo Parade: no valid logos -->';
 }
 
-$yokoi_wrapper_classes = array( 'wp-block-yokoi-logo-parade' );
+$wrapper_classes = array( 'wp-block-yokoi-logo-parade' );
 
-if ( $yokoi_hide_on_mobile ) {
-	$yokoi_wrapper_classes[] = 'logo-parade--hidden-mobile';
+if ( $hide_on_mobile ) {
+	$wrapper_classes[] = 'logo-parade--hidden-mobile';
 }
 
-$yokoi_style_rules = array(
-	'--logo-height'                   => $yokoi_logo_height,
-	'--logo-parade-gap'               => $yokoi_gap_between_logos . 'px',
-	'--logos-per-view'                => (string) $yokoi_logos_per_view,
-	'--logo-parade-current-per-view'  => (string) $yokoi_logos_per_view,
-	'--mobile-logos-per-view'         => (string) $yokoi_mobile_logos_per_view,
-	'text-align'                      => $yokoi_alignment,
+$style_rules = array(
+	'--logo-height'                   => $logo_height,
+	'--logo-parade-gap'               => $gap_between_logos . 'px',
+	'--logos-per-view'                => (string) $logos_per_view,
+	'--logo-parade-current-per-view'  => (string) $logos_per_view,
+	'--mobile-logos-per-view'         => (string) $mobile_logos_per_view,
+	'text-align'                      => $alignment,
 );
 
-if ( $yokoi_background_color && 'transparent' !== strtolower( $yokoi_background_color ) ) {
-	$yokoi_style_rules['background-color'] = $yokoi_background_color;
+if ( $background_color && 'transparent' !== strtolower( $background_color ) ) {
+	$style_rules['background-color'] = $background_color;
 }
 
-$yokoi_style_attribute = '';
+$style_attribute = '';
 
-foreach ( $yokoi_style_rules as $yokoi_property => $yokoi_value ) {
-	$yokoi_style_attribute .= sprintf( '%s: %s; ', esc_attr( $yokoi_property ), esc_attr( $yokoi_value ) );
+foreach ( $style_rules as $property => $value ) {
+	$style_attribute .= sprintf( '%s: %s; ', esc_attr( $property ), esc_attr( $value ) );
 }
 
-$yokoi_wrapper_attributes = get_block_wrapper_attributes(
+$wrapper_attributes = get_block_wrapper_attributes(
 	array(
-		'class'                     => implode( ' ', array_map( 'sanitize_html_class', $yokoi_wrapper_classes ) ),
-		'data-rotation-speed'       => esc_attr( $yokoi_rotation_speed ),
-		'data-transition-duration'  => esc_attr( $yokoi_transition_duration ),
-		'data-pause-on-hover'       => $yokoi_pause_on_hover ? 'true' : 'false',
-		'data-logos-per-view'       => esc_attr( $yokoi_logos_per_view ),
-		'data-original-count'       => esc_attr( count( $yokoi_valid_logos ) ),
-		'style'                     => $yokoi_style_attribute,
+		'class'                     => implode( ' ', array_map( 'sanitize_html_class', $wrapper_classes ) ),
+		'data-rotation-speed'       => esc_attr( $rotation_speed ),
+		'data-transition-duration'  => esc_attr( $transition_duration ),
+		'data-pause-on-hover'       => $pause_on_hover ? 'true' : 'false',
+		'data-logos-per-view'       => esc_attr( $logos_per_view ),
+		'data-original-count'       => esc_attr( count( $valid_logos ) ),
+		'style'                     => $style_attribute,
 	)
 );
 
 ob_start();
 ?>
-<div <?php echo wp_kses_post( $yokoi_wrapper_attributes ); ?>>
+<div <?php echo $wrapper_attributes; ?>>
 	<div class="logo-parade-track">
-		<?php foreach ( $yokoi_valid_logos as $yokoi_logo ) : ?>
+		<?php foreach ( $valid_logos as $logo ) : ?>
 			<div class="logo-parade-item">
-				<?php if ( $yokoi_logo['linkUrl'] ) : ?>
+				<?php if ( $logo['linkUrl'] ) : ?>
 					<a
-						href="<?php echo esc_url( $yokoi_logo['linkUrl'] ); ?>"
-						<?php echo $yokoi_logo['newTab'] ? 'target="_blank" rel="noopener noreferrer"' : ''; ?>
-						aria-label="<?php echo esc_attr( $yokoi_logo['alt'] ?: __( 'Partner logo', 'yokoi' ) ); ?>"
+						href="<?php echo esc_url( $logo['linkUrl'] ); ?>"
+						<?php echo $logo['newTab'] ? 'target="_blank" rel="noopener noreferrer"' : ''; ?>
+						aria-label="<?php echo esc_attr( $logo['alt'] ?: __( 'Partner logo', 'yokoi' ) ); ?>"
 					>
 						<img
-							src="<?php echo esc_url( $yokoi_logo['url'] ); ?>"
-							alt="<?php echo esc_attr( $yokoi_logo['alt'] ); ?>"
+							src="<?php echo esc_url( $logo['url'] ); ?>"
+							alt="<?php echo esc_attr( $logo['alt'] ); ?>"
 							loading="lazy"
 							decoding="async"
 						/>
@@ -114,8 +114,8 @@ ob_start();
 				<?php else : ?>
 					<span>
 						<img
-							src="<?php echo esc_url( $yokoi_logo['url'] ); ?>"
-							alt="<?php echo esc_attr( $yokoi_logo['alt'] ); ?>"
+							src="<?php echo esc_url( $logo['url'] ); ?>"
+							alt="<?php echo esc_attr( $logo['alt'] ); ?>"
 							loading="lazy"
 							decoding="async"
 						/>
@@ -124,20 +124,20 @@ ob_start();
 			</div>
 		<?php endforeach; ?>
 		<?php
-		$yokoi_duplicate_sets = max( 2, ceil( ( ( $yokoi_logos_per_view * 2 ) + count( $yokoi_valid_logos ) ) / count( $yokoi_valid_logos ) ) );
+		$duplicate_sets = max( 2, ceil( ( ( $logos_per_view * 2 ) + count( $valid_logos ) ) / count( $valid_logos ) ) );
 
-		for ( $yokoi_i = 0; $yokoi_i < $yokoi_duplicate_sets; $yokoi_i++ ) :
-			foreach ( $yokoi_valid_logos as $yokoi_logo ) :
+		for ( $i = 0; $i < $duplicate_sets; $i++ ) :
+			foreach ( $valid_logos as $logo ) :
 				?>
 				<div class="logo-parade-item" aria-hidden="true">
-					<?php if ( $yokoi_logo['linkUrl'] ) : ?>
+					<?php if ( $logo['linkUrl'] ) : ?>
 						<a
-							href="<?php echo esc_url( $yokoi_logo['linkUrl'] ); ?>"
-							<?php echo $yokoi_logo['newTab'] ? 'target="_blank" rel="noopener noreferrer"' : ''; ?>
+							href="<?php echo esc_url( $logo['linkUrl'] ); ?>"
+							<?php echo $logo['newTab'] ? 'target="_blank" rel="noopener noreferrer"' : ''; ?>
 							tabindex="-1"
 						>
 							<img
-								src="<?php echo esc_url( $yokoi_logo['url'] ); ?>"
+								src="<?php echo esc_url( $logo['url'] ); ?>"
 								alt=""
 								loading="lazy"
 								decoding="async"
@@ -146,7 +146,7 @@ ob_start();
 					<?php else : ?>
 						<span>
 							<img
-								src="<?php echo esc_url( $yokoi_logo['url'] ); ?>"
+								src="<?php echo esc_url( $logo['url'] ); ?>"
 								alt=""
 								loading="lazy"
 								decoding="async"

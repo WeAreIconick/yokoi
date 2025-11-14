@@ -149,12 +149,13 @@ function registerEnabledBlocks( settings ) {
 export function refreshBlockInserter( forceClose = false ) {
 	return new Promise( ( resolve ) => {
 		try {
-			// Invalidate inserter cache
+			// Invalidate inserter cache in all possible stores
 			const blockEditorStore = dispatch( 'core/block-editor' );
 			if ( blockEditorStore ) {
 				if ( typeof blockEditorStore.invalidateResolution === 'function' ) {
 					blockEditorStore.invalidateResolution( 'getInserterItems' );
 					blockEditorStore.invalidateResolution( '__experimentalGetInserterItems' );
+					blockEditorStore.invalidateResolution( 'getAllowedBlocks' );
 				}
 			}
 
@@ -165,21 +166,33 @@ export function refreshBlockInserter( forceClose = false ) {
 				editorStore.invalidateResolution( '__experimentalGetInserterItems' );
 			}
 
+			// Try core/blocks store (if available)
+			try {
+				const blocksStore = dispatch( 'core/blocks' );
+				if ( blocksStore && typeof blocksStore.invalidateResolution === 'function' ) {
+					blocksStore.invalidateResolution( 'getBlockTypes' );
+				}
+			} catch ( e ) {
+				// core/blocks store might not exist in all WordPress versions
+			}
+
 			// Dispatch custom event
 			window.dispatchEvent( new CustomEvent( 'yokoi:blocks-updated' ) );
 
-			// Force a refresh by calling the selector
+			// Force a refresh by calling the selector multiple times
 			if ( window?.wp?.data?.select ) {
 				const { select: wpSelect } = window.wp.data;
 				try {
 					const blockEditorSelect = wpSelect( 'core/block-editor' );
 					if ( blockEditorSelect ) {
-						// Force refresh
+						// Force refresh multiple times to ensure it takes
 						if ( typeof blockEditorSelect.getInserterItems === 'function' ) {
 							blockEditorSelect.getInserterItems();
+							setTimeout( () => blockEditorSelect.getInserterItems(), 100 );
 						}
 						if ( typeof blockEditorSelect.__experimentalGetInserterItems === 'function' ) {
 							blockEditorSelect.__experimentalGetInserterItems();
+							setTimeout( () => blockEditorSelect.__experimentalGetInserterItems(), 100 );
 						}
 					}
 				} catch ( e ) {
@@ -197,7 +210,8 @@ export function refreshBlockInserter( forceClose = false ) {
 						'button[aria-label*="Toggle block inserter"], ' +
 						'button[aria-label*="Inserter"], ' +
 						'.block-editor-inserter__toggle, ' +
-						'[data-tooltip*="Add block"]'
+						'[data-tooltip*="Add block"], ' +
+						'button[aria-expanded="true"][aria-label*="block"]'
 					);
 					
 					if ( inserterButton ) {
@@ -205,12 +219,14 @@ export function refreshBlockInserter( forceClose = false ) {
 						const inserterPanel = document.querySelector( 
 							'.block-editor-inserter__panel, ' +
 							'.block-editor-inserter__menu, ' +
-							'.block-editor-inserter__main-area'
+							'.block-editor-inserter__main-area, ' +
+							'.block-editor-inserter__sidebar'
 						);
 						
 						const isOpen = inserterPanel && 
 							inserterPanel.style.display !== 'none' && 
-							! inserterPanel.classList.contains( 'is-hidden' );
+							! inserterPanel.classList.contains( 'is-hidden' ) &&
+							inserterPanel.offsetParent !== null;
 						
 						if ( forceClose || isOpen ) {
 							// Close it first
@@ -218,19 +234,33 @@ export function refreshBlockInserter( forceClose = false ) {
 							// Then reopen it after a short delay
 							setTimeout( () => {
 								inserterButton.click();
-								resolve( true );
-							}, 150 );
+								// Force another refresh after reopening
+								setTimeout( () => {
+									if ( window?.wp?.data?.select ) {
+										const { select: wpSelect } = window.wp.data;
+										const blockEditorSelect = wpSelect( 'core/block-editor' );
+										if ( blockEditorSelect && typeof blockEditorSelect.getInserterItems === 'function' ) {
+											blockEditorSelect.getInserterItems();
+										}
+									}
+									resolve( true );
+								}, 100 );
+							}, 200 );
 						} else {
 							// Just open it to refresh
 							inserterButton.click();
 							setTimeout( () => {
 								inserterButton.click();
 								resolve( true );
-							}, 100 );
+							}, 300 );
 						}
 					} else {
 						// No inserter button found, but we've invalidated cache
-						resolve( true );
+						// Try to trigger a refresh anyway by dispatching events
+						setTimeout( () => {
+							window.dispatchEvent( new Event( 'resize' ) );
+							resolve( true );
+						}, 100 );
 					}
 				} catch ( e ) {
 					// Ignore errors - this is best effort
@@ -330,9 +360,22 @@ export function updateBlocks( settings ) {
 	// They're filtered server-side via allowed_block_types_all filter
 	unregisterDisabledBlocks( settings );
 	
+	// Check if NavyGator or other render_callback blocks need special handling
+	const hasRenderCallbackBlocks = enabledBlocks.some( ( name ) => {
+		const blockType = getBlockType( name );
+		return blockType && blockType.render;
+	} );
+	
 	// Finally, refresh the inserter
 	// This is critical for blocks with render_callbacks that weren't unregistered
-	refreshBlockInserter();
+	// Use a longer delay for render_callback blocks to ensure server-side filter has updated
+	if ( hasRenderCallbackBlocks ) {
+		setTimeout( () => {
+			refreshBlockInserter( true );
+		}, 300 );
+	} else {
+		refreshBlockInserter();
+	}
 }
 
 /**
