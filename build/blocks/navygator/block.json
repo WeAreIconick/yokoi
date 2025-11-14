@@ -14,6 +14,17 @@
     "headings",
     "navygator"
   ],
+  "example": {
+    "attributes": {
+      "title": "Table of Contents",
+      "showNumbers": true,
+      "headingLevels": [
+        2,
+        3,
+        4
+      ]
+    }
+  },
   "textdomain": "yokoi",
   "supports": {
     "html": false,

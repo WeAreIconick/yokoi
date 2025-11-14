@@ -15,6 +15,13 @@
 		"events",
 		"schedule"
 	],
+	"example": {
+		"attributes": {
+			"defaultView": "week",
+			"showWeekends": true,
+			"eventLimit": 3
+		}
+	},
 	"attributes": {
 		"calendarId": {
 			"type": "string",

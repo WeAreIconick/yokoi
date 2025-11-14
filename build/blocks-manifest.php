@@ -12,6 +12,13 @@ return array(
 			'src' => '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="6" y="7" width="12" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M8 8h8v1H8z" fill="currentColor"/><path d="M8 11h8v2H8z" fill="currentColor"/><path d="M8 15h8v1H8z" fill="currentColor"/></svg>'
 		),
 		'description' => 'Add a distraction-free reading toggle powered by Cozy Mode.',
+		'example' => array(
+			'attributes' => array(
+				'buttonLabel' => 'Read in Cozy Mode',
+				'showHelperText' => true,
+				'helperText' => 'Opens a focused reading interface with clean typography.'
+			)
+		),
 		'attributes' => array(
 			'buttonLabel' => array(
 				'type' => 'string',
@@ -52,6 +59,13 @@ return array(
 			'google',
 			'events',
 			'schedule'
+		),
+		'example' => array(
+			'attributes' => array(
+				'defaultView' => 'week',
+				'showWeekends' => true,
+				'eventLimit' => 3
+			)
 		),
 		'attributes' => array(
 			'calendarId' => array(
@@ -362,6 +376,17 @@ return array(
 			'navigation',
 			'headings',
 			'navygator'
+		),
+		'example' => array(
+			'attributes' => array(
+				'title' => 'Table of Contents',
+				'showNumbers' => true,
+				'headingLevels' => array(
+					2,
+					3,
+					4
+				)
+			)
 		),
 		'textdomain' => 'yokoi',
 		'supports' => array(

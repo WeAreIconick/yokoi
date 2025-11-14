@@ -8,6 +8,13 @@
 	"icon": "list-view",
 	"description": "Automatically generate a beautiful, floating table of contents from your page headings.",
 	"keywords": ["toc", "table of contents", "navigation", "headings", "navygator"],
+	"example": {
+		"attributes": {
+			"title": "Table of Contents",
+			"showNumbers": true,
+			"headingLevels": [2, 3, 4]
+		}
+	},
 	"textdomain": "yokoi",
 	"supports": {
 		"html": false,
