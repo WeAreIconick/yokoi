@@ -7,9 +7,10 @@
 
 namespace Yokoi;
 
+require_once YOKOI_PLUGIN_DIR . 'includes/class-dependency-checker.php';
+
 use function add_filter;
 use function apply_filters;
-use function get_block_definitions_map;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -69,12 +70,19 @@ class Z_Index_Manager {
 			return $this->registered_z_indexes[ $block_name ];
 		}
 
-		$blocks = get_block_definitions_map();
-		$block_keys = array_keys( $blocks );
-		$block_index = array_search( $block_name, $block_keys, true );
-
-		if ( false === $block_index ) {
+		// Safely get block definitions.
+		$blocks = Dependency_Checker::safe_call( 'get_block_definitions_map', array() );
+		
+		if ( empty( $blocks ) ) {
+			// Fallback: use count of registered indexes.
 			$block_index = count( $this->registered_z_indexes );
+		} else {
+			$block_keys = array_keys( $blocks );
+			$block_index = array_search( $block_name, $block_keys, true );
+
+			if ( false === $block_index ) {
+				$block_index = count( $this->registered_z_indexes );
+			}
 		}
 
 		$z_index = self::BASE_Z_INDEX + ( $block_index * self::Z_INDEX_INCREMENT );

@@ -7,12 +7,13 @@
 
 namespace Yokoi;
 
+require_once YOKOI_PLUGIN_DIR . 'includes/class-dependency-checker.php';
+
 use function add_action;
 use function add_filter;
 use function apply_filters;
 use function esc_attr;
 use function esc_html;
-use function get_block_definitions_map;
 use function register_block_type;
 use function wp_register_script;
 use function wp_register_style;
@@ -87,9 +88,23 @@ class Block_Isolation {
 	 * @return void
 	 */
 	public function validate_block_registrations(): void {
+		// Validate dependencies before proceeding.
+		if ( ! Dependency_Checker::validate_dependencies(
+			array( 'includes/block-utils.php' ),
+			array( 'get_block_definitions_map' )
+		) ) {
+			// Silently fail if dependencies aren't available.
+			return;
+		}
+
 		$registry = \WP_Block_Type_Registry::get_instance();
-		$blocks   = get_block_definitions_map();
-		$errors   = array();
+		$blocks   = Dependency_Checker::safe_call( 'get_block_definitions_map', array() );
+		
+		if ( empty( $blocks ) ) {
+			return;
+		}
+
+		$errors = array();
 
 		foreach ( $blocks as $block_name => $definition ) {
 			// Check if block is registered.
@@ -263,6 +278,9 @@ class Block_Isolation {
 	 * @return string
 	 */
 	public function get_css_prefix( string $block_name ): string {
+		if ( ! is_callable( 'apply_filters' ) ) {
+			return '';
+		}
 		return apply_filters( 'yokoi_block_css_prefix', '', $block_name );
 	}
 
@@ -273,6 +291,9 @@ class Block_Isolation {
 	 * @return string
 	 */
 	public function get_js_namespace( string $block_name ): string {
+		if ( ! is_callable( 'apply_filters' ) ) {
+			return '';
+		}
 		return apply_filters( 'yokoi_block_js_namespace', '', $block_name );
 	}
 
@@ -284,6 +305,9 @@ class Block_Isolation {
 	 * @return string
 	 */
 	public function get_asset_handle( string $block_name, string $type ): string {
+		if ( ! is_callable( 'apply_filters' ) ) {
+			return '';
+		}
 		return apply_filters( 'yokoi_block_asset_handle', '', $block_name, $type );
 	}
 
@@ -295,6 +319,9 @@ class Block_Isolation {
 	 * @return int
 	 */
 	public function get_hook_priority( string $hook, string $block_name ): int {
+		if ( ! is_callable( 'apply_filters' ) ) {
+			return 10;
+		}
 		return apply_filters( 'yokoi_block_hook_priority', 10, $hook, $block_name );
 	}
 }

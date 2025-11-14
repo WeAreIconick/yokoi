@@ -109,26 +109,146 @@ class Plugin {
 	 * @return void
 	 */
 	private function load_dependencies(): void {
-		require_once YOKOI_PLUGIN_DIR . 'includes/class-settings-api.php';
-		require_once YOKOI_PLUGIN_DIR . 'includes/class-block-registry.php';
-		require_once YOKOI_PLUGIN_DIR . 'includes/class-block-catalog-api.php';
-		require_once YOKOI_PLUGIN_DIR . 'includes/class-block-statistics.php';
-		require_once YOKOI_PLUGIN_DIR . 'includes/class-block-isolation.php';
-		require_once YOKOI_PLUGIN_DIR . 'includes/class-block-monitor.php';
-		require_once YOKOI_PLUGIN_DIR . 'includes/class-z-index-manager.php';
-		require_once YOKOI_PLUGIN_DIR . 'includes/Navygator/Service.php';
+		// Load dependency checker first.
+		require_once YOKOI_PLUGIN_DIR . 'includes/class-dependency-checker.php';
 
-		$this->settings_api      = new Settings_API();
-		$this->block_registry    = new Block_Registry( $this->settings_api );
-		$this->block_catalog_api = new Block_Catalog_API();
-		$this->date_now_service  = new Date_Now_Service();
-		$this->navygator_service = new Navygator_Service();
-		$this->block_statistics  = new Block_Statistics();
+		// Load core dependencies with error handling.
+		$dependencies = array(
+			'class-settings-api.php'      => 'Settings_API',
+			'class-block-registry.php'    => 'Block_Registry',
+			'class-block-catalog-api.php'  => 'Block_Catalog_API',
+			'class-block-statistics.php'  => 'Block_Statistics',
+			'class-block-isolation.php'   => 'Block_Isolation',
+			'class-block-monitor.php'     => 'Block_Monitor',
+			'class-z-index-manager.php'   => 'Z_Index_Manager',
+		);
 
-		// Initialize block isolation and monitoring systems.
-		new Block_Isolation();
-		new Block_Monitor();
-		new Z_Index_Manager();
+		foreach ( $dependencies as $file => $class_name ) {
+			$file_path = YOKOI_PLUGIN_DIR . 'includes/' . $file;
+			if ( ! Dependency_Checker::require_file( $file_path, true ) ) {
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log( "Yokoi: Failed to load required file: {$file}" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				}
+				continue;
+			}
+
+			// Validate class exists before using.
+			$full_class_name = __NAMESPACE__ . '\\' . $class_name;
+			if ( ! Dependency_Checker::class_exists( $full_class_name ) ) {
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log( "Yokoi: Required class not found: {$class_name}" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				}
+				continue;
+			}
+		}
+
+		// Load block-specific services.
+		$block_services = array(
+			'Date_Now/Service.php'  => 'Date_Now\\Service',
+			'Navygator/Service.php' => 'Navygator\\Service',
+		);
+
+		foreach ( $block_services as $file => $class_name ) {
+			$file_path = YOKOI_PLUGIN_DIR . 'includes/' . $file;
+			if ( Dependency_Checker::require_file( $file_path, true ) ) {
+				$full_class_name = __NAMESPACE__ . '\\' . $class_name;
+				if ( Dependency_Checker::class_exists( $full_class_name ) ) {
+					// Service will be instantiated below if class exists.
+				}
+			}
+		}
+
+		// Initialize services with error handling.
+		try {
+			if ( Dependency_Checker::class_exists( __NAMESPACE__ . '\\Settings_API' ) ) {
+				$this->settings_api = new Settings_API();
+			}
+		} catch ( \Throwable $e ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Failed to initialize Settings_API: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+		}
+
+		try {
+			if ( $this->settings_api && Dependency_Checker::class_exists( __NAMESPACE__ . '\\Block_Registry' ) ) {
+				$this->block_registry = new Block_Registry( $this->settings_api );
+			}
+		} catch ( \Throwable $e ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Failed to initialize Block_Registry: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+		}
+
+		try {
+			if ( Dependency_Checker::class_exists( __NAMESPACE__ . '\\Block_Catalog_API' ) ) {
+				$this->block_catalog_api = new Block_Catalog_API();
+			}
+		} catch ( \Throwable $e ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Failed to initialize Block_Catalog_API: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+		}
+
+		try {
+			if ( Dependency_Checker::class_exists( __NAMESPACE__ . '\\Date_Now\\Service' ) ) {
+				$this->date_now_service = new Date_Now_Service();
+			}
+		} catch ( \Throwable $e ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Failed to initialize Date_Now_Service: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+		}
+
+		try {
+			if ( Dependency_Checker::class_exists( __NAMESPACE__ . '\\Navygator\\Service' ) ) {
+				$this->navygator_service = new Navygator_Service();
+			}
+		} catch ( \Throwable $e ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Failed to initialize Navygator_Service: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+		}
+
+		try {
+			if ( Dependency_Checker::class_exists( __NAMESPACE__ . '\\Block_Statistics' ) ) {
+				$this->block_statistics = new Block_Statistics();
+			}
+		} catch ( \Throwable $e ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Failed to initialize Block_Statistics: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+		}
+
+		// Initialize optional systems with error handling.
+		try {
+			if ( Dependency_Checker::class_exists( __NAMESPACE__ . '\\Block_Isolation' ) ) {
+				new Block_Isolation();
+			}
+		} catch ( \Throwable $e ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Failed to initialize Block_Isolation: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+		}
+
+		try {
+			if ( Dependency_Checker::class_exists( __NAMESPACE__ . '\\Block_Monitor' ) ) {
+				new Block_Monitor();
+			}
+		} catch ( \Throwable $e ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Failed to initialize Block_Monitor: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+		}
+
+		try {
+			if ( Dependency_Checker::class_exists( __NAMESPACE__ . '\\Z_Index_Manager' ) ) {
+				new Z_Index_Manager();
+			}
+		} catch ( \Throwable $e ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Failed to initialize Z_Index_Manager: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+		}
 	}
 
 	/**
@@ -137,43 +257,119 @@ class Plugin {
 	 * @return void
 	 */
 	private function define_hooks(): void {
+		if ( ! function_exists( 'add_action' ) ) {
+			return;
+		}
+
 		add_action( 'init', array( $this, 'init' ) );
 
-		if ( $this->settings_api instanceof Settings_API ) {
-			$this->settings_api->register();
+		try {
+			if ( $this->settings_api instanceof Settings_API ) {
+				$this->settings_api->register();
+			}
+		} catch ( \Throwable $e ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Failed to register Settings_API: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
 		}
 
-		if ( $this->block_registry instanceof Block_Registry ) {
-			$this->block_registry->register();
+		try {
+			if ( $this->block_registry instanceof Block_Registry ) {
+				$this->block_registry->register();
+			}
+		} catch ( \Throwable $e ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Failed to register Block_Registry: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
 		}
 
-		if ( $this->block_catalog_api instanceof Block_Catalog_API ) {
-			$this->block_catalog_api->register();
+		try {
+			if ( $this->block_catalog_api instanceof Block_Catalog_API ) {
+				$this->block_catalog_api->register();
+			}
+		} catch ( \Throwable $e ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Failed to register Block_Catalog_API: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
 		}
 
-		if ( $this->date_now_service instanceof Date_Now_Service ) {
-			$this->date_now_service->register();
+		try {
+			if ( $this->date_now_service instanceof Date_Now_Service ) {
+				$this->date_now_service->register();
+			}
+		} catch ( \Throwable $e ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Failed to register Date_Now_Service: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
 		}
 
-		if ( $this->navygator_service instanceof Navygator_Service ) {
-			$this->navygator_service->register();
+		try {
+			if ( $this->navygator_service instanceof Navygator_Service ) {
+				$this->navygator_service->register();
+			}
+		} catch ( \Throwable $e ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Failed to register Navygator_Service: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
 		}
 
-		if ( $this->block_statistics instanceof Block_Statistics ) {
-			$this->block_statistics->register();
+		try {
+			if ( $this->block_statistics instanceof Block_Statistics ) {
+				$this->block_statistics->register();
+			}
+		} catch ( \Throwable $e ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Failed to register Block_Statistics: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
 		}
 
-		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_editor_assets' ), 5 );
-		add_action( 'enqueue_block_editor_assets', array( $this, 'localize_editor_settings' ), 10 );
-		add_filter( 'block_categories_all', array( $this, 'register_block_category' ), 10, 2 );
-		add_filter( 'block_categories', array( $this, 'register_block_category_legacy' ), 10, 2 );
-		add_filter( 'allowed_block_types_all', array( $this, 'filter_allowed_block_types' ), 10, 2 );
-		add_filter( 'render_block', array( $this, 'maybe_disable_block_output' ), 10, 2 );
-		add_action( 'admin_init', array( $this, 'maybe_redirect_to_site_editor' ) );
-		add_filter(
-			'plugin_action_links_' . plugin_basename( YOKOI_PLUGIN_FILE ),
-			array( $this, 'add_plugin_action_link' )
+		// Register hooks with error handling.
+		$action_hooks = array(
+			array( 'enqueue_block_editor_assets', array( $this, 'enqueue_editor_assets' ), 5 ),
+			array( 'enqueue_block_editor_assets', array( $this, 'localize_editor_settings' ), 10 ),
+			array( 'admin_init', array( $this, 'maybe_redirect_to_site_editor' ) ),
 		);
+
+		foreach ( $action_hooks as $hook ) {
+			try {
+				call_user_func_array( 'add_action', $hook );
+			} catch ( \Throwable $e ) {
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log( 'Yokoi: Failed to register action hook: ' . ( $hook[0] ?? 'unknown' ) . ' - ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				}
+			}
+		}
+
+		$filter_hooks = array(
+			array( 'block_categories_all', array( $this, 'register_block_category' ), 10, 2 ),
+			array( 'block_categories', array( $this, 'register_block_category_legacy' ), 10, 2 ),
+			array( 'allowed_block_types_all', array( $this, 'filter_allowed_block_types' ), 10, 2 ),
+			array( 'render_block', array( $this, 'maybe_disable_block_output' ), 10, 2 ),
+		);
+
+		foreach ( $filter_hooks as $hook ) {
+			try {
+				call_user_func_array( 'add_filter', $hook );
+			} catch ( \Throwable $e ) {
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log( 'Yokoi: Failed to register filter hook: ' . ( $hook[0] ?? 'unknown' ) . ' - ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				}
+			}
+		}
+
+		// Register plugin action link with error handling.
+		try {
+			if ( function_exists( 'plugin_basename' ) && defined( 'YOKOI_PLUGIN_FILE' ) ) {
+				add_filter(
+					'plugin_action_links_' . plugin_basename( YOKOI_PLUGIN_FILE ),
+					array( $this, 'add_plugin_action_link' )
+				);
+			}
+		} catch ( \Throwable $e ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Failed to register plugin action link: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+		}
 	}
 
 	/**
