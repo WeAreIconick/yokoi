@@ -1,17 +1,19 @@
+// Editor styles for ticker tape parade block
+.wp-block-yokoi-ticker-tape-parade,
 .yokoi-ticker-block {
 	width: 100%;
 	position: relative;
-	padding: 24px;
-	border-radius: 14px;
-	border: 1px solid rgba(15, 23, 42, 0.08);
-	background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
-	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6),
-		0 12px 30px rgba(15, 23, 42, 0.08);
+	padding: 0;
+	background: transparent;
 
 	&.has-background {
-		background: linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(226, 232, 240, 0.9) 100%);
+		background: transparent;
 	}
+}
 
+// Block content styles
+.wp-block-yokoi-ticker-tape-parade,
+.yokoi-ticker-block {
 	.yokoi-ticker-preview {
 		display: flex;
 		flex-direction: column;
@@ -24,8 +26,8 @@
 		min-height: 64px;
 		display: flex;
 		align-items: center;
-		border-radius: 12px;
-		border: 1px solid rgba(15, 23, 42, 0.08);
+		border-radius: 0;
+		border: none;
 		background-color: inherit;
 		color: inherit;
 		overflow: hidden;
@@ -37,7 +39,8 @@
 		align-items: center;
 		white-space: nowrap;
 		padding-left: 24px;
-		animation: yokoiTickerScroll 25s linear infinite;
+		animation: yokoi-ticker-scroll 25s linear infinite;
+		will-change: transform; // Optimize animation performance
 	}
 
 	.yokoi-ticker-preview__text {
@@ -55,38 +58,41 @@
 		height: 100%;
 		background: linear-gradient(
 			to right,
-			rgba(255, 255, 255, 0) 0%,
-			rgba(245, 247, 250, 0.9) 100%
+			transparent 0%,
+			rgba(255, 255, 255, 0.95) 100%
 		);
 		pointer-events: none;
+		z-index: 1;
 	}
 
 	.yokoi-ticker-preview__meta {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 16px;
+		gap: 12px;
 		font-size: 12px;
-		color: #475569;
+		color: #6b7280;
 
 		span {
 			display: inline-flex;
 			align-items: center;
 			gap: 6px;
-			padding: 6px 10px;
-			border-radius: 8px;
-			background: rgba(15, 23, 42, 0.04);
-			border: 1px solid rgba(15, 23, 42, 0.04);
+			padding: 4px 8px;
+			border-radius: 4px;
+			background: rgba(0, 0, 0, 0.03);
+			border: 1px solid rgba(0, 0, 0, 0.05);
 		}
 	}
 
 	.yokoi-ticker__about {
 		font-size: 13px;
-		color: #4b5563;
+		color: #6b7280;
 		line-height: 1.6;
+		margin: 0;
 	}
 }
 
-@keyframes yokoiTickerScroll {
+// Namespaced animation for editor preview
+@keyframes yokoi-ticker-scroll {
 	0% {
 		transform: translateX(0);
 	}
