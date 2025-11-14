@@ -353,7 +353,7 @@ return array(
 		'name' => 'yokoi/navygator',
 		'version' => '1.0.0',
 		'title' => 'NavyGator',
-		'category' => 'widgets',
+		'category' => 'yokoi',
 		'icon' => 'list-view',
 		'description' => 'Automatically generate a beautiful, floating table of contents from your page headings.',
 		'keywords' => array(

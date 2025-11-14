@@ -127,6 +127,7 @@ class Plugin {
 			$file_path = YOKOI_PLUGIN_DIR . 'includes/' . $file;
 			if ( ! Dependency_Checker::require_file( $file_path, true ) ) {
 				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log( "Yokoi: Required file not found: {$file_path}" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 					error_log( "Yokoi: Failed to load required file: {$file}" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				}
 				continue;
@@ -249,6 +250,39 @@ class Plugin {
 				error_log( 'Yokoi: Failed to initialize Z_Index_Manager: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			}
 		}
+
+		// Always initialize fallback registry as a safety net
+		// This must be wrapped in extra safety checks to prevent fatal errors
+		try {
+			$fallback_file = YOKOI_PLUGIN_DIR . 'includes/class-block-fallback-registry.php';
+			if ( ! file_exists( $fallback_file ) ) {
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log( 'Yokoi: Fallback registry file not found: ' . $fallback_file ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				}
+			} else {
+				require_once $fallback_file;
+				
+				if ( Dependency_Checker::class_exists( __NAMESPACE__ . '\\Block_Fallback_Registry' ) ) {
+					try {
+						$fallback_registry = new Block_Fallback_Registry();
+						$fallback_registry->register();
+					} catch ( \Throwable $e ) {
+						if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+							error_log( 'Yokoi: Failed to instantiate Block_Fallback_Registry: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+						}
+					}
+				} else {
+					if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+						error_log( 'Yokoi: Block_Fallback_Registry class not found after requiring file' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					}
+				}
+			}
+		} catch ( \Throwable $e ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Failed to initialize Block_Fallback_Registry: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+			// Don't let this stop plugin initialization
+		}
 	}
 
 	/**
@@ -276,6 +310,11 @@ class Plugin {
 		try {
 			if ( $this->block_registry instanceof Block_Registry ) {
 				$this->block_registry->register();
+			} else {
+				// Block_Registry failed to initialize - log warning
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log( 'Yokoi: Block_Registry is not initialized - blocks may not register properly' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				}
 			}
 		} catch ( \Throwable $e ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
@@ -341,11 +380,15 @@ class Plugin {
 		}
 
 		$filter_hooks = array(
-			array( 'block_categories_all', array( $this, 'register_block_category' ), 10, 2 ),
-			array( 'block_categories', array( $this, 'register_block_category_legacy' ), 10, 2 ),
+			// Use priority 5 to register category early, before other plugins (lower number = earlier)
+			array( 'block_categories_all', array( $this, 'register_block_category' ), 5, 2 ),
+			array( 'block_categories', array( $this, 'register_block_category_legacy' ), 5, 2 ),
 			array( 'allowed_block_types_all', array( $this, 'filter_allowed_block_types' ), 10, 2 ),
 			array( 'render_block', array( $this, 'maybe_disable_block_output' ), 10, 2 ),
 		);
+
+		// Clear block enabled cache when settings are updated
+		add_action( 'yokoi_settings_updated', array( $this, 'clear_block_enabled_cache' ) );
 
 		foreach ( $filter_hooks as $hook ) {
 			try {
@@ -559,13 +602,34 @@ class Plugin {
 	 * @return array<int,array<string,string>>
 	 */
 	private function merge_block_category( array $categories ): array {
-		$exists = wp_list_filter( $categories, array( 'slug' => 'yokoi' ) );
+		// Find existing Yokoi category
+		$yokoi_index = false;
+		$yokoi_category = null;
+		
+		foreach ( $categories as $index => $category ) {
+			if ( isset( $category['slug'] ) && 'yokoi' === $category['slug'] ) {
+				$yokoi_index = $index;
+				$yokoi_category = $category;
+				break;
+			}
+		}
 
-		if ( empty( $exists ) ) {
-			$categories[] = array(
-				'slug'  => 'yokoi',
-				'title' => __( 'Yokoi', 'yokoi' ),
+		if ( null === $yokoi_category ) {
+			// Category doesn't exist, add it at the beginning
+			array_unshift(
+				$categories,
+				array(
+					'slug'  => 'yokoi',
+					'title' => __( 'Yokoi', 'yokoi' ),
+					'icon'  => null,
+				)
 			);
+		} elseif ( false !== $yokoi_index && $yokoi_index > 0 ) {
+			// Category exists but not at the top, move it to the beginning
+			unset( $categories[ $yokoi_index ] );
+			array_unshift( $categories, $yokoi_category );
+			// Re-index array
+			$categories = array_values( $categories );
 		}
 
 		return $categories;
@@ -647,6 +711,16 @@ class Plugin {
 	}
 
 	/**
+	 * Clear the block enabled cache.
+	 * Call this when settings are updated to ensure fresh data.
+	 *
+	 * @return void
+	 */
+	public function clear_block_enabled_cache(): void {
+		$this->block_enabled_cache = null;
+	}
+
+	/**
 	 * Determine whether a given block is enabled.
 	 *
 	 * @param string $block_name Block identifier.
@@ -691,7 +765,9 @@ class Plugin {
 		$disabled = array();
 
 		foreach ( $this->block_enabled_cache as $name => $enabled ) {
-			if ( 0 === strpos( $name, 'yokoi/' ) && ! $enabled ) {
+			// Only filter out Yokoi blocks that are explicitly disabled
+			// Blocks not in cache default to enabled (see is_block_enabled)
+			if ( 0 === strpos( $name, 'yokoi/' ) && false === $enabled ) {
 				$disabled[] = $name;
 			}
 		}
@@ -710,6 +786,14 @@ class Plugin {
 	public function filter_allowed_block_types( $allowed_block_types, $editor_context = null ) {
 		unset( $editor_context );
 
+		// Safety check: if Settings_API failed to load, don't filter anything
+		if ( ! $this->settings_api instanceof Settings_API ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Settings_API not available, skipping block filtering' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+			return $allowed_block_types;
+		}
+
 		$disabled = $this->get_disabled_block_names();
 
 		if ( empty( $disabled ) ) {
@@ -720,7 +804,29 @@ class Plugin {
 			$registry = WP_Block_Type_Registry::get_instance();
 			$all      = array_keys( $registry->get_all_registered() );
 
-			return array_values( array_diff( $all, $disabled ) );
+			$filtered = array_values( array_diff( $all, $disabled ) );
+			
+			// Debug: Log if NavyGator is being filtered
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				$navygator_registered = $registry->is_registered( 'yokoi/navygator' );
+				$navygator_disabled = in_array( 'yokoi/navygator', $disabled, true );
+				$navygator_allowed = in_array( 'yokoi/navygator', $filtered, true );
+				
+				if ( $navygator_registered ) {
+					error_log( sprintf( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+						'Yokoi: NavyGator filter check - Registered: %s, Disabled: %s, Allowed: %s, Cache: %s',
+						$navygator_registered ? 'yes' : 'no',
+						$navygator_disabled ? 'yes' : 'no',
+						$navygator_allowed ? 'yes' : 'no',
+						isset( $this->block_enabled_cache['yokoi/navygator'] ) ? ( $this->block_enabled_cache['yokoi/navygator'] ? 'enabled' : 'disabled' ) : 'not in cache'
+					) );
+				} elseif ( ! $navygator_registered ) {
+					// NavyGator is not registered - this is a problem
+					error_log( 'Yokoi: NavyGator is NOT registered in block registry - check Block_Registry or Block_Fallback_Registry' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				}
+			}
+			
+			return $filtered;
 		}
 
 		if ( is_array( $allowed_block_types ) ) {
