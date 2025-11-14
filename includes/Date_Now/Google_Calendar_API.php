@@ -25,8 +25,6 @@ use function wp_remote_get;
 use function wp_remote_retrieve_body;
 use function wp_remote_retrieve_response_code;
 use function apply_filters;
-use function error_log;
-use function defined;
 use function sanitize_email;
 use function filter_var;
 
@@ -172,8 +170,8 @@ class Google_Calendar_API {
 
 		if ( is_wp_error( $response ) ) {
 			// Log error for debugging.
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				error_log( 'Yokoi Calendar API Error: ' . $response->get_error_message() );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && function_exists( 'error_log' ) ) {
+				error_log( 'Yokoi Calendar API Error: ' . $response->get_error_message() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			}
 			return $response;
 		}

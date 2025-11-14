@@ -66,8 +66,14 @@ class Block_Registry {
 	 */
 	public function register_blocks(): void {
 		$blocks = $this->get_block_definitions();
+		$registry = \WP_Block_Type_Registry::get_instance();
 
 		foreach ( $blocks as $name => $definition ) {
+			// Skip if already registered (e.g., by a block-specific service)
+			if ( $registry->is_registered( $name ) ) {
+				continue;
+			}
+
 			// Always register blocks - filtering happens via allowed_block_types_all filter
 			// This ensures blocks are available for client-side filtering
 			if ( empty( $definition['path'] ) || ! is_dir( $definition['path'] ) ) {

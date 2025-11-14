@@ -9,7 +9,7 @@ import {
 	Flex,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { starEmpty, starFilled } from '@wordpress/icons';
+import { starEmpty, starFilled, update } from '@wordpress/icons';
 import { useState } from '@wordpress/element';
 
 const BlockTogglePanel = ( {
@@ -30,6 +30,7 @@ const BlockTogglePanel = ( {
 	blockStatistics = {},
 	validationErrors = {},
 	disabled = false,
+	onRefreshInserter = null,
 } ) => {
 	const orderedKeys = Object.keys( blockDefinitions ).length
 		? Object.keys( blockDefinitions )
@@ -73,6 +74,24 @@ const BlockTogglePanel = ( {
 		<Card>
 			<CardBody>
 				<Flex direction="column" gap={ 4 }>
+					<Notice
+						status="info"
+						isDismissible={ false }
+						className="yokoi-block-toggle-notice"
+					>
+						{ __( 'Changes are saved immediately. If a block doesn\'t appear or disappear in the inserter right away, click "Refresh Inserter" below or close and reopen the block inserter.', 'yokoi' ) }
+					</Notice>
+
+					<Button
+						variant="secondary"
+						size="small"
+						icon={ update }
+						onClick={ onRefreshInserter || ( () => {} ) }
+						disabled={ disabled || ! onRefreshInserter }
+					>
+						{ __( 'Refresh Block Inserter', 'yokoi' ) }
+					</Button>
+
 			<Flex direction="column" gap={ 2 }>
 				<SearchControl
 					value={ searchValue }

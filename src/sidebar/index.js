@@ -17,7 +17,7 @@ import isEqual from 'lodash/isEqual';
 
 import BlockTogglePanel from './components/BlockTogglePanel';
 import { ToggleQueue } from '../utils/toggle-queue';
-import { updateBlocks } from '../utils/block-registry-manager';
+import { updateBlocks, manualRefreshInserter } from '../utils/block-registry-manager';
 import './style.scss';
 
 const DEBUG_STORAGE_KEY = 'YOKOI_DEBUG';
@@ -215,6 +215,7 @@ const YokoiSidebar = () => {
 	const [ blockStatistics, setBlockStatistics ] = useState( {} );
 	const [ validationErrors, setValidationErrors ] = useState( {} );
 	const [ localBlocksEnabled, setLocalBlocksEnabled ] = useState( null );
+	const [ isRefreshingInserter, setIsRefreshingInserter ] = useState( false );
 	const abortControllerRef = useRef( null );
 	const pendingUpdatesRef = useRef( {} );
 	const saveTimeoutRef = useRef( null );
@@ -1267,6 +1268,20 @@ const YokoiSidebar = () => {
 		}
 	}, [ toggleAllBlocks, toggleBlock, favoriteBlocks, blocksEnabled ] );
 
+	const handleRefreshInserter = useCallback( async () => {
+		setIsRefreshingInserter( true );
+		try {
+			await manualRefreshInserter();
+		} catch ( error ) {
+			// eslint-disable-next-line no-console
+			console.debug( 'Failed to refresh inserter:', error );
+		} finally {
+			setTimeout( () => {
+				setIsRefreshingInserter( false );
+			}, 500 );
+		}
+	}, [] );
+
 
 	const hasMoreBlocks =
 		catalogMeta.page > 0 && catalogMeta.page < catalogMeta.totalPages;
@@ -1420,7 +1435,8 @@ const YokoiSidebar = () => {
 									togglingBlocks={ togglingBlocks }
 									blockStatistics={ blockStatistics }
 									validationErrors={ validationErrors }
-									disabled={ ! canToggle || isBusy }
+									disabled={ ! canToggle || isBusy || isRefreshingInserter }
+									onRefreshInserter={ handleRefreshInserter }
 									onRetry={ () => {
 										setBlockCatalogError( null );
 										fetchBlockCatalog( {
