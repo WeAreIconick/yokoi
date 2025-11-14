@@ -352,7 +352,7 @@ return array(
 		'apiVersion' => 3,
 		'name' => 'yokoi/navygator',
 		'version' => '1.0.0',
-		'title' => 'NavyGator Table of Contents',
+		'title' => 'NavyGator',
 		'category' => 'widgets',
 		'icon' => 'list-view',
 		'description' => 'Automatically generate a beautiful, floating table of contents from your page headings.',
