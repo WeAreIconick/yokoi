@@ -1,5 +1,5 @@
 import { registerPlugin } from '@wordpress/plugins';
-import { Button, Flex, Notice, Spinner, TabPanel, TextControl } from '@wordpress/components';
+import { Button, Card, CardBody, Flex, Notice, Spinner, TabPanel, TextControl } from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
 import {
@@ -1188,7 +1188,7 @@ const YokoiSidebar = () => {
 	);
 
 	const handleExportSettings = useCallback( () => {
-		const settings = normalizedOptionValue;
+		const settings = normalizedOptionValue || buildDefaultSettings( blockDefinitions );
 		const exportData = {
 			version: '1.0',
 			exported: new Date().toISOString(),
@@ -1208,7 +1208,7 @@ const YokoiSidebar = () => {
 		a.click();
 		document.body.removeChild( a );
 		URL.revokeObjectURL( url );
-	}, [ normalizedOptionValue ] );
+	}, [ normalizedOptionValue, blockDefinitions ] );
 
 	const handleImportSettings = useCallback( () => {
 		const input = document.createElement( 'input' );
@@ -1329,42 +1329,27 @@ const YokoiSidebar = () => {
 			</SitePluginSidebarMoreMenuItem>
 			<SitePluginSidebar
 				name="yokoi-settings-sidebar"
-				title={ __( 'Yokoi Settings', 'yokoi' ) }
-				icon={ <YokoiSidebarIcon /> }
 			>
-				<Flex direction="column" gap={ 6 }>
-					<Notice status="info" isDismissible={ false }>
-								{ __(
-									'Yokoi ships a suite of high-performance blocks built for modern WordPress sites. Use the controls below to enable blocks and fine-tune their behavior.',
-									'yokoi'
-								) }
-							</Notice>
-
-							<TabPanel
-								initialTabName="catalog"
-								tabs={ [
-									{
-										name: 'catalog',
-										title: __( 'Blocks', 'yokoi' ),
-									},
-									{
-										name: 'settings',
-										title: __( 'Settings', 'yokoi' ),
-									},
-								] }
-							>
-								{ ( tab ) => {
-									if ( tab.name === 'settings' ) {
-										return (
+				<TabPanel
+						initialTabName="catalog"
+						tabs={ [
+							{
+								name: 'catalog',
+								title: __( 'Blocks', 'yokoi' ),
+							},
+							{
+								name: 'settings',
+								title: __( 'Settings', 'yokoi' ),
+							},
+						] }
+					>
+						{ ( tab ) => {
+							if ( tab.name === 'settings' ) {
+								return (
+									<Card>
+										<CardBody>
 											<Flex direction="column" gap={ 4 }>
-												{ ! isDateNowEnabled ? (
-													<Notice status="info" isDismissible={ false }>
-														{ __(
-															'Enable the Date.now block to configure Google Calendar access.',
-															'yokoi'
-														) }
-													</Notice>
-												) : (
+												{ isDateNowEnabled && (
 													<TextControl
 														label={ __(
 															'Google Calendar API key',
@@ -1386,88 +1371,66 @@ const YokoiSidebar = () => {
 
 												<Flex direction="column" gap={ 2 }>
 													<Button
+														type="button"
 														variant="secondary"
-														onClick={ handleExportSettings }
-														disabled={ ! isOptionReady || isBusy }
+														onClick={ ( e ) => {
+															e.preventDefault();
+															e.stopPropagation();
+															handleExportSettings();
+														} }
+														disabled={ isBusy }
 													>
 														{ __( 'Export Settings', 'yokoi' ) }
 													</Button>
 													<Button
+														type="button"
 														variant="secondary"
-														onClick={ handleImportSettings }
-														disabled={ ! isOptionReady || isBusy }
+														onClick={ ( e ) => {
+															e.preventDefault();
+															e.stopPropagation();
+															handleImportSettings();
+														} }
+														disabled={ isBusy }
 													>
 														{ __( 'Import Settings', 'yokoi' ) }
 													</Button>
-													<Flex direction="column" gap={ 1 } style={ { marginTop: '8px' } }>
-														<span style={ { fontSize: '12px', fontWeight: 600 } }>
-															{ __( 'Quick Presets', 'yokoi' ) }
-														</span>
-														<Flex gap={ 1 } wrap>
-															<Button
-																variant="tertiary"
-																size="small"
-																onClick={ () => applyPreset( 'all' ) }
-																disabled={ ! isOptionReady || isBusy }
-															>
-																{ __( 'Enable All', 'yokoi' ) }
-															</Button>
-															<Button
-																variant="tertiary"
-																size="small"
-																onClick={ () => applyPreset( 'none' ) }
-																disabled={ ! isOptionReady || isBusy }
-															>
-																{ __( 'Disable All', 'yokoi' ) }
-															</Button>
-															{ favoriteBlocks.size > 0 && (
-																<Button
-																	variant="tertiary"
-																	size="small"
-																	onClick={ () => applyPreset( 'favorites' ) }
-																	disabled={ ! isOptionReady || isBusy }
-																>
-																	{ __( 'Enable Favorites', 'yokoi' ) }
-																</Button>
-															) }
-														</Flex>
-													</Flex>
 												</Flex>
 											</Flex>
-										);
-									}
+										</CardBody>
+									</Card>
+								);
+							}
 
-									return (
-										<BlockTogglePanel
-											error={ blockCatalogError }
-											searchValue={ searchTerm }
-											onSearchChange={ setSearchTerm }
-											searchHistory={ searchHistory }
-											hasMore={ hasMoreBlocks }
-											onLoadMore={ loadMoreBlocks }
-											blocksEnabled={ blocksEnabled }
-											blockDefinitions={ blockDefinitions }
-											onToggle={ toggleBlock }
-											onToggleAll={ toggleAllBlocks }
-											onToggleFavorite={ toggleFavorite }
-											favoriteBlocks={ favoriteBlocks }
-											togglingBlocks={ togglingBlocks }
-											blockStatistics={ blockStatistics }
-											validationErrors={ validationErrors }
-											disabled={ ! canToggle || isBusy }
-											onRetry={ () => {
-												setBlockCatalogError( null );
-												fetchBlockCatalog( {
-													search: catalogMeta.search,
-													page: catalogMeta.page || 1,
-													append: false,
-												} );
-											} }
-										/>
-									);
-								} }
-							</TabPanel>
-				</Flex>
+							return (
+								<BlockTogglePanel
+									error={ blockCatalogError }
+									searchValue={ searchTerm }
+									onSearchChange={ setSearchTerm }
+									searchHistory={ searchHistory }
+									hasMore={ hasMoreBlocks }
+									onLoadMore={ loadMoreBlocks }
+									blocksEnabled={ blocksEnabled }
+									blockDefinitions={ blockDefinitions }
+									onToggle={ toggleBlock }
+									onToggleAll={ toggleAllBlocks }
+									onToggleFavorite={ toggleFavorite }
+									favoriteBlocks={ favoriteBlocks }
+									togglingBlocks={ togglingBlocks }
+									blockStatistics={ blockStatistics }
+									validationErrors={ validationErrors }
+									disabled={ ! canToggle || isBusy }
+									onRetry={ () => {
+										setBlockCatalogError( null );
+										fetchBlockCatalog( {
+											search: catalogMeta.search,
+											page: catalogMeta.page || 1,
+											append: false,
+										} );
+									} }
+								/>
+							);
+						} }
+					</TabPanel>
 			</SitePluginSidebar>
 		</Fragment>
 	);

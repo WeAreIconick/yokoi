@@ -1,3 +1,18 @@
+// Hide the sidebar header
+.components-panel__header.interface-complementary-area-header {
+	display: none;
+}
+
+// Set CardBody padding to 16px
+.components-card__body {
+	padding: 16px;
+}
+
+// Set specific class padding to 16px
+.css-9ii361 {
+	padding: 16px !important;
+}
+
 .yokoi-sidebar__loading-shell {
 	display: flex;
 	flex-direction: column;

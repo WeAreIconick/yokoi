@@ -1,8 +1,8 @@
 import {
 	Button,
+	Card,
+	CardBody,
 	Notice,
-	Panel,
-	PanelBody,
 	SearchControl,
 	Spinner,
 	ToggleControl,
@@ -70,184 +70,181 @@ const BlockTogglePanel = ( {
 	const allDisabled = totalCount > 0 && enabledCount === 0;
 
 	return (
-		<Panel>
-			<PanelBody
-				title={ __( 'Enable/Disable Blocks', 'yokoi' ) }
-				initialOpen={ true }
-			>
-				<Flex direction="column" gap={ 3 }>
-					<Flex direction="column" gap={ 2 }>
-						<SearchControl
-							value={ searchValue }
-							onChange={ onSearchChange }
-							placeholder={ __( 'Search blocks… (⌘K)', 'yokoi' ) }
-							disabled={ disabled }
-							__nextHasNoMarginBottom
-							aria-label={ __( 'Search blocks', 'yokoi' ) }
-							aria-describedby="yokoi-search-description"
-						/>
-						<span id="yokoi-search-description" className="screen-reader-text">
-							{ __( 'Search for blocks by name or description. Use arrow keys to navigate results.', 'yokoi' ) }
-						</span>
-						{ searchHistory.length > 0 && ! searchValue && (
-							<Flex gap={ 1 } wrap>
-								{ searchHistory.slice( 0, 5 ).map( ( term ) => (
-									<Button
-										key={ term }
-										variant="tertiary"
-										size="small"
-										onClick={ () => onSearchChange( term ) }
-									>
-										{ term }
-									</Button>
-								) ) }
-							</Flex>
-						) }
+		<Card>
+			<CardBody>
+				<Flex direction="column" gap={ 4 }>
+			<Flex direction="column" gap={ 2 }>
+				<SearchControl
+					value={ searchValue }
+					onChange={ onSearchChange }
+					placeholder={ __( 'Search blocks… (⌘K)', 'yokoi' ) }
+					disabled={ disabled }
+					__nextHasNoMarginBottom
+					aria-label={ __( 'Search blocks', 'yokoi' ) }
+					aria-describedby="yokoi-search-description"
+				/>
+				<span id="yokoi-search-description" className="screen-reader-text">
+					{ __( 'Search for blocks by name or description. Use arrow keys to navigate results.', 'yokoi' ) }
+				</span>
+				{ searchHistory.length > 0 && ! searchValue && (
+					<Flex gap={ 1 } wrap>
+						{ searchHistory.slice( 0, 5 ).map( ( term ) => (
+							<Button
+								key={ term }
+								variant="tertiary"
+								size="small"
+								onClick={ () => onSearchChange( term ) }
+							>
+								{ term }
+							</Button>
+						) ) }
 					</Flex>
-
-					{ onToggleAll && totalCount > 0 && (
-						<Flex gap={ 2 }>
-							<Button
-								variant="secondary"
-								size="small"
-								onClick={ () => onToggleAll( true ) }
-								disabled={ disabled || allEnabled }
-							>
-								{ __( 'Enable All', 'yokoi' ) }
-							</Button>
-							<Button
-								variant="secondary"
-								size="small"
-								onClick={ () => onToggleAll( false ) }
-								disabled={ disabled || allDisabled }
-							>
-								{ __( 'Disable All', 'yokoi' ) }
-							</Button>
-							{ totalCount > 0 && (
-								<span style={ { marginLeft: 'auto', fontSize: '12px', color: '#757575' } }>
-									{ enabledCount } / { totalCount } { __( 'enabled', 'yokoi' ) }
-								</span>
-							) }
-						</Flex>
-					) }
-
-					{ error && (
-						<Notice
-							status="error"
-							isDismissible={ false }
-							actions={ onRetry ? [
-								{
-									label: __( 'Retry', 'yokoi' ),
-									onClick: onRetry,
-								},
-							] : [] }
-						>
-							{ error?.message ||
-								__( 'Unable to load block catalog.', 'yokoi' ) }
-						</Notice>
-					) }
-
-				{ entries.length === 0 && (
-					<p>
-						{ __(
-							'No blocks registered yet. Blocks will appear here once available.',
-							'yokoi'
-						) }
-					</p>
 				) }
+			</Flex>
 
-				{ filteredEntries.length === 0 &&
-					entries.length > 0 && (
-						<p>{ __( 'No blocks match your search.', 'yokoi' ) }</p>
-					) }
-
-					{ filteredEntries.map( ( [ blockName, enabled ] ) => {
-						const BlockItem = ( { blockName: name, enabled: isEnabled } ) => {
-							const label = blockDefinitions[ name ]?.title || name;
-							const description = blockDefinitions[ name ]?.description;
-							const isToggling = togglingBlocks.has( name );
-							const isFavorite = favoriteBlocks.has( name );
-							const stats = blockStatistics[ name ] || {};
-							const usageCount = stats.usage_count || 0;
-							const postCount = stats.post_count || 0;
-							
-							return (
-								<Flex key={ name } align="flex-start" gap={ 2 } style={ { position: 'relative' } }>
-									<Flex direction="column" gap={ 0 } style={ { flex: 1, minWidth: 0 } }>
-										<Flex align="center" justify="space-between" gap={ 2 }>
-											<ToggleControl
-												label={ label }
-												checked={ Boolean( isEnabled ) }
-												onChange={ () => onToggle( name ) }
-												help={ description }
-												__nextHasNoMarginBottom
-												disabled={ disabled || isToggling }
-												aria-describedby={ `yokoi-block-${ name }-description` }
-												aria-invalid={ validationErrors[ name ] ? 'true' : undefined }
-												aria-errormessage={ validationErrors[ name ] ? `yokoi-error-${ name }` : undefined }
-											/>
-											{ onToggleFavorite && (
-												<Button
-													icon={ isFavorite ? starFilled : starEmpty }
-													onClick={ () => onToggleFavorite( name ) }
-													variant="tertiary"
-													size="small"
-													style={ { 
-														minWidth: '24px', 
-														width: '24px',
-														height: '24px',
-														padding: 0,
-														flexShrink: 0,
-														display: 'flex',
-														alignItems: 'center',
-														justifyContent: 'center'
-													} }
-													aria-label={ isFavorite ? __( 'Remove from favorites', 'yokoi' ) : __( 'Add to favorites', 'yokoi' ) }
-												/>
-											) }
-										</Flex>
-										{ validationErrors[ name ] && (
-											<span
-												id={ `yokoi-error-${ name }` }
-												role="alert"
-												style={ { fontSize: '12px', color: '#d63638', marginLeft: '48px', marginTop: '-4px' } }
-											>
-												{ validationErrors[ name ] }
-											</span>
-										) }
-										<Flex gap={ 2 } style={ { marginTop: '-8px', marginLeft: '48px', fontSize: '11px', color: '#757575' } }>
-											{ usageCount > 0 && (
-												<span id={ `yokoi-block-${ name }-stats` } aria-label={ __( 'Usage statistics', 'yokoi' ) }>
-													{ usageCount } { __( 'uses', 'yokoi' ) }
-												</span>
-											) }
-											{ postCount > 0 && (
-												<span aria-label={ __( 'Post count', 'yokoi' ) }>
-													{ postCount } { __( 'posts', 'yokoi' ) }
-												</span>
-											) }
-										</Flex>
-									</Flex>
-									{ isToggling && <Spinner size={ 16 } aria-label={ __( 'Saving…', 'yokoi' ) } /> }
-								</Flex>
-							);
-						};
-
-						return <BlockItem key={ blockName } blockName={ blockName } enabled={ enabled } />;
-					} ) }
-				</Flex>
-
-				{ hasMore && (
+			{ onToggleAll && totalCount > 0 && (
+				<Flex gap={ 2 }>
 					<Button
 						variant="secondary"
-						onClick={ onLoadMore }
-						disabled={ disabled }
+						size="small"
+						onClick={ () => onToggleAll( true ) }
+						disabled={ disabled || allEnabled }
 					>
-						{ __( 'Load more blocks', 'yokoi' ) }
+						{ __( 'Enable All', 'yokoi' ) }
 					</Button>
+					<Button
+						variant="secondary"
+						size="small"
+						onClick={ () => onToggleAll( false ) }
+						disabled={ disabled || allDisabled }
+					>
+						{ __( 'Disable All', 'yokoi' ) }
+					</Button>
+					{ totalCount > 0 && (
+						<span style={ { marginLeft: 'auto', fontSize: '12px', color: '#757575' } }>
+							{ enabledCount } / { totalCount } { __( 'enabled', 'yokoi' ) }
+						</span>
+					) }
+				</Flex>
+			) }
+
+			{ error && (
+				<Notice
+					status="error"
+					isDismissible={ false }
+					actions={ onRetry ? [
+						{
+							label: __( 'Retry', 'yokoi' ),
+							onClick: onRetry,
+						},
+					] : [] }
+				>
+					{ error?.message ||
+						__( 'Unable to load block catalog.', 'yokoi' ) }
+				</Notice>
+			) }
+
+			{ entries.length === 0 && (
+				<p>
+					{ __(
+						'No blocks registered yet. Blocks will appear here once available.',
+						'yokoi'
+					) }
+				</p>
+			) }
+
+			{ filteredEntries.length === 0 &&
+				entries.length > 0 && (
+					<p>{ __( 'No blocks match your search.', 'yokoi' ) }</p>
 				) }
-			</PanelBody>
-		</Panel>
+
+			{ filteredEntries.map( ( [ blockName, enabled ] ) => {
+				const BlockItem = ( { blockName: name, enabled: isEnabled } ) => {
+					const label = blockDefinitions[ name ]?.title || name;
+					const description = blockDefinitions[ name ]?.description;
+					const isToggling = togglingBlocks.has( name );
+					const isFavorite = favoriteBlocks.has( name );
+					const stats = blockStatistics[ name ] || {};
+					const usageCount = stats.usage_count || 0;
+					const postCount = stats.post_count || 0;
+					
+					return (
+						<Flex key={ name } align="flex-start" gap={ 2 } style={ { position: 'relative' } }>
+							<Flex direction="column" gap={ 0 } style={ { flex: 1, minWidth: 0 } }>
+								<Flex align="center" justify="space-between" gap={ 2 }>
+									<ToggleControl
+										label={ label }
+										checked={ Boolean( isEnabled ) }
+										onChange={ () => onToggle( name ) }
+										help={ description }
+										__nextHasNoMarginBottom
+										disabled={ disabled || isToggling }
+										aria-describedby={ `yokoi-block-${ name }-description` }
+										aria-invalid={ validationErrors[ name ] ? 'true' : undefined }
+										aria-errormessage={ validationErrors[ name ] ? `yokoi-error-${ name }` : undefined }
+									/>
+									{ onToggleFavorite && (
+										<Button
+											icon={ isFavorite ? starFilled : starEmpty }
+											onClick={ () => onToggleFavorite( name ) }
+											variant="tertiary"
+											size="small"
+											style={ { 
+												minWidth: '24px', 
+												width: '24px',
+												height: '24px',
+												padding: 0,
+												flexShrink: 0,
+												display: 'flex',
+												alignItems: 'center',
+												justifyContent: 'center'
+											} }
+											aria-label={ isFavorite ? __( 'Remove from favorites', 'yokoi' ) : __( 'Add to favorites', 'yokoi' ) }
+										/>
+									) }
+								</Flex>
+								{ validationErrors[ name ] && (
+									<span
+										id={ `yokoi-error-${ name }` }
+										role="alert"
+										style={ { fontSize: '12px', color: '#d63638', marginLeft: '48px', marginTop: '-4px' } }
+									>
+										{ validationErrors[ name ] }
+									</span>
+								) }
+								<Flex gap={ 2 } style={ { marginTop: '-8px', marginLeft: '48px', fontSize: '11px', color: '#757575' } }>
+									{ usageCount > 0 && (
+										<span id={ `yokoi-block-${ name }-stats` } aria-label={ __( 'Usage statistics', 'yokoi' ) }>
+											{ usageCount } { __( 'uses', 'yokoi' ) }
+										</span>
+									) }
+									{ postCount > 0 && (
+										<span aria-label={ __( 'Post count', 'yokoi' ) }>
+											{ postCount } { __( 'posts', 'yokoi' ) }
+										</span>
+									) }
+								</Flex>
+							</Flex>
+							{ isToggling && <Spinner size={ 16 } aria-label={ __( 'Saving…', 'yokoi' ) } /> }
+						</Flex>
+					);
+				};
+
+				return <BlockItem key={ blockName } blockName={ blockName } enabled={ enabled } />;
+			} ) }
+
+			{ hasMore && (
+				<Button
+					variant="secondary"
+					onClick={ onLoadMore }
+					disabled={ disabled }
+				>
+					{ __( 'Load more blocks', 'yokoi' ) }
+				</Button>
+			) }
+				</Flex>
+			</CardBody>
+		</Card>
 	);
 };
 
