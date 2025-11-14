@@ -658,7 +658,7 @@ return array(
 		'icon' => array(
 			'src' => '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 8h10M7 12h6M7 16h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M16 11l3 1.5-3 1.5V11z" fill="currentColor"/></svg>'
 		),
-		'description' => 'A customizable horizontal scrolling ticker for announcements and headlines.',
+		'description' => 'Headlines that won\'t sit still. A horizontal scrolling ticker that makes your announcements impossible to ignore.',
 		'example' => array(
 			'attributes' => array(
 				'content' => 'Breaking News: New Product Launch • Special Offer: 50% Off This Week • Update: Server Maintenance Tonight',
