@@ -14,23 +14,13 @@ return array(
 		'description' => 'Give readers a one-click escape into pure, distraction-free reading bliss with Cozy Mode.',
 		'example' => array(
 			'attributes' => array(
-				'buttonLabel' => 'Read in Cozy Mode',
-				'showHelperText' => true,
-				'helperText' => 'Opens a focused reading interface with clean typography.'
+				'buttonLabel' => 'Read in Cozy Mode'
 			)
 		),
 		'attributes' => array(
 			'buttonLabel' => array(
 				'type' => 'string',
 				'default' => 'Read in Cozy Mode'
-			),
-			'showHelperText' => array(
-				'type' => 'boolean',
-				'default' => true
-			),
-			'helperText' => array(
-				'type' => 'string',
-				'default' => 'Opens a focused reading interface with clean typography.'
 			)
 		),
 		'supports' => array(

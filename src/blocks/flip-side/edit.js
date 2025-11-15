@@ -10,7 +10,6 @@ import {
 	BaseControl,
 	Button,
 	ButtonGroup,
-	ExternalLink,
 	Notice,
 	PanelBody,
 	RangeControl,
@@ -586,24 +585,6 @@ const FlipSideEdit = ( { attributes, setAttributes } ) => {
 						},
 					] }
 				/>
-
-				<PanelBody
-					title={ __( 'More Blocks by iconick', 'yokoi' ) }
-					initialOpen={ false }
-				>
-					<p style={ { lineHeight: 1.5, marginBottom: '16px' } }>
-						{ __(
-							'Think these ideas are wild? You ain’t seen nothing yet.',
-							'yokoi'
-						) }
-					</p>
-					<ExternalLink href="https://iconick.io/blocks/">
-						{ __(
-							'Click to enter the block wonderland.',
-							'yokoi'
-						) }
-					</ExternalLink>
-				</PanelBody>
 			</InspectorControls>
 
 			<div { ...blockProps }>

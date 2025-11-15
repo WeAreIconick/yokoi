@@ -11,23 +11,13 @@
   "description": "Give readers a one-click escape into pure, distraction-free reading bliss with Cozy Mode.",
   "example": {
     "attributes": {
-      "buttonLabel": "Read in Cozy Mode",
-      "showHelperText": true,
-      "helperText": "Opens a focused reading interface with clean typography."
+      "buttonLabel": "Read in Cozy Mode"
     }
   },
   "attributes": {
     "buttonLabel": {
       "type": "string",
       "default": "Read in Cozy Mode"
-    },
-    "showHelperText": {
-      "type": "boolean",
-      "default": true
-    },
-    "helperText": {
-      "type": "string",
-      "default": "Opens a focused reading interface with clean typography."
     }
   },
   "supports": {

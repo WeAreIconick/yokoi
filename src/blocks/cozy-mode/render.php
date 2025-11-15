@@ -25,10 +25,7 @@ if ( ! function_exists( 'yokoi_render_cozy_mode_block_content' ) ) :
 			$attributes = array();
 		}
 
-		$button_label    = isset( $attributes['buttonLabel'] ) ? sanitize_text_field( $attributes['buttonLabel'] ) : __( 'Read in Cozy Mode', 'yokoi' );
-		$show_helper     = array_key_exists( 'showHelperText', $attributes ) ? (bool) $attributes['showHelperText'] : true;
-		$helper_text_raw = isset( $attributes['helperText'] ) ? $attributes['helperText'] : __( 'Opens a focused reading interface with clean typography.', 'yokoi' );
-		$helper_text     = $show_helper ? wp_kses_post( $helper_text_raw ) : '';
+		$button_label = isset( $attributes['buttonLabel'] ) ? sanitize_text_field( $attributes['buttonLabel'] ) : __( 'Read in Cozy Mode', 'yokoi' );
 
 		$post_id = get_the_ID();
 
@@ -51,15 +48,6 @@ if ( ! function_exists( 'yokoi_render_cozy_mode_block_content' ) ) :
 			esc_html( $button_label )
 		);
 
-		$helper_markup = '';
-
-		if ( $show_helper && ! empty( $helper_text ) ) {
-			$helper_markup = sprintf(
-				'<p class="cozy-mode-helper">%s</p>',
-				$helper_text
-			);
-		}
-
 		// Get wrapper attributes - handle case where block context might not be available
 		$wrapper_attributes = '';
 		if ( function_exists( 'get_block_wrapper_attributes' ) && $block instanceof \WP_Block ) {
@@ -73,7 +61,7 @@ if ( ! function_exists( 'yokoi_render_cozy_mode_block_content' ) ) :
 			$wrapper_attributes = 'class="wp-block-yokoi-cozy-mode yokoi-cozy-mode-block"';
 		}
 
-		$output  = sprintf( '<div %s>%s%s</div>', $wrapper_attributes, $button, $helper_markup );
+		$output  = sprintf( '<div %s>%s</div>', $wrapper_attributes, $button );
 		$output .= yokoi_get_cozy_mode_modal_markup();
 
 		return $output;
