@@ -260,6 +260,8 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 							'Choose whether multiple panels can be open at once or just one.',
 							'yokoi'
 						) }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 				</PanelBody>
 				<PanelBody
@@ -331,6 +333,8 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 									updateItem( index, 'title', value )
 								}
 								maxLength={ MAX_TITLE_LENGTH }
+								__next40pxDefaultSize={ true }
+								__nextHasNoMarginBottom={ true }
 							/>
 							<TextareaControl
 								label={ __( 'Content', 'yokoi' ) }
@@ -344,6 +348,7 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 								}
 								rows={ 4 }
 								maxLength={ MAX_CONTENT_LENGTH }
+								__nextHasNoMarginBottom={ true }
 							/>
 						</div>
 					</div>

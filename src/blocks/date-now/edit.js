@@ -57,6 +57,8 @@ const Edit = ( { attributes, setAttributes } ) => {
 								'Paste the share URL or calendar ID from Google Calendar.',
 								'yokoi'
 							) }
+							__next40pxDefaultSize={ true }
+							__nextHasNoMarginBottom={ true }
 						/>
 					</BaseControl>
 					<SelectControl
@@ -66,6 +68,8 @@ const Edit = ( { attributes, setAttributes } ) => {
 						onChange={ ( value ) =>
 							setAttributes( { defaultView: value } )
 						}
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<ToggleControl
 						label={ __( 'Show Weekends', 'yokoi' ) }
@@ -102,10 +106,13 @@ const Edit = ( { attributes, setAttributes } ) => {
 							'Upcoming events',
 							'yokoi'
 						) }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<TextareaControl
 						label={ __( 'Subheadline', 'yokoi' ) }
 						value={ customSubheadline }
+						__nextHasNoMarginBottom={ true }
 						onChange={ ( value ) =>
 							setAttributes( { customSubheadline: value } )
 						}

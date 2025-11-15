@@ -44,6 +44,8 @@ export default function Edit( { attributes, setAttributes } ) {
 						value={ title }
 						onChange={ ( value ) => setAttributes( { title: value } ) }
 						help={ __( 'The title displayed at the top of the table of contents', 'yokoi' ) }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 
 					<ToggleControl

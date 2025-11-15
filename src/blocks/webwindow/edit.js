@@ -95,6 +95,8 @@ const WebWindowEdit = ( { attributes, setAttributes } ) => {
 						value={ src }
 						onChange={ ( value ) => setAttributes( { src: value } ) }
 						placeholder="https://iconick.io"
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<ToggleControl
 						label={ __(

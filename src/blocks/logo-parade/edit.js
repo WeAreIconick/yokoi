@@ -174,6 +174,8 @@ const Edit = ( {
 											updateLogo( index, { alt: value } )
 										}
 										placeholder={ __( 'Logo description', 'yokoi' ) }
+										__next40pxDefaultSize={ true }
+										__nextHasNoMarginBottom={ true }
 									/>
 									<TextControl
 										label={ __( 'Link URL', 'yokoi' ) }
@@ -182,6 +184,8 @@ const Edit = ( {
 											updateLogo( index, { linkUrl: value } )
 										}
 										placeholder={ __( 'https://example.com', 'yokoi' ) }
+										__next40pxDefaultSize={ true }
+										__nextHasNoMarginBottom={ true }
 									/>
 									<ToggleControl
 										label={ __( 'Open in new tab', 'yokoi' ) }
@@ -259,6 +263,8 @@ const Edit = ( {
 						onChange={ ( value ) =>
 							setAttributes( { animationType: value } )
 						}
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<SelectControl
 						label={ __( 'Animation Direction', 'yokoi' ) }
@@ -274,6 +280,8 @@ const Edit = ( {
 						onChange={ ( value ) =>
 							setAttributes( { animationDirection: value } )
 						}
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<RangeControl
 						label={ __( 'Rotation speed (seconds)', 'yokoi' ) }
@@ -403,6 +411,8 @@ const Edit = ( {
 						onChange={ ( value ) =>
 							setAttributes( { hoverEffect: value } )
 						}
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<ToggleControl
 						label={ __( 'Logo border', 'yokoi' ) }

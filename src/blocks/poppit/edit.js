@@ -265,6 +265,8 @@ export default function Edit( { attributes, setAttributes } ) {
 						onChange={ ( value ) =>
 							setAttributes( { popupType: value } )
 						}
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 
 					<SelectControl
@@ -274,6 +276,8 @@ export default function Edit( { attributes, setAttributes } ) {
 						onChange={ ( value ) =>
 							setAttributes( { animation: value } )
 						}
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 
 					{ popupType === 'modal' && (
@@ -284,6 +288,8 @@ export default function Edit( { attributes, setAttributes } ) {
 							onChange={ ( value ) =>
 								setAttributes( { position: value } )
 							}
+							__next40pxDefaultSize={ true }
+							__nextHasNoMarginBottom={ true }
 						/>
 					) }
 
@@ -294,6 +300,8 @@ export default function Edit( { attributes, setAttributes } ) {
 							setAttributes( { width: value } )
 						}
 						help={ __( 'e.g., 500px, 80%, auto', 'yokoi' ) }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 
 					<ToggleControl
@@ -327,6 +335,8 @@ export default function Edit( { attributes, setAttributes } ) {
 						onChange={ ( value ) =>
 							setAttributes( { triggerType: value } )
 						}
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 
 					{ triggerType === 'time' && (
@@ -452,6 +462,8 @@ export default function Edit( { attributes, setAttributes } ) {
 								onChange={ ( value ) =>
 									setAttributes( { emailPlaceholder: value } )
 								}
+								__next40pxDefaultSize={ true }
+								__nextHasNoMarginBottom={ true }
 							/>
 
 							<TextControl
@@ -460,6 +472,8 @@ export default function Edit( { attributes, setAttributes } ) {
 								onChange={ ( value ) =>
 									setAttributes( { buttonText: value } )
 								}
+								__next40pxDefaultSize={ true }
+								__nextHasNoMarginBottom={ true }
 							/>
 						</>
 					) }
@@ -535,6 +549,8 @@ export default function Edit( { attributes, setAttributes } ) {
 								targeting: { ...targeting, userType: value },
 							} )
 						}
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 				</PanelBody>
 			</InspectorControls>

@@ -198,6 +198,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 								'Separate multiple items with bullet points (•) or new lines to create a continuous ticker.',
 								'yokoi'
 							) }
+							__nextHasNoMarginBottom={ true }
 						/>
 					</BaseControl>
 				</PanelBody>
@@ -208,12 +209,16 @@ const Edit = ( { attributes, setAttributes } ) => {
 						value={ textTransform }
 						options={ textTransformOptions }
 						onChange={ ( value ) => setAttributes( { textTransform: value } ) }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<SelectControl
 						label={ __( 'Font Weight', 'yokoi' ) }
 						value={ fontWeight }
 						options={ fontWeightOptions }
 						onChange={ ( value ) => setAttributes( { fontWeight: value } ) }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<RangeControl
 						label={ __( 'Font Size', 'yokoi' ) }

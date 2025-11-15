@@ -272,6 +272,8 @@ const FlipSideEdit = ( { attributes, setAttributes } ) => {
 								'Select which card to edit below.',
 								'yokoi'
 							) }
+							__next40pxDefaultSize={ true }
+							__nextHasNoMarginBottom={ true }
 						/>
 					) }
 
@@ -333,6 +335,8 @@ const FlipSideEdit = ( { attributes, setAttributes } ) => {
 														'yokoi'
 													)
 										}
+										__next40pxDefaultSize={ true }
+										__nextHasNoMarginBottom={ true }
 									/>
 									<TextareaControl
 										label={
@@ -360,6 +364,7 @@ const FlipSideEdit = ( { attributes, setAttributes } ) => {
 														'yokoi'
 													)
 										}
+										__nextHasNoMarginBottom={ true }
 									/>
 									<BaseControl
 										label={

@@ -52,6 +52,8 @@ const Edit = ( { attributes, setAttributes } ) => {
 							setAttributes( { buttonLabel: value } )
 						}
 						placeholder={ __( 'Read in Cozy Mode', 'yokoi' ) }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 				</PanelBody>
 			</InspectorControls>
