@@ -6,10 +6,11 @@
   "scripts": {
     "test": "node scripts/check-components.js && node scripts/check-imports.js && php tests/run.php",
     "check:imports": "node scripts/check-imports.js",
+    "check:php": "node scripts/check-php-syntax.js",
     "clean": "node scripts/clean.js",
     "start": "wp-scripts start --webpack-copy-php --hot",
     "build": "npm run clean && wp-scripts build --webpack-copy-php --blocks-manifest && npm run package",
-    "prebuild": "npm run check:imports",
+    "prebuild": "npm run check:imports && npm run check:php",
     "package": "node scripts/package.js",
     "build:dist": "npm run build",
     "lint:js": "wp-scripts lint-js",
