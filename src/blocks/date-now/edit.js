@@ -144,7 +144,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 				) : (
 					<Placeholder
 						icon="calendar-alt"
-						label={ __( 'Date.now Calendar', 'yokoi' ) }
+						label={ __( 'Date.now', 'yokoi' ) }
 						instructions={ __(
 							'Paste a Google Calendar share URL or ID in the block settings.',
 							'yokoi'

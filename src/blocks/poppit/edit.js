@@ -27,7 +27,6 @@ import {
 	CheckboxControl,
 	ToolbarGroup,
 	ToolbarButton,
-	ExternalLink,
 } from '@wordpress/components';
 
 import { useState, useEffect } from '@wordpress/element';
@@ -537,21 +536,6 @@ export default function Edit( { attributes, setAttributes } ) {
 							} )
 						}
 					/>
-				</PanelBody>
-
-				<PanelBody
-					title={ __( 'More Blocks by iconick', 'yokoi' ) }
-					initialOpen={ false }
-				>
-					<p>
-						{ __(
-							"Think these ideas are wild? You ain't seen nothing yet.",
-							'yokoi'
-						) }
-					</p>
-					<ExternalLink href="https://iconick.io/blocks/">
-						{ __( 'Click to enter the block wonderland', 'yokoi' ) }
-					</ExternalLink>
 				</PanelBody>
 			</InspectorControls>
 

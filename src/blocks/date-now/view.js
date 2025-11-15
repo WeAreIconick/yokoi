@@ -117,7 +117,7 @@ const renderHeader = ( wrapper, state, setState ) => {
 
 	const headlineWrapper = createElement( 'div', 'yokoi-date-now__headline' );
 
-	const title = state.headline || __( 'Date.now Calendar', 'yokoi' );
+	const title = state.headline || __( 'Date.now', 'yokoi' );
 	const subtitle = state.subheadline || __( 'A calm overview of your upcoming schedule.', 'yokoi' );
 
 	headlineWrapper.append(
