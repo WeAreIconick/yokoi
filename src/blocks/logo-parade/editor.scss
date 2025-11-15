@@ -57,29 +57,6 @@
 			}
 		}
 
-		.components-placeholder {
-			min-height: 140px;
-			border: 2px dashed #007cba;
-			border-radius: 8px;
-			background: #f0f6fc;
-
-			&:hover {
-				border-color: #005a87;
-				background: #e5f2ff;
-			}
-
-			.components-placeholder__label {
-				font-weight: 600;
-				font-size: 16px;
-				color: #1e1e1e;
-			}
-
-			.components-placeholder__instructions {
-				color: #757575;
-				font-size: 14px;
-				line-height: 1.4;
-			}
-		}
 	}
 
 	.logo-parade-preview {
@@ -145,28 +122,6 @@
 
 	.logo-parade-footer {
 		margin-top: 20px;
-
-		.components-placeholder {
-			min-height: 120px;
-			border: 2px dashed #ccc;
-			border-radius: 6px;
-			background: #fafafa;
-
-			&:hover {
-				border-color: #007cba;
-				background: #f0f6fc;
-			}
-
-			.components-placeholder__label {
-				font-weight: 500;
-				color: #1e1e1e;
-			}
-
-			.components-placeholder__instructions {
-				color: #757575;
-				font-size: 13px;
-			}
-		}
 	}
 
 	.logo-parade-control {

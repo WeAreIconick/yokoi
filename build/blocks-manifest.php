@@ -210,7 +210,7 @@ return array(
 		'$schema' => 'https://schemas.wp.org/trunk/block.json',
 		'apiVersion' => 3,
 		'name' => 'yokoi/logo-parade',
-		'version' => '1.0.0',
+		'version' => '1.1.0',
 		'title' => 'Logo Parade',
 		'category' => 'yokoi',
 		'icon' => array(
@@ -329,6 +329,61 @@ return array(
 					'center',
 					'right'
 				)
+			),
+			'animationDirection' => array(
+				'type' => 'string',
+				'default' => 'left',
+				'enum' => array(
+					'left',
+					'right',
+					'bidirectional'
+				)
+			),
+			'animationType' => array(
+				'type' => 'string',
+				'default' => 'continuous',
+				'enum' => array(
+					'continuous',
+					'carousel'
+				)
+			),
+			'autoPlay' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'grayscaleEffect' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'hoverEffect' => array(
+				'type' => 'string',
+				'default' => 'colorize',
+				'enum' => array(
+					'none',
+					'colorize',
+					'scale',
+					'lift'
+				)
+			),
+			'logoOpacity' => array(
+				'type' => 'number',
+				'default' => 75,
+				'minimum' => 0,
+				'maximum' => 100
+			),
+			'logoBorder' => array(
+				'type' => 'boolean',
+				'default' => false
+			),
+			'logoPadding' => array(
+				'type' => 'number',
+				'default' => 0,
+				'minimum' => 0,
+				'maximum' => 40
+			),
+			'showIndicators' => array(
+				'type' => 'boolean',
+				'default' => false
 			)
 		),
 		'supports' => array(

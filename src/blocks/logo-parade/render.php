@@ -24,9 +24,30 @@ $logo_height           = isset( $attributes['logoHeight'] ) ? sanitize_text_fiel
 $gap_between_logos     = isset( $attributes['gapBetweenLogos'] ) ? absint( $attributes['gapBetweenLogos'] ) : 40;
 $background_color      = isset( $attributes['backgroundColor'] ) ? sanitize_text_field( $attributes['backgroundColor'] ) : '';
 $alignment             = isset( $attributes['alignment'] ) ? sanitize_text_field( $attributes['alignment'] ) : 'center';
+$animation_direction   = isset( $attributes['animationDirection'] ) ? sanitize_text_field( $attributes['animationDirection'] ) : 'left';
+$animation_type        = isset( $attributes['animationType'] ) ? sanitize_text_field( $attributes['animationType'] ) : 'continuous';
+$auto_play             = isset( $attributes['autoPlay'] ) ? (bool) $attributes['autoPlay'] : true;
+$grayscale_effect      = isset( $attributes['grayscaleEffect'] ) ? (bool) $attributes['grayscaleEffect'] : true;
+$hover_effect          = isset( $attributes['hoverEffect'] ) ? sanitize_text_field( $attributes['hoverEffect'] ) : 'colorize';
+$logo_opacity          = isset( $attributes['logoOpacity'] ) ? max( 0, min( 100, absint( $attributes['logoOpacity'] ) ) ) : 75;
+$logo_border           = isset( $attributes['logoBorder'] ) ? (bool) $attributes['logoBorder'] : false;
+$logo_padding          = isset( $attributes['logoPadding'] ) ? max( 0, min( 40, absint( $attributes['logoPadding'] ) ) ) : 0;
+$show_indicators       = isset( $attributes['showIndicators'] ) ? (bool) $attributes['showIndicators'] : false;
 
 if ( ! in_array( $alignment, array( 'left', 'center', 'right' ), true ) ) {
 	$alignment = 'center';
+}
+
+if ( ! in_array( $animation_direction, array( 'left', 'right', 'bidirectional' ), true ) ) {
+	$animation_direction = 'left';
+}
+
+if ( ! in_array( $animation_type, array( 'continuous', 'carousel' ), true ) ) {
+	$animation_type = 'continuous';
+}
+
+if ( ! in_array( $hover_effect, array( 'none', 'colorize', 'scale', 'lift' ), true ) ) {
+	$hover_effect = 'colorize';
 }
 
 $valid_logos = array();
@@ -67,6 +88,8 @@ $style_rules = array(
 	'--logos-per-view'                => (string) $logos_per_view,
 	'--logo-parade-current-per-view'  => (string) $logos_per_view,
 	'--mobile-logos-per-view'         => (string) $mobile_logos_per_view,
+	'--logo-opacity'                  => (string) ( $logo_opacity / 100 ),
+	'--logo-padding'                  => (string) $logo_padding . 'px',
 	'text-align'                      => $alignment,
 );
 
@@ -80,6 +103,10 @@ foreach ( $style_rules as $property => $value ) {
 	$style_attribute .= sprintf( '%s: %s; ', esc_attr( $property ), esc_attr( $value ) );
 }
 
+$wrapper_classes[] = 'logo-parade-grayscale-' . ( $grayscale_effect ? 'enabled' : 'disabled' );
+$wrapper_classes[] = 'logo-parade-hover-' . sanitize_html_class( $hover_effect );
+$wrapper_classes[] = 'logo-parade-border-' . ( $logo_border ? 'enabled' : 'disabled' );
+
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
 		'class'                     => implode( ' ', array_map( 'sanitize_html_class', $wrapper_classes ) ),
@@ -88,6 +115,9 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		'data-pause-on-hover'       => $pause_on_hover ? 'true' : 'false',
 		'data-logos-per-view'       => esc_attr( $logos_per_view ),
 		'data-original-count'       => esc_attr( count( $valid_logos ) ),
+		'data-animation-direction'  => esc_attr( $animation_direction ),
+		'data-animation-type'       => esc_attr( $animation_type ),
+		'data-auto-play'            => $auto_play ? 'true' : 'false',
 		'style'                     => $style_attribute,
 	)
 );
