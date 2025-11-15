@@ -5,7 +5,6 @@ import {
 	useBlockProps,
 } from '@wordpress/block-editor';
 import {
-	Button,
 	Notice,
 	PanelBody,
 	TextControl,
@@ -95,7 +94,7 @@ const WebWindowEdit = ( { attributes, setAttributes } ) => {
 						label={ __( 'Webpage URL', 'yokoi' ) }
 						value={ src }
 						onChange={ ( value ) => setAttributes( { src: value } ) }
-						placeholder="https://demo.iconick.io/twombly/"
+						placeholder="https://iconick.io"
 					/>
 					<ToggleControl
 						label={ __(
@@ -112,24 +111,6 @@ const WebWindowEdit = ( { attributes, setAttributes } ) => {
 						) }
 					/>
 				</PanelBody>
-				<PanelBody
-					title={ __( 'Powered by Telex', 'yokoi' ) }
-					initialOpen={ false }
-				>
-					<p>
-						{ __(
-							'Telex is an AI assistant that helps build WordPress blocks in minutes.',
-							'yokoi'
-						) }
-					</p>
-					<a
-						href="https://telex.automattic.ai"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						{ __( 'Learn more about Telex', 'yokoi' ) }
-					</a>
-				</PanelBody>
 			</InspectorControls>
 
 			<div
@@ -142,22 +123,26 @@ const WebWindowEdit = ( { attributes, setAttributes } ) => {
 					<span className="browser-frame-dot green" />
 					<span className="browser-frame-url">{ src || '' }</span>
 					{ src ? (
-						<Button
+						<a
+							href={ src }
 							className="browser-frame-open-button"
-							icon="external"
-							label={ __(
+							target="_blank"
+							rel="noopener noreferrer"
+							title={ __(
 								'Open full site in a new tab',
 								'yokoi'
 							) }
-							variant="tertiary"
-							onClick={ () =>
+							onClick={ ( e ) => {
+								e.preventDefault();
 								window.open(
 									src,
 									'_blank',
 									'noopener,noreferrer'
-								)
-							}
-						/>
+								);
+							} }
+						>
+							&#8599;
+						</a>
 					) : null }
 				</div>
 				<div
@@ -171,7 +156,9 @@ const WebWindowEdit = ( { attributes, setAttributes } ) => {
 							src={ src }
 							onError={ handleIframeError }
 							style={ iframeStyles }
-							sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
+							sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+							loading="lazy"
+							referrerPolicy="no-referrer-when-downgrade"
 						/>
 					) : null }
 				</div>

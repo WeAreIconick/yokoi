@@ -1,13 +1,22 @@
 import { useBlockProps } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
 
+/**
+ * WebWindow Save Component
+ * Secure rendering with proper URL sanitization
+ */
 const WebWindowSave = ( { attributes } ) => {
 	const { src, scaleToFit } = attributes;
+
+	// Sanitize URL for security - only allow http/https
+	const sanitizedSrc = src && ( src.startsWith( 'http://' ) || src.startsWith( 'https://' ) )
+		? src
+		: '';
 
 	return (
 		<div
 			{ ...useBlockProps.save() }
-			data-src={ src }
+			data-src={ sanitizedSrc }
 			data-scale-to-fit={ scaleToFit ? '1' : '0' }
 		>
 			<div className="webwindow-block-embed browser-frame">
@@ -15,10 +24,10 @@ const WebWindowSave = ( { attributes } ) => {
 					<span className="browser-frame-dot red" />
 					<span className="browser-frame-dot yellow" />
 					<span className="browser-frame-dot green" />
-					<span className="browser-frame-url">{ src || '' }</span>
-					{ src ? (
+					<span className="browser-frame-url">{ sanitizedSrc || '' }</span>
+					{ sanitizedSrc ? (
 						<a
-							href={ src }
+							href={ sanitizedSrc }
 							className="browser-frame-open-button"
 							target="_blank"
 							rel="noopener noreferrer"
@@ -32,24 +41,26 @@ const WebWindowSave = ( { attributes } ) => {
 					) : null }
 				</div>
 				<noscript>
-					{ src ? (
+					{ sanitizedSrc ? (
 						<iframe
 							title={ __(
 								'Embedded web page (noscript fallback)',
 								'yokoi'
 							) }
-							src={ src }
+							src={ sanitizedSrc }
 							style={ {
 								width: '100%',
 								minHeight: 400,
 								border: '1px solid #ccc',
 							} }
-							sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
+							sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+							loading="lazy"
+							referrerPolicy="no-referrer-when-downgrade"
 						/>
 					) : null }
 				</noscript>
 				<div className="webwindow-iframe-outer" />
-				{ ! src ? <div className="webwindow-block-empty" /> : null }
+				{ ! sanitizedSrc ? <div className="webwindow-block-empty" /> : null }
 			</div>
 		</div>
 	);

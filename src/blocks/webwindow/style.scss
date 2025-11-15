@@ -1,8 +1,10 @@
+/* Scoped styles - all styles are prefixed with .wp-block-yokoi-webwindow */
 .wp-block-yokoi-webwindow {
 	max-width: 100%;
+	isolation: isolate; /* Create new stacking context for scoping */
 }
 
-.webwindow-block-embed {
+.wp-block-yokoi-webwindow .webwindow-block-embed {
 	width: 100%;
 	background: #fff;
 	border-radius: 6px;
@@ -11,7 +13,7 @@
 	box-shadow: 0 2px 16px rgba( 0, 0, 0, 0.08 );
 }
 
-.webwindow-iframe-outer {
+.wp-block-yokoi-webwindow .webwindow-iframe-outer {
 	width: 100%;
 	aspect-ratio: 16 / 9;
 	background: #fff;
@@ -19,7 +21,7 @@
 	overflow: hidden;
 }
 
-.webwindow-block-empty {
+.wp-block-yokoi-webwindow .webwindow-block-empty {
 	font-size: 1.1em;
 	display: flex;
 	justify-content: center;
@@ -30,13 +32,13 @@
 	color: #6a6e74;
 }
 
-.webwindow-block-embed.scale-to-fit {
+.wp-block-yokoi-webwindow .webwindow-block-embed.scale-to-fit {
 	position: relative;
 	background: #fff;
 	overflow: hidden;
 }
 
-.webwindow-block-embed.scale-to-fit .webwindow-iframe-outer {
+.wp-block-yokoi-webwindow .webwindow-block-embed.scale-to-fit .webwindow-iframe-outer {
 	width: 100%;
 	aspect-ratio: 16 / 9;
 	margin: 0 auto;
@@ -45,7 +47,7 @@
 	overflow: hidden;
 }
 
-.browser-frame {
+.wp-block-yokoi-webwindow .browser-frame {
 	border-radius: 8px;
 	box-shadow: 0 4px 32px rgba( 0, 0, 0, 0.07 );
 	border: 1px solid #e4e7ea;
@@ -55,7 +57,7 @@
 	flex-direction: column;
 }
 
-.browser-frame-bar {
+.wp-block-yokoi-webwindow .browser-frame-bar {
 	display: flex;
 	align-items: center;
 	gap: 0.5em;
@@ -66,7 +68,7 @@
 	box-sizing: border-box;
 }
 
-.browser-frame-dot {
+.wp-block-yokoi-webwindow .browser-frame-dot {
 	display: inline-block;
 	width: 12px;
 	height: 12px;
@@ -74,22 +76,22 @@
 	margin-right: 4px;
 }
 
-.browser-frame-dot.red {
+.wp-block-yokoi-webwindow .browser-frame-dot.red {
 	background: #ff6053;
 	border: 1px solid #e06666;
 }
 
-.browser-frame-dot.yellow {
+.wp-block-yokoi-webwindow .browser-frame-dot.yellow {
 	background: #ffbd44;
 	border: 1px solid #f6d155;
 }
 
-.browser-frame-dot.green {
+.wp-block-yokoi-webwindow .browser-frame-dot.green {
 	background: #00ca4e;
 	border: 1px solid #83c993;
 }
 
-.browser-frame-url {
+.wp-block-yokoi-webwindow .browser-frame-url {
 	font-size: 0.97em;
 	margin-left: 1.2em;
 	color: #6a6e74;
@@ -100,7 +102,7 @@
 	flex-shrink: 1;
 }
 
-.browser-frame-open-button {
+.wp-block-yokoi-webwindow .browser-frame-open-button {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -118,7 +120,7 @@
 	line-height: 1.15em;
 }
 
-.browser-frame-open-button:hover {
+.wp-block-yokoi-webwindow .browser-frame-open-button:hover {
 	background: #f2f4fa;
 	color: #174fa8;
 }

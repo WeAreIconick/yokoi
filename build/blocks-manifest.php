@@ -779,7 +779,7 @@ return array(
 		'icon' => array(
 			'src' => '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="7" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M10 11.5 8 13l2 1.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11.5 16 13l-2 1.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
 		),
-		'description' => 'Embed external sites inside a responsive browser frame with optional scale-to-fit zoom.',
+		'description' => 'Responsive frames that look gorgeous on any device, plus automatic zoom that makes everything fit just right.',
 		'keywords' => array(
 			'embed',
 			'iframe',
@@ -788,14 +788,14 @@ return array(
 		),
 		'example' => array(
 			'attributes' => array(
-				'src' => 'https://demo.iconick.io/twombly/',
+				'src' => 'https://iconick.io',
 				'scaleToFit' => true
 			)
 		),
 		'attributes' => array(
 			'src' => array(
 				'type' => 'string',
-				'default' => 'https://demo.iconick.io/twombly/'
+				'default' => 'https://iconick.io'
 			),
 			'scaleToFit' => array(
 				'type' => 'boolean',
@@ -808,7 +808,7 @@ return array(
 				'wide',
 				'full'
 			),
-			'layout' => true
+			'layout' => false
 		),
 		'textdomain' => 'yokoi',
 		'editorScript' => 'file:./index.js',
