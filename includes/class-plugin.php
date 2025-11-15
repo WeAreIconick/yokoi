@@ -367,6 +367,7 @@ class Plugin {
 			array( 'enqueue_block_editor_assets', array( $this, 'enqueue_editor_assets' ), 5 ),
 			array( 'enqueue_block_editor_assets', array( $this, 'localize_editor_settings' ), 10 ),
 			array( 'admin_init', array( $this, 'maybe_redirect_to_site_editor' ) ),
+			array( 'enqueue_block_assets', array( $this, 'prevent_cozy_mode_frontend_styles_in_editor' ), 999 ),
 		);
 
 		foreach ( $action_hooks as $hook ) {
@@ -412,6 +413,34 @@ class Plugin {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 				error_log( 'Yokoi: Failed to register plugin action link: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			}
+		}
+	}
+
+	/**
+	 * Prevent Cozy Mode frontend styles from loading in the editor.
+	 *
+	 * @return void
+	 */
+	public function prevent_cozy_mode_frontend_styles_in_editor(): void {
+		// Only run in admin/editor context - skip on frontend
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		// Dequeue the frontend style if it was auto-loaded by WordPress
+		wp_dequeue_style( 'yokoi-cozy-mode-style' );
+		wp_deregister_style( 'yokoi-cozy-mode-style' );
+		
+		// Also try to remove any style handles that WordPress might have auto-generated
+		// WordPress auto-generates handles like 'wp-block-yokoi-cozy-mode'
+		$auto_handles = array(
+			'wp-block-yokoi-cozy-mode',
+			'yokoi-cozy-mode-style',
+		);
+		
+		foreach ( $auto_handles as $handle ) {
+			wp_dequeue_style( $handle );
+			wp_deregister_style( $handle );
 		}
 	}
 

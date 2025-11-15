@@ -69,5 +69,38 @@
 	.block-editor-block-list__block.is-selected & .cozy-mode-icon {
 		color: #3b82f6;
 	}
+
+	// Override ALL frontend styles in editor - reset fixed positioning and ensure selectability
+	.cozy-mode-button-container {
+		position: static !important;
+		bottom: auto !important;
+		right: auto !important;
+		left: auto !important;
+		transform: none !important;
+		z-index: auto !important;
+		max-width: 100% !important;
+		width: 100% !important;
+		justify-content: flex-start !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		pointer-events: auto !important;
+	}
+
+	.cozy-mode-toggle {
+		position: static !important;
+		width: fit-content !important;
+		min-width: auto !important;
+		margin: 0 !important;
+		pointer-events: none !important;
+	}
+
+	// Ensure block wrapper is selectable
+	& {
+		position: relative !important;
+		width: 100% !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		pointer-events: auto !important;
+	}
 }
 

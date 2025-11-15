@@ -39,7 +39,6 @@ return array(
 		'textdomain' => 'yokoi',
 		'editorScript' => 'file:./index.js',
 		'editorStyle' => 'file:./editor.css',
-		'style' => 'file:./style-index.css',
 		'viewScript' => 'file:./view.js',
 		'render' => 'file:./render.php'
 	),

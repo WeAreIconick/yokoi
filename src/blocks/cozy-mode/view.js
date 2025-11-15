@@ -17,7 +17,6 @@ class CozyMode {
 		this.lastFocusableElement = null;
 		this.previousActiveElement = null;
 		this.currentFontSize = 18;
-		this.isDarkMode = false;
 		this.retryCount = 0;
 		this.maxRetries = 3;
 
@@ -43,7 +42,6 @@ class CozyMode {
 		if (preferences) {
 			const prefs = JSON.parse(preferences);
 			this.currentFontSize = prefs.fontSize || 18;
-			this.isDarkMode = prefs.darkMode || false;
 		}
 		} catch (error) {
 		// eslint-disable-next-line no-console
@@ -53,12 +51,11 @@ class CozyMode {
 
 	savePreferences() {
 		try {
-				const preferences = {
-					fontSize: this.currentFontSize,
-					darkMode: this.isDarkMode,
-					lastUsed: new Date().toISOString(),
-					version: window.cozyMode?.version || '1.0.0',
-				};
+			const preferences = {
+				fontSize: this.currentFontSize,
+				lastUsed: new Date().toISOString(),
+				version: window.cozyMode?.version || '1.0.0',
+			};
 		localStorage.setItem(
 			'cozyModePreferences',
 			JSON.stringify(preferences)
@@ -96,10 +93,6 @@ class CozyMode {
 				this.resetFontSize();
 			} else if (control.classList.contains('cozy-mode-font-increase')) {
 				this.increaseFontSize();
-			} else if (control.classList.contains('cozy-mode-theme-toggle')) {
-				this.toggleTheme();
-			} else if (control.classList.contains('cozy-mode-print')) {
-				this.printArticle();
 			} else if (control.classList.contains('cozy-mode-close-error')) {
 				const errorContainer = control.closest('.cozy-mode-error');
 				if (errorContainer) {
@@ -113,6 +106,13 @@ class CozyMode {
 		// Handle overlay click
 		if (this.isActive && this.modal && event.target.classList.contains('cozy-mode-click-overlay')) {
 			this.closeModal();
+			return;
+		}
+
+		// Handle backdrop click
+		if (this.isActive && this.backdrop && event.target === this.backdrop) {
+			this.closeModal();
+			return;
 		}
 		}, { passive: false });
 
@@ -250,10 +250,16 @@ class CozyMode {
 
 		this.backdrop = this.modal?.querySelector('.cozy-mode-backdrop');
 		this.container = this.modal?.querySelector('.cozy-mode-container');
-		this.content = this.modal?.querySelector('.cozy-mode-article');
+		// Content container is .cozy-mode-content, article goes inside .cozy-mode-article
+		this.content = this.modal?.querySelector('.cozy-mode-content') || this.modal?.querySelector('.cozy-mode-article');
 		this.loading = this.modal?.querySelector('.cozy-mode-loading');
 		this.closeButton = this.modal?.querySelector('.cozy-mode-close');
 		this.controls = this.modal?.querySelector('.cozy-mode-controls');
+
+		// Ensure backdrop is clickable to close modal
+		if (this.backdrop) {
+			this.backdrop.style.cursor = 'pointer';
+		}
 
 		if (this.content) {
 		this.updateFocusableElements();
@@ -433,23 +439,46 @@ class CozyMode {
 		const cozyButtons = documentClone.querySelectorAll('.cozy-mode-button-container');
 		cozyButtons.forEach((button) => button.remove());
 		
-		// Remove entire Cozy Mode blocks
+		// Remove entire Cozy Mode blocks (but preserve the content inside)
 		const cozyBlocks = documentClone.querySelectorAll('.yokoi-cozy-mode-block');
-		cozyBlocks.forEach((block) => block.remove());
+		cozyBlocks.forEach((block) => {
+			// Instead of removing, replace with a div to preserve content structure
+			const wrapper = document.createElement('div');
+			while (block.firstChild) {
+				wrapper.appendChild(block.firstChild);
+			}
+			block.parentNode?.replaceChild(wrapper, block);
+		});
 		
 		// Remove the modal markup itself
 		const cozyModal = documentClone.querySelectorAll('.cozy-mode-modal');
 		cozyModal.forEach((modal) => modal.remove());
 		
-		// Also remove any elements with cozy-mode classes
-		const cozyElements = documentClone.querySelectorAll('[class*="cozy-mode"]');
-		cozyElements.forEach((element) => element.remove());
+		// Remove specific cozy-mode UI elements, but NOT all elements with cozy-mode in class
+		// This is important - we only want to remove UI elements, not content that might have cozy-mode classes
+		const cozyUIElements = documentClone.querySelectorAll(
+			'.cozy-mode-button-container, .cozy-mode-toggle, .cozy-mode-modal, .cozy-mode-backdrop, .cozy-mode-container, .cozy-mode-header, .cozy-mode-controls, .cozy-mode-control'
+		);
+		cozyUIElements.forEach((element) => element.remove());
 
 		const reader = new Readability(documentClone);
 		const article = reader.parse();
 
 		if (!article) {
+			if (window.yokoiDebug) {
+				// eslint-disable-next-line no-console
+				console.warn('Cozy Mode: Readability.js could not parse content. Document clone:', documentClone);
+			}
 			throw new Error('Readability.js could not parse content');
+		}
+
+		if (window.yokoiDebug) {
+			// eslint-disable-next-line no-console
+			console.log('Cozy Mode: Extracted article:', {
+				title: article.title,
+				contentLength: article.content?.length || 0,
+				excerpt: article.excerpt
+			});
 		}
 
 		return article;
@@ -462,7 +491,21 @@ class CozyMode {
 
 	populateModal(article) {
 		if (!this.modal || !this.content) {
-		return;
+			if (window.yokoiDebug) {
+				// eslint-disable-next-line no-console
+				console.warn('Cozy Mode: Modal or content container not found');
+			}
+			return;
+		}
+
+		if (!article || !article.content) {
+			if (window.yokoiDebug) {
+				// eslint-disable-next-line no-console
+				console.warn('Cozy Mode: Article or article.content is missing', article);
+			}
+			// Show error message to user
+			this.showError('Unable to extract content. Please try refreshing the page.');
+			return;
 		}
 
 		const titleElement =
@@ -483,7 +526,6 @@ class CozyMode {
 		
 		// Security: Use DOMPurify if available, otherwise sanitize via DOM parsing
 		// Readability.js already sanitizes content, but we add extra protection
-		if (article.content) {
 		// Create a temporary container to parse and sanitize HTML
 		const tempDiv = document.createElement('div');
 		tempDiv.innerHTML = article.content;
@@ -536,6 +578,19 @@ class CozyMode {
 		while (tempDiv.firstChild) {
 			articleContent.appendChild(tempDiv.firstChild);
 		}
+		
+		// Verify we have content
+		if (!articleContent.hasChildNodes() || articleContent.textContent.trim() === '') {
+			if (window.yokoiDebug) {
+				// eslint-disable-next-line no-console
+				console.warn('Cozy Mode: Article content is empty after sanitization');
+			}
+			// Try to use the original article content as fallback
+			const fallbackDiv = document.createElement('div');
+			fallbackDiv.innerHTML = article.content;
+			while (fallbackDiv.firstChild) {
+				articleContent.appendChild(fallbackDiv.firstChild);
+			}
 		}
 
 		// Final pass: Remove any Cozy Mode elements that might have slipped through
@@ -546,7 +601,16 @@ class CozyMode {
 		finalCozyElements.forEach((el) => el.remove());
 		
 		this.enhanceContent(articleContent);
-		this.content.appendChild(articleContent);
+		
+		// Find the .cozy-mode-article container inside .cozy-mode-content
+		const articleContainer = this.content.querySelector('.cozy-mode-article');
+		if (articleContainer) {
+			articleContainer.appendChild(articleContent);
+		} else {
+			// Fallback: append directly to content container
+			this.content.appendChild(articleContent);
+		}
+		
 		this.applyStoredPreferences(articleContent);
 		this.setupAnalytics(article);
 		this.setupSecurity(articleContent);
@@ -618,16 +682,11 @@ class CozyMode {
 
 	applyStoredPreferences(articleContent) {
 		if (!articleContent) {
-		return;
+			return;
 		}
 
-		articleContent.style.fontSize = `${this.currentFontSize}px`;
-
-		if (this.isDarkMode) {
-		this.modal?.classList.add('cozy-mode-dark');
-		} else {
-		this.modal?.classList.remove('cozy-mode-dark');
-		}
+		// Font size will be applied by applyFontSize() after content is loaded
+		// Don't set it here as it might be overridden
 	}
 
 	setupAnalytics(article) {
@@ -921,101 +980,36 @@ class CozyMode {
 			'.cozy-mode-article-content'
 		);
 		if (articleContent) {
-			// Apply font size with !important to override any CSS
+			// Apply base font size to the container
 			articleContent.style.setProperty('font-size', `${this.currentFontSize}px`, 'important');
 			
-			// Also apply to all paragraphs and text elements within for better coverage
-			const textElements = articleContent.querySelectorAll('p, li, span, div, h1, h2, h3, h4, h5, h6');
+			// Apply to all text elements - use a multiplier for headings to maintain hierarchy
+			const textElements = articleContent.querySelectorAll('p, li, span, div, a, blockquote, pre, code');
 			textElements.forEach((el) => {
-				// Only set if element doesn't have inline style already
-				if (!el.style.fontSize) {
-					el.style.fontSize = `${this.currentFontSize}px`;
-				}
+				el.style.setProperty('font-size', `${this.currentFontSize}px`, 'important');
+			});
+			
+			// Apply larger sizes to headings to maintain hierarchy
+			const h1Elements = articleContent.querySelectorAll('h1');
+			h1Elements.forEach((el) => {
+				el.style.setProperty('font-size', `${this.currentFontSize * 1.8}px`, 'important');
+			});
+			
+			const h2Elements = articleContent.querySelectorAll('h2');
+			h2Elements.forEach((el) => {
+				el.style.setProperty('font-size', `${this.currentFontSize * 1.5}px`, 'important');
+			});
+			
+			const h3Elements = articleContent.querySelectorAll('h3');
+			h3Elements.forEach((el) => {
+				el.style.setProperty('font-size', `${this.currentFontSize * 1.3}px`, 'important');
+			});
+			
+			const h4Elements = articleContent.querySelectorAll('h4, h5, h6');
+			h4Elements.forEach((el) => {
+				el.style.setProperty('font-size', `${this.currentFontSize * 1.1}px`, 'important');
 			});
 		}
-	}
-
-	toggleTheme() {
-		this.isDarkMode = !this.isDarkMode;
-
-		if (this.modal) {
-		this.modal.classList.toggle('cozy-mode-dark', this.isDarkMode);
-		}
-
-		this.trackEvent(this.isDarkMode ? 'dark_mode_on' : 'dark_mode_off');
-		this.savePreferences();
-	}
-
-	printArticle() {
-		const articleContent = this.modal?.querySelector(
-			'.cozy-mode-article-content'
-		);
-
-		if (!articleContent) {
-			if (window.yokoiDebug) {
-				// eslint-disable-next-line no-console
-				console.warn('Cozy Mode: Article content not found for printing');
-			}
-			return;
-		}
-
-		// Get the title
-		const titleElement = this.modal?.querySelector('.cozy-mode-title');
-		const title = titleElement?.textContent || 
-			window.cozyMode?.strings?.readingMode || 
-			'Reading Mode';
-
-		// Security: Clone content and sanitize before printing
-		const contentClone = articleContent.cloneNode(true);
-		
-		// Remove scripts and dangerous elements
-		const scripts = contentClone.querySelectorAll('script, iframe, object, embed');
-		scripts.forEach((el) => el.remove());
-		
-		// Remove event handlers
-		const allElements = contentClone.querySelectorAll('*');
-		allElements.forEach((el) => {
-			Array.from(el.attributes).forEach((attr) => {
-				if (attr.name.startsWith('on')) {
-					el.removeAttribute(attr.name);
-				}
-			});
-		});
-
-		// Create print window
-		const printWindow = window.open('', '_blank', 'noopener,noreferrer');
-		if (!printWindow) {
-			if (window.yokoiDebug) {
-				// eslint-disable-next-line no-console
-				console.warn('Cozy Mode: Print window blocked by popup blocker');
-			}
-			return;
-		}
-
-		const sanitizedContent = contentClone.innerHTML;
-		const escapedTitle = this.escapeHTML(title);
-		
-		printWindow.document.open();
-		printWindow.document.write(
-			'<!DOCTYPE html><html><head><title>' + escapedTitle + '</title>' +
-			'<style>body { font-family: Georgia, serif; margin: 40px; line-height: 1.6; } ' +
-			'img { max-width: 100%; height: auto; } ' +
-			'h1, h2, h3, h4, h5, h6 { margin-top: 1.5em; margin-bottom: 0.5em; } ' +
-			'p { margin-bottom: 1em; }</style></head><body>' + 
-			sanitizedContent + 
-			'</body></html>'
-		);
-		printWindow.document.close();
-		
-		// Wait for content to load before printing
-		printWindow.onload = () => {
-			setTimeout(() => {
-				printWindow.focus();
-				printWindow.print();
-			}, 250);
-		};
-
-		this.trackEvent('print');
 	}
 
 	trackEvent(action) {

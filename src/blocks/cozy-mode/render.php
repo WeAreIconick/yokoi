@@ -95,21 +95,23 @@ if ( ! function_exists( 'yokoi_enqueue_cozy_mode_assets' ) ) :
 		$view_handle  = 'yokoi-cozy-mode-view';
 		$style_handle = 'yokoi-cozy-mode-style';
 
-		// Register and enqueue frontend styles
-		if ( ! wp_style_is( $style_handle, 'registered' ) ) {
-			$style_path = YOKOI_PLUGIN_DIR . 'build/blocks/cozy-mode/style-index.css';
-			if ( file_exists( $style_path ) ) {
-				wp_register_style(
-					$style_handle,
-					YOKOI_PLUGIN_URL . 'build/blocks/cozy-mode/style-index.css',
-					array(),
-					$version
-				);
+		// Register and enqueue frontend styles - only on frontend, not in editor
+		if ( ! is_admin() && ! ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+			if ( ! wp_style_is( $style_handle, 'registered' ) ) {
+				$style_path = YOKOI_PLUGIN_DIR . 'build/blocks/cozy-mode/style-index.css';
+				if ( file_exists( $style_path ) ) {
+					wp_register_style(
+						$style_handle,
+						YOKOI_PLUGIN_URL . 'build/blocks/cozy-mode/style-index.css',
+						array(),
+						$version
+					);
+				}
 			}
-		}
 
-		if ( wp_style_is( $style_handle, 'registered' ) ) {
-			wp_enqueue_style( $style_handle );
+			if ( wp_style_is( $style_handle, 'registered' ) ) {
+				wp_enqueue_style( $style_handle );
+			}
 		}
 
 		if ( ! wp_script_is( $view_handle, 'registered' ) ) {
@@ -159,8 +161,6 @@ if ( ! function_exists( 'yokoi_enqueue_cozy_mode_assets' ) ) :
 					'extractionError' => __( 'Unable to extract content. Showing original content.', 'yokoi' ),
 					'loading'         => __( 'Loading...', 'yokoi' ),
 					'error'           => __( 'An error occurred. Please try again.', 'yokoi' ),
-					'toggleDarkMode'  => __( 'Toggle dark mode', 'yokoi' ),
-					'print'           => __( 'Print article', 'yokoi' ),
 				),
 				'trustedDomains' => array_values(
 					array_unique(
@@ -219,8 +219,6 @@ if ( ! function_exists( 'yokoi_get_cozy_mode_modal_markup' ) ) :
 					<button type="button" class="cozy-mode-control cozy-mode-font-decrease" aria-label="<?php esc_attr_e( 'Decrease font size', 'yokoi' ); ?>">A-</button>
 					<button type="button" class="cozy-mode-control cozy-mode-font-reset" aria-label="<?php esc_attr_e( 'Reset font size', 'yokoi' ); ?>">A</button>
 					<button type="button" class="cozy-mode-control cozy-mode-font-increase" aria-label="<?php esc_attr_e( 'Increase font size', 'yokoi' ); ?>">A+</button>
-					<button type="button" class="cozy-mode-control cozy-mode-theme-toggle" aria-label="<?php esc_attr_e( 'Toggle dark mode', 'yokoi' ); ?>">🌙</button>
-					<button type="button" class="cozy-mode-control cozy-mode-print" aria-label="<?php esc_attr_e( 'Print article', 'yokoi' ); ?>">🖨️</button>
 				</div>
 			</div>
 		</div>
