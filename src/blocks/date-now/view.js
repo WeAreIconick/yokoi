@@ -92,11 +92,6 @@ const parseEvents = ( jsonString ) => {
 		const parsed = JSON.parse( jsonString || '[]' );
 		return parsed.map( buildEvent ).filter( ( event ) => event.start );
 	} catch ( error ) {
-		// Only log in debug mode to avoid console noise
-		if ( typeof window !== 'undefined' && window.yokoiDebug ) {
-			// eslint-disable-next-line no-console
-			console.warn( 'Date.now: invalid events payload', error );
-		}
 		return [];
 	}
 };
