@@ -20,6 +20,11 @@ if ( ! function_exists( 'yokoi_render_cozy_mode_block_content' ) ) :
 	 * @return string
 	 */
 	function yokoi_render_cozy_mode_block_content( $attributes, $content, $block ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+		// Safety check - ensure we have valid attributes
+		if ( ! is_array( $attributes ) ) {
+			$attributes = array();
+		}
+
 		$button_label    = isset( $attributes['buttonLabel'] ) ? sanitize_text_field( $attributes['buttonLabel'] ) : __( 'Read in Cozy Mode', 'yokoi' );
 		$show_helper     = array_key_exists( 'showHelperText', $attributes ) ? (bool) $attributes['showHelperText'] : true;
 		$helper_text_raw = isset( $attributes['helperText'] ) ? $attributes['helperText'] : __( 'Opens a focused reading interface with clean typography.', 'yokoi' );
@@ -27,6 +32,7 @@ if ( ! function_exists( 'yokoi_render_cozy_mode_block_content' ) ) :
 
 		$post_id = get_the_ID();
 
+		// Enqueue assets - this ensures styles and scripts load
 		yokoi_enqueue_cozy_mode_assets( (int) $post_id );
 
 		$button  = sprintf(
@@ -54,11 +60,18 @@ if ( ! function_exists( 'yokoi_render_cozy_mode_block_content' ) ) :
 			);
 		}
 
-		$wrapper_attributes = get_block_wrapper_attributes(
-			array(
-				'class' => 'yokoi-cozy-mode-block',
-			)
-		);
+		// Get wrapper attributes - handle case where block context might not be available
+		$wrapper_attributes = '';
+		if ( function_exists( 'get_block_wrapper_attributes' ) && $block instanceof \WP_Block ) {
+			$wrapper_attributes = get_block_wrapper_attributes(
+				array(
+					'class' => 'yokoi-cozy-mode-block',
+				)
+			);
+		} else {
+			// Fallback if get_block_wrapper_attributes is not available or block context missing
+			$wrapper_attributes = 'class="wp-block-yokoi-cozy-mode yokoi-cozy-mode-block"';
+		}
 
 		$output  = sprintf( '<div %s>%s%s</div>', $wrapper_attributes, $button, $helper_markup );
 		$output .= yokoi_get_cozy_mode_modal_markup();
@@ -81,6 +94,19 @@ if ( ! function_exists( 'yokoi_enqueue_cozy_mode_assets' ) ) :
 		$version      = defined( 'YOKOI_VERSION' ) ? YOKOI_VERSION : '1.0.0';
 		$view_handle  = 'yokoi-cozy-mode-view';
 		$style_handle = 'yokoi-cozy-mode-style';
+
+		// Register and enqueue frontend styles
+		if ( ! wp_style_is( $style_handle, 'registered' ) ) {
+			$style_path = YOKOI_PLUGIN_DIR . 'build/blocks/cozy-mode/style-index.css';
+			if ( file_exists( $style_path ) ) {
+				wp_register_style(
+					$style_handle,
+					YOKOI_PLUGIN_URL . 'build/blocks/cozy-mode/style-index.css',
+					array(),
+					$version
+				);
+			}
+		}
 
 		if ( wp_style_is( $style_handle, 'registered' ) ) {
 			wp_enqueue_style( $style_handle );

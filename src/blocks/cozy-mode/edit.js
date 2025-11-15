@@ -29,40 +29,8 @@ const CozyModePlaceholder = ( { label, helperText, showHelperText } ) => (
 				</span>
 			</button>
 			{ showHelperText && helperText && (
-				<span className="cozy-mode-toggle__helper">{ helperText }</span>
+				<p className="cozy-mode-toggle__helper">{ helperText }</p>
 			) }
-		</div>
-
-		<div className="yokoi-cozy-mode-preview__modal">
-			<header className="yokoi-cozy-mode-preview__modal-header">
-				<span className="yokoi-cozy-mode-preview__modal-title">
-					{ __( 'Reading Mode', 'yokoi' ) }
-				</span>
-				<span className="yokoi-cozy-mode-preview__modal-close" aria-hidden="true">
-					&times;
-				</span>
-			</header>
-			<div className="yokoi-cozy-mode-preview__modal-body">
-				<p>
-					{ __(
-						'Cozy Mode reflows your content with research-backed typography for a delightful reading experience.',
-						'yokoi'
-					) }
-				</p>
-				<p>
-					{ __(
-						'Readers can toggle dark mode, adjust font size, and stay focused on the words that matter.',
-						'yokoi'
-					) }
-				</p>
-			</div>
-			<footer className="yokoi-cozy-mode-preview__modal-controls">
-				<span className="yokoi-cozy-mode-preview__control">A-</span>
-				<span className="yokoi-cozy-mode-preview__control">A</span>
-				<span className="yokoi-cozy-mode-preview__control">A+</span>
-				<span className="yokoi-cozy-mode-preview__control">🌙</span>
-				<span className="yokoi-cozy-mode-preview__control">🖨️</span>
-			</footer>
 		</div>
 	</div>
 );

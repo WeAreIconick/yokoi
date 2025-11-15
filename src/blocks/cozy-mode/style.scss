@@ -1,10 +1,363 @@
+// Scoped styles to prevent conflicts - all classes prefixed
 .yokoi-cozy-mode-block {
+	width: 100%;
+	margin: 0;
+	padding: 0;
+
 	.cozy-mode-button-container {
 		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		position: fixed;
+		bottom: 20px;
+		right: 20px;
+		z-index: 999998;
+		max-width: calc(100% - 40px);
+	}
+
+	.cozy-mode-toggle {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		padding: 10px 16px;
+		background: #ffffff;
+		color: #111827;
+		border: 1.5px solid #d1d5db;
+		border-radius: 6px;
+		font-weight: 500;
+		font-size: 14px;
+		line-height: 1.5;
+		cursor: pointer;
+		transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+		width: fit-content;
+		text-decoration: none;
+		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+		&:hover {
+			background: #f9fafb;
+			border-color: #9ca3af;
+			box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+		}
+
+		&:focus {
+			outline: 2px solid #3b82f6;
+			outline-offset: 2px;
+		}
+
+		&.loading {
+			opacity: 0.7;
+			cursor: wait;
+		}
+	}
+
+	.cozy-mode-label {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	.cozy-mode-helper {
+		font-size: 13px;
+		line-height: 1.5;
+		color: #6b7280;
+		margin: 0;
+		max-width: 400px;
+	}
+
+	.cozy-mode-icon {
+		display: inline-flex;
+		width: 18px;
+		height: 18px;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		color: #4b5563;
 	}
 
 	&.is-style-centered {
 		text-align: center;
+	}
+
+	// Responsive adjustments for mobile
+	@media (max-width: 782px) {
+		.cozy-mode-button-container {
+			bottom: 20px;
+			left: 50%;
+			right: auto;
+			transform: translateX(-50%);
+			max-width: calc(100% - 40px);
+			width: auto;
+			justify-content: center;
+		}
+
+		.cozy-mode-toggle {
+			font-size: 14px;
+			padding: 12px 20px;
+			border-radius: 50px;
+			box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.2), 0 4px 8px -2px rgba(0, 0, 0, 0.1);
+			min-width: 200px;
+			justify-content: center;
+
+			&:hover {
+				box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.25), 0 6px 12px -2px rgba(0, 0, 0, 0.15);
+			}
+		}
+
+		.cozy-mode-helper {
+			display: none; // Hide helper text on mobile to save space
+		}
+	}
+
+	// Small mobile devices
+	@media (max-width: 480px) {
+		.cozy-mode-button-container {
+			bottom: 16px;
+			max-width: calc(100% - 32px);
+		}
+
+		.cozy-mode-toggle {
+			font-size: 13px;
+			padding: 10px 18px;
+			min-width: 180px;
+		}
+	}
+}
+
+// Modal styles - scoped to prevent conflicts
+.cozy-mode-modal {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	width: 100vw;
+	height: 100vh;
+	z-index: 999999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+	opacity: 0;
+	visibility: hidden;
+	transition: opacity 0.3s ease, visibility 0.3s ease;
+
+	&.active {
+		opacity: 1;
+		visibility: visible;
+	}
+
+	&[hidden] {
+		display: none !important;
+	}
+}
+
+.cozy-mode-backdrop {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	width: 100vw;
+	height: 100vh;
+	background: rgba(0, 0, 0, 0.75);
+	backdrop-filter: blur(2px);
+	z-index: 0;
+}
+
+.cozy-mode-container {
+	position: relative;
+	z-index: 1;
+	background: #ffffff;
+	border-radius: 12px;
+	box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+	max-width: 800px;
+	width: 100%;
+	max-height: 90vh;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.cozy-mode-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 20px 24px;
+	border-bottom: 1px solid #e5e7eb;
+}
+
+.cozy-mode-title {
+	margin: 0;
+	font-size: 24px;
+	font-weight: 600;
+	color: #111827;
+}
+
+.cozy-mode-close {
+	background: transparent;
+	border: none;
+	font-size: 28px;
+	line-height: 1;
+	color: #6b7280;
+	cursor: pointer;
+	padding: 4px;
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 4px;
+	transition: background-color 0.15s ease, color 0.15s ease;
+
+	&:hover {
+		background: #f3f4f6;
+		color: #111827;
+	}
+
+	&:focus {
+		outline: 2px solid #3b82f6;
+		outline-offset: 2px;
+	}
+}
+
+.cozy-mode-content {
+	flex: 1;
+	overflow-y: auto;
+	padding: 24px;
+}
+
+.cozy-mode-article-content {
+	font-size: 18px;
+	line-height: 1.6;
+	
+	p, li, span, div {
+		font-size: inherit;
+	}
+	
+	h1, h2, h3, h4, h5, h6 {
+		font-size: inherit;
+		font-weight: 600;
+	}
+}
+
+.cozy-mode-loading {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 40px;
+	gap: 16px;
+}
+
+.cozy-mode-spinner {
+	width: 40px;
+	height: 40px;
+	border: 3px solid #e5e7eb;
+	border-top-color: #3b82f6;
+	border-radius: 50%;
+	animation: cozy-mode-spin 0.8s linear infinite;
+}
+
+@keyframes cozy-mode-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.cozy-mode-article {
+	min-height: 200px;
+}
+
+.cozy-mode-controls {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 16px 24px;
+	border-top: 1px solid #e5e7eb;
+	background: #f9fafb;
+}
+
+.cozy-mode-control {
+	background: #ffffff;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	padding: 8px 12px;
+	font-size: 14px;
+	cursor: pointer;
+	transition: background-color 0.15s ease, border-color 0.15s ease;
+
+	&:hover {
+		background: #f3f4f6;
+		border-color: #9ca3af;
+	}
+
+	&:focus {
+		outline: 2px solid #3b82f6;
+		outline-offset: 2px;
+	}
+}
+
+.cozy-mode-click-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 0;
+	cursor: pointer;
+}
+
+// Dark mode support
+.cozy-mode-modal.cozy-mode-dark {
+	.cozy-mode-container {
+		background: #1f2937;
+		color: #f9fafb;
+	}
+
+	.cozy-mode-header {
+		border-bottom-color: #374151;
+	}
+
+	.cozy-mode-title {
+		color: #f9fafb;
+	}
+
+	.cozy-mode-close {
+		color: #9ca3af;
+
+		&:hover {
+			background: #374151;
+			color: #f9fafb;
+		}
+	}
+
+	.cozy-mode-content {
+		color: #f9fafb;
+	}
+
+	.cozy-mode-controls {
+		background: #111827;
+		border-top-color: #374151;
+	}
+
+	.cozy-mode-control {
+		background: #374151;
+		border-color: #4b5563;
+		color: #f9fafb;
+
+		&:hover {
+			background: #4b5563;
+			border-color: #6b7280;
+		}
+	}
+}
+
+// Reduced motion support
+.cozy-mode-modal.cozy-mode-reduced-motion {
+	.cozy-mode-spinner {
+		animation: none;
 	}
 }
 

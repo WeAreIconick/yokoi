@@ -209,7 +209,7 @@ class Block_Registry {
 	private function get_block_registration_args( string $name, array $definition ): array {
 		$args = array();
 
-		// Special handling for NavyGator - ensure render_callback is set
+		// Special handling for blocks with render callbacks
 		if ( 'yokoi/navygator' === $name ) {
 			$renderer_file = YOKOI_PLUGIN_DIR . 'includes/Navygator/Block_Renderer.php';
 
@@ -223,6 +223,22 @@ class Block_Registry {
 				$args['render_callback'] = array( 'Yokoi\\Navygator\\Block_Renderer', 'render' );
 			}
 			// If Block_Renderer doesn't exist, WordPress will use render.php from block.json
+		}
+
+		// Ensure Cozy Mode render callback is explicitly set
+		if ( 'yokoi/cozy-mode' === $name ) {
+			$render_file = $definition['path'] . '/render.php';
+			if ( file_exists( $render_file ) ) {
+				// Explicitly set render callback to ensure it works
+				// The render.php file defines functions and returns the output
+				$args['render_callback'] = function( $attributes, $content, $block ) use ( $render_file ) {
+					// Include the render file - WordPress passes $attributes, $content, $block as variables
+					// The file will return the rendered output
+					$result = include $render_file;
+					// Ensure we return a string
+					return is_string( $result ) ? $result : '';
+				};
+			}
 		}
 
 		return $args;
