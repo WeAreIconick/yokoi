@@ -42,7 +42,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 					title={ __( 'Calendar Settings', 'yokoi' ) }
 					initialOpen={ true }
 				>
-					<BaseControl>
+					<BaseControl __nextHasNoMarginBottom={ true }>
 						<TextControl
 							label={ __(
 								'Google Calendar ID or Share URL',
@@ -77,6 +77,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 						onChange={ ( value ) =>
 							setAttributes( { showWeekends: value } )
 						}
+						__nextHasNoMarginBottom={ true }
 					/>
 					<RangeControl
 						label={ __(
@@ -89,6 +90,8 @@ const Edit = ( { attributes, setAttributes } ) => {
 						}
 						min={ 1 }
 						max={ 10 }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 				</PanelBody>
 

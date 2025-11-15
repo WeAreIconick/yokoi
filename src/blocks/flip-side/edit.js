@@ -236,6 +236,7 @@ const FlipSideEdit = ( { attributes, setAttributes } ) => {
 							),
 							safeCards.length
 						) }
+						__nextHasNoMarginBottom={ true }
 					>
 						<div className="card-management-buttons">
 							<Button
@@ -372,6 +373,7 @@ const FlipSideEdit = ( { attributes, setAttributes } ) => {
 												? __( 'Front Image', 'yokoi' )
 												: __( 'Back Image', 'yokoi' )
 										}
+										__nextHasNoMarginBottom={ true }
 									>
 										<MediaUploadCheck>
 											<MediaUpload
@@ -471,6 +473,7 @@ const FlipSideEdit = ( { attributes, setAttributes } ) => {
 							'Display arrows to navigate between cards.',
 							'yokoi'
 						) }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<ToggleControl
 						label={ __( 'Show Indicators', 'yokoi' ) }
@@ -482,6 +485,7 @@ const FlipSideEdit = ( { attributes, setAttributes } ) => {
 							'Display dots to indicate card position.',
 							'yokoi'
 						) }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<ToggleControl
 						label={ __( 'Auto Play', 'yokoi' ) }
@@ -493,6 +497,7 @@ const FlipSideEdit = ( { attributes, setAttributes } ) => {
 							'Automatically cycle through cards.',
 							'yokoi'
 						) }
+						__nextHasNoMarginBottom={ true }
 					/>
 					{ autoPlay && (
 						<RangeControl
@@ -514,6 +519,8 @@ const FlipSideEdit = ( { attributes, setAttributes } ) => {
 								'Time between card transitions in milliseconds.',
 								'yokoi'
 							) }
+							__next40pxDefaultSize={ true }
+							__nextHasNoMarginBottom={ true }
 						/>
 					) }
 				</PanelBody>
@@ -537,6 +544,8 @@ const FlipSideEdit = ( { attributes, setAttributes } ) => {
 							'Width of the card in pixels.',
 							'yokoi'
 						) }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<RangeControl
 						label={ __( 'Card Height', 'yokoi' ) }
@@ -560,6 +569,8 @@ const FlipSideEdit = ( { attributes, setAttributes } ) => {
 							'Height of the card in pixels.',
 							'yokoi'
 						) }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 				</PanelBody>
 

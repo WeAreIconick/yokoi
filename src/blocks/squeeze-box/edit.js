@@ -268,7 +268,7 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 					title={ __( 'Colors', 'yokoi' ) }
 					initialOpen={ false }
 				>
-					<BaseControl label={ __( 'Primary Color', 'yokoi' ) }>
+					<BaseControl label={ __( 'Primary Color', 'yokoi' ) } __nextHasNoMarginBottom={ true }>
 						<ColorPalette
 							value={ primaryColor }
 							onChange={ ( color ) =>

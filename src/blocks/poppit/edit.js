@@ -310,6 +310,7 @@ export default function Edit( { attributes, setAttributes } ) {
 						onChange={ ( value ) =>
 							setAttributes( { showCloseButton: value } )
 						}
+						__nextHasNoMarginBottom={ true }
 					/>
 
 					<RangeControl
@@ -321,6 +322,8 @@ export default function Edit( { attributes, setAttributes } ) {
 						min={ 0 }
 						max={ 1 }
 						step={ 0.1 }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 				</PanelBody>
 
@@ -349,6 +352,8 @@ export default function Edit( { attributes, setAttributes } ) {
 							min={ 0 }
 							max={ 60 }
 							step={ 1 }
+							__next40pxDefaultSize={ true }
+							__nextHasNoMarginBottom={ true }
 						/>
 					) }
 
@@ -362,6 +367,8 @@ export default function Edit( { attributes, setAttributes } ) {
 							min={ 0 }
 							max={ 100 }
 							step={ 5 }
+							__next40pxDefaultSize={ true }
+							__nextHasNoMarginBottom={ true }
 						/>
 					) }
 
@@ -376,6 +383,7 @@ export default function Edit( { attributes, setAttributes } ) {
 								'Show popup when user moves cursor to leave the page',
 								'yokoi'
 							) }
+							__nextHasNoMarginBottom={ true }
 						/>
 					) }
 				</PanelBody>
@@ -394,6 +402,7 @@ export default function Edit( { attributes, setAttributes } ) {
 							'Allow the popup to be shown again after a specified delay',
 							'yokoi'
 						) }
+						__nextHasNoMarginBottom={ true }
 					/>
 
 					{ allowReset && (
@@ -411,6 +420,8 @@ export default function Edit( { attributes, setAttributes } ) {
 									'Time in minutes before the popup can be shown again',
 									'yokoi'
 								) }
+								__next40pxDefaultSize={ true }
+								__nextHasNoMarginBottom={ true }
 							/>
 
 							<div
@@ -452,6 +463,7 @@ export default function Edit( { attributes, setAttributes } ) {
 						onChange={ ( value ) =>
 							setAttributes( { emailEnabled: value } )
 						}
+						__nextHasNoMarginBottom={ true }
 					/>
 
 					{ emailEnabled && (
@@ -497,6 +509,7 @@ export default function Edit( { attributes, setAttributes } ) {
 								targeting: { ...targeting, devices },
 							} );
 						} }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<CheckboxControl
 						label={ __( 'Tablet', 'yokoi' ) }
@@ -511,6 +524,7 @@ export default function Edit( { attributes, setAttributes } ) {
 								targeting: { ...targeting, devices },
 							} );
 						} }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<CheckboxControl
 						label={ __( 'Mobile', 'yokoi' ) }
@@ -525,6 +539,7 @@ export default function Edit( { attributes, setAttributes } ) {
 								targeting: { ...targeting, devices },
 							} );
 						} }
+						__nextHasNoMarginBottom={ true }
 					/>
 
 					<SelectControl

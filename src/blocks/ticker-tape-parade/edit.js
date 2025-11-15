@@ -184,7 +184,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 
 			<InspectorControls>
 				<PanelBody title={ __( 'Ticker Items', 'yokoi' ) }>
-					<BaseControl>
+					<BaseControl __nextHasNoMarginBottom={ true }>
 						<TextareaControl
 							label={ __( 'Ticker Text', 'yokoi' ) }
 							value={ content }
@@ -226,6 +226,8 @@ const Edit = ( { attributes, setAttributes } ) => {
 						onChange={ ( value ) => setAttributes( { fontSize: value } ) }
 						min={ 12 }
 						max={ 36 }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 				</PanelBody>
 
@@ -240,11 +242,14 @@ const Edit = ( { attributes, setAttributes } ) => {
 							'Higher values scroll faster (1 = slowest, 100 = fastest)',
 							'yokoi'
 						) }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<ToggleControl
 						label={ __( 'Pause on Hover', 'yokoi' ) }
 						checked={ pauseOnHover }
 						onChange={ ( value ) => setAttributes( { pauseOnHover: value } ) }
+						__nextHasNoMarginBottom={ true }
 					/>
 				</PanelBody>
 
@@ -272,6 +277,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 						label={ __( 'Show Background', 'yokoi' ) }
 						checked={ hasBackground }
 						onChange={ ( value ) => setAttributes( { hasBackground: value } ) }
+						__nextHasNoMarginBottom={ true }
 					/>
 				</PanelColorSettings>
 			</InspectorControls>

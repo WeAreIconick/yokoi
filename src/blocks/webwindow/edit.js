@@ -111,6 +111,7 @@ const WebWindowEdit = ( { attributes, setAttributes } ) => {
 							'Zooms out the embedded page so more of the full site is visible. This may reduce readability or interactivity.',
 							'yokoi'
 						) }
+						__nextHasNoMarginBottom={ true }
 					/>
 				</PanelBody>
 			</InspectorControls>

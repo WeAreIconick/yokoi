@@ -193,6 +193,7 @@ const Edit = ( {
 										onChange={ ( value ) =>
 											updateLogo( index, { newTab: value } )
 										}
+										__nextHasNoMarginBottom={ true }
 									/>
 								</div>
 								<div
@@ -246,6 +247,7 @@ const Edit = ( {
 							'Automatically rotate logos when the page loads.',
 							'yokoi'
 						) }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<SelectControl
 						label={ __( 'Animation Type', 'yokoi' ) }
@@ -298,6 +300,8 @@ const Edit = ( {
 							'Time each group of logos remains visible.',
 							'yokoi'
 						) }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<RangeControl
 						label={ __( 'Transition duration (ms)', 'yokoi' ) }
@@ -312,6 +316,8 @@ const Edit = ( {
 							'Speed of the scrolling animation.',
 							'yokoi'
 						) }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<ToggleControl
 						label={ __( 'Pause on hover', 'yokoi' ) }
@@ -323,6 +329,7 @@ const Edit = ( {
 							'Stop the parade when visitors hover over it.',
 							'yokoi'
 						) }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<ToggleControl
 						label={ __( 'Show indicators', 'yokoi' ) }
@@ -334,6 +341,7 @@ const Edit = ( {
 							'Display navigation dots below the carousel.',
 							'yokoi'
 						) }
+						__nextHasNoMarginBottom={ true }
 					/>
 				</PanelBody>
 
@@ -349,6 +357,8 @@ const Edit = ( {
 						}
 						min={ 1 }
 						max={ 8 }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<RangeControl
 						label={ __( 'Logos per view (mobile)', 'yokoi' ) }
@@ -358,6 +368,8 @@ const Edit = ( {
 						}
 						min={ 1 }
 						max={ 4 }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<ToggleControl
 						label={ __( 'Hide on mobile devices', 'yokoi' ) }
@@ -365,6 +377,7 @@ const Edit = ( {
 						onChange={ ( value ) =>
 							setAttributes( { hideOnMobile: value } )
 						}
+						__nextHasNoMarginBottom={ true }
 					/>
 				</PanelBody>
 
@@ -382,6 +395,7 @@ const Edit = ( {
 							'Apply grayscale filter to logos by default.',
 							'yokoi'
 						) }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<RangeControl
 						label={ __( 'Logo opacity (%)', 'yokoi' ) }
@@ -395,6 +409,8 @@ const Edit = ( {
 							'Default opacity level for logos.',
 							'yokoi'
 						) }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<SelectControl
 						label={ __( 'Hover effect', 'yokoi' ) }
@@ -424,6 +440,7 @@ const Edit = ( {
 							'Add a subtle border around each logo.',
 							'yokoi'
 						) }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<RangeControl
 						label={ __( 'Logo padding (px)', 'yokoi' ) }
@@ -437,6 +454,8 @@ const Edit = ( {
 							'Internal spacing around each logo.',
 							'yokoi'
 						) }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 				</PanelBody>
 
@@ -469,6 +488,8 @@ const Edit = ( {
 						}
 						min={ 0 }
 						max={ 100 }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 					<div className="logo-parade-control">
 						<span className="logo-parade-control__label">

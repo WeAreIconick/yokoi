@@ -53,11 +53,13 @@ export default function Edit( { attributes, setAttributes } ) {
 						checked={ showNumbers }
 						onChange={ ( value ) => setAttributes( { showNumbers: value } ) }
 						help={ __( 'Display numbered list instead of bullets', 'yokoi' ) }
+						__nextHasNoMarginBottom={ true }
 					/>
 
 					<BaseControl
 						label={ __( 'Heading Levels', 'yokoi' ) }
 						help={ __( 'Select which heading levels to include in the table of contents', 'yokoi' ) }
+						__nextHasNoMarginBottom={ true }
 					>
 						<div style={ { marginTop: '8px' } }>
 							{ [ 1, 2, 3, 4, 5, 6 ].map( ( level ) => (
@@ -66,6 +68,7 @@ export default function Edit( { attributes, setAttributes } ) {
 									label={ __( `Heading ${ level } (H${ level })`, 'yokoi' ) }
 									checked={ isHeadingLevelSelected( level ) }
 									onChange={ () => toggleHeadingLevel( level ) }
+									__nextHasNoMarginBottom={ true }
 								/>
 							) ) }
 						</div>
@@ -73,14 +76,14 @@ export default function Edit( { attributes, setAttributes } ) {
 				</PanelBody>
 
 				<PanelBody title={ __( 'Color Settings', 'yokoi' ) } initialOpen={ false }>
-					<BaseControl label={ __( 'Background Color', 'yokoi' ) }>
+					<BaseControl label={ __( 'Background Color', 'yokoi' ) } __nextHasNoMarginBottom={ true }>
 						<ColorPalette
 							value={ backgroundColor }
 							onChange={ ( value ) => setAttributes( { backgroundColor: value } ) }
 						/>
 					</BaseControl>
 
-					<BaseControl label={ __( 'Text Color', 'yokoi' ) }>
+					<BaseControl label={ __( 'Text Color', 'yokoi' ) } __nextHasNoMarginBottom={ true }>
 						<ColorPalette
 							value={ textColor }
 							onChange={ ( value ) => setAttributes( { textColor: value } ) }
