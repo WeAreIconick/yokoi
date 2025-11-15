@@ -124,10 +124,11 @@ class Plugin {
 		);
 
 		foreach ( $dependencies as $file => $class_name ) {
-			$file_path = YOKOI_PLUGIN_DIR . 'includes/' . $file;
+			$file_path = 'includes/' . $file;
 			if ( ! Dependency_Checker::require_file( $file_path, true ) ) {
 				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-					error_log( "Yokoi: Required file not found: {$file_path}" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					$full_path = YOKOI_PLUGIN_DIR . $file_path;
+					error_log( "Yokoi: Required file not found: {$full_path}" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 					error_log( "Yokoi: Failed to load required file: {$file}" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				}
 				continue;
@@ -150,7 +151,7 @@ class Plugin {
 		);
 
 		foreach ( $block_services as $file => $class_name ) {
-			$file_path = YOKOI_PLUGIN_DIR . 'includes/' . $file;
+			$file_path = 'includes/' . $file;
 			if ( Dependency_Checker::require_file( $file_path, true ) ) {
 				$full_class_name = __NAMESPACE__ . '\\' . $class_name;
 				if ( Dependency_Checker::class_exists( $full_class_name ) ) {
