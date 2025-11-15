@@ -160,7 +160,7 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 			setAttributes( { items: nextItems } );
 		} catch ( error ) {
 			// eslint-disable-next-line no-console
-			console.error( 'Error updating item:', error );
+			// Silent error handling
 		}
 	};
 
@@ -181,7 +181,7 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 			setAttributes( { items: nextItems } );
 		} catch ( error ) {
 			// eslint-disable-next-line no-console
-			console.error( 'Error adding item:', error );
+			// Silent error handling
 		}
 	};
 
@@ -200,7 +200,7 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 			setAttributes( { items: nextItems } );
 		} catch ( error ) {
 			// eslint-disable-next-line no-console
-			console.error( 'Error removing item:', error );
+			// Silent error handling
 		}
 	};
 

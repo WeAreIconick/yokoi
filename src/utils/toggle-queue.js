@@ -96,8 +96,7 @@ export class ToggleQueue {
 				this.onComplete( updatesObject );
 			}
 		} catch ( error ) {
-			// eslint-disable-next-line no-console
-			console.error( 'ToggleQueue processing error:', error );
+			// Silent error handling
 		} finally {
 			this.processing = false;
 

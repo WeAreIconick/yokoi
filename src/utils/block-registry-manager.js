@@ -60,10 +60,6 @@ function unregisterDisabledBlocks( settings ) {
 		// Don't unregister blocks with render_callbacks - they're PHP-based and can't be re-registered client-side
 		// These blocks should be filtered via allowed_block_types_all filter instead
 		if ( blockType.render ) {
-			if ( window.yokoiDebug && blockName === 'yokoi/navygator' ) {
-				// eslint-disable-next-line no-console
-				console.debug( 'Yokoi: Skipping unregistration of NavyGator (has render_callback)' );
-			}
 			return;
 		}
 
@@ -75,8 +71,7 @@ function unregisterDisabledBlocks( settings ) {
 			unregister( blockName );
 			UNREGISTERED_BLOCKS.set( blockName, true );
 		} catch ( error ) {
-			// eslint-disable-next-line no-console
-			console.warn( `Failed to unregister block ${ blockName }:`, error );
+			// Silent error handling
 		}
 	} );
 }
@@ -116,26 +111,8 @@ function registerEnabledBlocks( settings ) {
 				
 				UNREGISTERED_BLOCKS.delete( blockName );
 				// Don't delete from cache - keep it for future use
-				
-				if ( window.yokoiDebug && blockName === 'yokoi/navygator' ) {
-					// eslint-disable-next-line no-console
-					console.debug( 'Yokoi: Re-registered NavyGator block', {
-						hasRenderCallback: !!cachedMetadata.render,
-						hasEdit: !!cachedMetadata.edit,
-					} );
-				}
 			} catch ( error ) {
-				// eslint-disable-next-line no-console
-				console.warn( `Failed to re-register block ${ blockName }:`, error );
-				if ( window.yokoiDebug && blockName === 'yokoi/navygator' ) {
-					// eslint-disable-next-line no-console
-					console.error( 'Yokoi: NavyGator re-registration error details', error, cachedMetadata );
-				}
-			}
-		} else {
-			if ( window.yokoiDebug ) {
-				// eslint-disable-next-line no-console
-				console.warn( `Yokoi: Cannot re-register ${ blockName } - no cached metadata. Block may need page refresh.` );
+				// Silent error handling
 			}
 		}
 	} );
@@ -268,8 +245,6 @@ export function refreshBlockInserter( forceClose = false ) {
 				}
 			}, 200 );
 		} catch ( error ) {
-			// eslint-disable-next-line no-console
-			console.debug( 'Block inserter refresh:', error );
 			resolve( false );
 		}
 	} );
@@ -295,16 +270,6 @@ function cacheAllYokoiBlocks() {
 			// Always update cache to ensure we have the latest metadata
 			// This is important for blocks like NavyGator that have render_callbacks
 			BLOCK_METADATA_CACHE.set( blockType.name, blockType );
-			
-			if ( window.yokoiDebug && blockType.name === 'yokoi/navygator' ) {
-				// eslint-disable-next-line no-console
-				console.debug( 'Yokoi: Cached NavyGator block metadata', {
-					name: blockType.name,
-					hasRenderCallback: !!blockType.render,
-					hasEdit: !!blockType.edit,
-					hasSave: !!blockType.save,
-				} );
-			}
 		}
 	} );
 }
@@ -333,24 +298,6 @@ export function updateBlocks( settings ) {
 	// Cache all Yokoi blocks before we start unregistering
 	// This ensures we can re-register them even if they were never unregistered
 	cacheAllYokoiBlocks();
-	
-	// Debug: Log block states
-	if ( window.yokoiDebug ) {
-		// eslint-disable-next-line no-console
-		console.debug( 'Yokoi: Updating blocks', {
-			enabled: enabledBlocks,
-			disabled: disabledBlocks,
-			registered: enabledBlocks.map( name => {
-				const blockType = getBlockType( name );
-				return {
-					name,
-					registered: !!blockType,
-					hasRenderCallback: blockType?.render ? true : false,
-				};
-			} ),
-			cached: Array.from( BLOCK_METADATA_CACHE.keys() ),
-		} );
-	}
 	
 	// First, re-register any blocks that should be enabled
 	registerEnabledBlocks( settings );

@@ -45,7 +45,7 @@ class Readability {
 			};
 		} catch (error) {
 			// eslint-disable-next-line no-console
-			console.error('Readability parsing error:', error);
+			// Silent error handling
 			return null;
 		}
 	}

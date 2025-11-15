@@ -20,7 +20,7 @@
 			return Array.isArray( cards ) ? cards : [];
 		} catch ( error ) {
 			// eslint-disable-next-line no-console
-			console.warn( 'Yokoi Flip Side: invalid cards data', error );
+			// Silent error handling
 			return [];
 		}
 	};

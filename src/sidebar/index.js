@@ -20,11 +20,6 @@ import { ToggleQueue } from '../utils/toggle-queue';
 import { updateBlocks, manualRefreshInserter } from '../utils/block-registry-manager';
 import './style.scss';
 
-const DEBUG_STORAGE_KEY = 'YOKOI_DEBUG';
-
-const ensureDebugFlag = () => false;
-const recordDebugLog = () => {};
-const logDebug = () => {};
 
 const bootstrap = window.yokoiSettings || {};
 const initialBlockList = Array.isArray( bootstrap.blocks ) ? bootstrap.blocks : [];
@@ -1244,8 +1239,7 @@ const YokoiSidebar = () => {
 						} ) );
 					}
 				} catch ( err ) {
-					// Handle error.
-					console.error( 'Failed to import settings:', err );
+					// Silent error handling
 				}
 			};
 			reader.readAsText( file );
@@ -1273,8 +1267,7 @@ const YokoiSidebar = () => {
 		try {
 			await manualRefreshInserter();
 		} catch ( error ) {
-			// eslint-disable-next-line no-console
-			console.debug( 'Failed to refresh inserter:', error );
+			// Silent error handling
 		} finally {
 			setTimeout( () => {
 				setIsRefreshingInserter( false );

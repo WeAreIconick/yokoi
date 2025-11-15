@@ -377,9 +377,7 @@
 				instances.push( instance );
 			} catch ( error ) {
 				// Silently fail - don't break the page
-				if ( window.console && window.console.error ) {
-					console.error( 'Logo Parade initialization error:', error );
-				}
+				// Silent error handling
 			}
 		} );
 

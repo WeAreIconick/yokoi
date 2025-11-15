@@ -19,9 +19,6 @@ export function createBlockNamespace( blockName, config = {} ) {
 
 	// Prevent duplicate initialization.
 	if ( window[ globalKey ] ) {
-		if ( config.debug ) {
-			console.warn( `[${ namespace }] Already initialized. Skipping.` );
-		}
 		return null;
 	}
 
@@ -34,7 +31,6 @@ export function createBlockNamespace( blockName, config = {} ) {
 		blockSlug,
 		globalKey,
 		config: {
-			debug: config.debug || false,
 			...config,
 		},
 		/**
@@ -73,35 +69,31 @@ export function createBlockNamespace( blockName, config = {} ) {
 			};
 		},
 		/**
-		 * Log debug message.
+		 * Log debug message (no-op).
 		 *
 		 * @param {string} message Message to log.
 		 * @param {*} data Additional data.
 		 */
 		log( message, data = null ) {
-			if ( isolated.config.debug ) {
-				console.log( `[${ namespace }] ${ message }`, data || '' );
-			}
+			// Silent - no logging
 		},
 		/**
-		 * Log warning message.
+		 * Log warning message (no-op).
 		 *
 		 * @param {string} message Message to log.
 		 * @param {*} data Additional data.
 		 */
 		warn( message, data = null ) {
-			if ( isolated.config.debug ) {
-				console.warn( `[${ namespace }] ${ message }`, data || '' );
-			}
+			// Silent - no logging
 		},
 		/**
-		 * Log error message.
+		 * Log error message (no-op).
 		 *
 		 * @param {string} message Message to log.
 		 * @param {Error} error Error object.
 		 */
 		error( message, error = null ) {
-			console.error( `[${ namespace }] ${ message }`, error || '' );
+			// Silent - no logging
 		},
 	};
 

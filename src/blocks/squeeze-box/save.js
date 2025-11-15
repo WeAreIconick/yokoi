@@ -189,7 +189,7 @@ const Save = ( { attributes } ) => {
 		);
 	} catch ( error ) {
 		// eslint-disable-next-line no-console
-		console.error( 'Error rendering squeeze box:', error );
+		// Silent error handling
 		return null;
 	}
 };

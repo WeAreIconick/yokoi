@@ -23,8 +23,6 @@
 			}
 			return element.scrollHeight || 0;
 		} catch ( error ) {
-			// eslint-disable-next-line no-console
-			console.warn( 'Error calculating height:', error );
 			return 0;
 		}
 	};
@@ -47,8 +45,7 @@
 
 			element.style[ property ] = value;
 		} catch ( error ) {
-			// eslint-disable-next-line no-console
-			console.warn( 'Error setting style:', error );
+			// Silent error handling
 		}
 	};
 
@@ -67,8 +64,7 @@
 				safeSetStyle( content, 'maxHeight', '0' );
 			}
 		} catch ( error ) {
-			// eslint-disable-next-line no-console
-			console.warn( 'Error updating content height:', error );
+			// Silent error handling
 		}
 	};
 
@@ -100,13 +96,11 @@
 						updateContentHeight( input, content );
 					}
 				} catch ( error ) {
-					// eslint-disable-next-line no-console
-					console.warn( 'Error in change event:', error );
+					// Silent error handling
 				}
 			} );
 		} catch ( error ) {
-			// eslint-disable-next-line no-console
-			console.warn( 'Error initializing tab:', error );
+			// Silent error handling
 		}
 	};
 
@@ -133,8 +127,7 @@
 				tabs.forEach( initializeTab );
 			} );
 		} catch ( error ) {
-			// eslint-disable-next-line no-console
-			console.error( 'Error initializing squeeze boxes:', error );
+			// Silent error handling
 		}
 	};
 
@@ -165,8 +158,7 @@
 				} );
 			} );
 		} catch ( error ) {
-			// eslint-disable-next-line no-console
-			console.warn( 'Error handling resize:', error );
+			// Silent error handling
 		}
 	}, 250 );
 
@@ -179,8 +171,7 @@
 				} );
 			}
 		} catch ( error ) {
-			// eslint-disable-next-line no-console
-			console.error( 'Error during initialization:', error );
+			// Silent error handling
 		}
 	};
 

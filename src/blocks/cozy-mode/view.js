@@ -44,8 +44,7 @@ class CozyMode {
 			this.currentFontSize = prefs.fontSize || 18;
 		}
 		} catch (error) {
-		// eslint-disable-next-line no-console
-		console.warn('Cozy Mode: Could not load preferences:', error);
+			// Silent error handling
 		}
 	}
 
@@ -61,8 +60,7 @@ class CozyMode {
 			JSON.stringify(preferences)
 		);
 		} catch (error) {
-		// eslint-disable-next-line no-console
-		console.warn('Cozy Mode: Could not save preferences:', error);
+			// Silent error handling
 		}
 	}
 
@@ -143,9 +141,7 @@ class CozyMode {
 		const postId = button?.dataset.postId;
 
 		if (!postId) {
-		// eslint-disable-next-line no-console
-		console.error('Cozy Mode: Post ID not found');
-		return;
+			return;
 		}
 
 		this.setButtonLoading(button, true);
@@ -211,17 +207,11 @@ class CozyMode {
 		} catch (error) {
 		this.retryCount += 1;
 		if (this.retryCount < this.maxRetries) {
-			// eslint-disable-next-line no-console
-			console.warn(
-				`Cozy Mode: Retry ${this.retryCount}/${this.maxRetries}`
-			);
 			setTimeout(
 				() => this.openModalWithRetry(),
 				1000 * this.retryCount
 			);
 		} else {
-			// eslint-disable-next-line no-console
-			console.error('Cozy Mode: Max retries exceeded');
 			this.showError(
 				'Maximum retry attempts exceeded. Please refresh the page.'
 			);
@@ -376,10 +366,8 @@ class CozyMode {
 		const buttons = document.querySelectorAll('.cozy-mode-toggle');
 		buttons.forEach((button) => this.setButtonLoading(button, false));
 		} catch (error) {
-		// eslint-disable-next-line no-console
-		console.error('Cozy Mode: Error opening modal:', error);
-		this.hideLoadingState();
-		this.showError(
+			this.hideLoadingState();
+			this.showError(
 			error.message || 'An error occurred while loading content'
 		);
 
@@ -417,10 +405,6 @@ class CozyMode {
 	logPerformanceMetrics() {
 		if ('performance' in window && this.performanceStart) {
 		const loadTime = performance.now() - this.performanceStart;
-		// eslint-disable-next-line no-console
-		console.log(
-			`Cozy Mode: Modal loaded in ${loadTime.toFixed(2)}ms`
-		);
 
 		if (typeof window.gtag !== 'undefined') {
 			window.gtag('event', 'cozy_mode_load_time', {
@@ -465,44 +449,21 @@ class CozyMode {
 		const article = reader.parse();
 
 		if (!article) {
-			if (window.yokoiDebug) {
-				// eslint-disable-next-line no-console
-				console.warn('Cozy Mode: Readability.js could not parse content. Document clone:', documentClone);
-			}
 			throw new Error('Readability.js could not parse content');
-		}
-
-		if (window.yokoiDebug) {
-			// eslint-disable-next-line no-console
-			console.log('Cozy Mode: Extracted article:', {
-				title: article.title,
-				contentLength: article.content?.length || 0,
-				excerpt: article.excerpt
-			});
 		}
 
 		return article;
 		} catch (error) {
-		// eslint-disable-next-line no-console
-		console.error('Cozy Mode: Content extraction failed:', error);
-		return null;
+			return null;
 		}
 	}
 
 	populateModal(article) {
 		if (!this.modal || !this.content) {
-			if (window.yokoiDebug) {
-				// eslint-disable-next-line no-console
-				console.warn('Cozy Mode: Modal or content container not found');
-			}
 			return;
 		}
 
 		if (!article || !article.content) {
-			if (window.yokoiDebug) {
-				// eslint-disable-next-line no-console
-				console.warn('Cozy Mode: Article or article.content is missing', article);
-			}
 			// Show error message to user
 			this.showError('Unable to extract content. Please try refreshing the page.');
 			return;
@@ -581,10 +542,6 @@ class CozyMode {
 		
 		// Verify we have content
 		if (!articleContent.hasChildNodes() || articleContent.textContent.trim() === '') {
-			if (window.yokoiDebug) {
-				// eslint-disable-next-line no-console
-				console.warn('Cozy Mode: Article content is empty after sanitization');
-			}
 			// Try to use the original article content as fallback
 			const fallbackDiv = document.createElement('div');
 			fallbackDiv.innerHTML = article.content;

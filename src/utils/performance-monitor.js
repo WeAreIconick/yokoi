@@ -100,11 +100,7 @@ export function monitorExecution( fn, blockName, operationName ) {
 						endMarker
 					);
 					
-					if ( duration !== null && duration > 100 ) {
-						console.warn(
-							`[Yokoi Performance] ${ blockName }/${ operationName } took ${ duration.toFixed( 2 ) }ms`
-						);
-					}
+					// Silent - no logging
 				} );
 			}
 
@@ -112,11 +108,7 @@ export function monitorExecution( fn, blockName, operationName ) {
 			markPerformance( blockName, endMarker );
 			const duration = performance.now() - start;
 
-			if ( duration > 100 ) {
-				console.warn(
-					`[Yokoi Performance] ${ blockName }/${ operationName } took ${ duration.toFixed( 2 ) }ms`
-				);
-			}
+			// Silent - no logging
 
 			return result;
 		} catch ( error ) {

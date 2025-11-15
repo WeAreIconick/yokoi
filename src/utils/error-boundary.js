@@ -25,8 +25,7 @@ export function withErrorBoundary( fn, blockName, onError = null ) {
 				timestamp: new Date().toISOString(),
 			};
 
-			// Log error with block context.
-			console.error( `[Yokoi Block Error] ${ blockName }:`, errorInfo );
+			// Silent error handling
 
 			// Call custom error handler if provided.
 			if ( onError ) {
@@ -68,7 +67,7 @@ export function withAsyncErrorBoundary( fn, blockName, onError = null ) {
 				timestamp: new Date().toISOString(),
 			};
 
-			console.error( `[Yokoi Block Error] ${ blockName }:`, errorInfo );
+			// Silent error handling
 
 			if ( onError ) {
 				onError( error, errorInfo );
