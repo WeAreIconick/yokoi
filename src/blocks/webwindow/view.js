@@ -141,10 +141,17 @@
 		iframe.setAttribute( 'loading', 'lazy' ); // Lazy load for performance
 		iframe.setAttribute( 'referrerpolicy', 'no-referrer-when-downgrade' );
 		
-		// Enhanced sandbox for security (more restrictive)
+		// Enhanced sandbox for security with necessary permissions
+		// Valid sandbox flags only
 		iframe.setAttribute(
 			'sandbox',
-			'allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox'
+			'allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation allow-orientation-lock allow-modals'
+		);
+		
+		// Permissions Policy for features not controlled by sandbox
+		iframe.setAttribute(
+			'allow',
+			'autoplay; encrypted-media; fullscreen; clipboard-write; accelerometer; gyroscope; web-share'
 		);
 		
 		// Set src only after all attributes are set

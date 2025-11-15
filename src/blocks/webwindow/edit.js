@@ -156,7 +156,8 @@ const WebWindowEdit = ( { attributes, setAttributes } ) => {
 							src={ src }
 							onError={ handleIframeError }
 							style={ iframeStyles }
-							sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+							sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation allow-orientation-lock allow-modals"
+							allow="autoplay; encrypted-media; fullscreen; clipboard-write; accelerometer; gyroscope; web-share"
 							loading="lazy"
 							referrerPolicy="no-referrer-when-downgrade"
 						/>

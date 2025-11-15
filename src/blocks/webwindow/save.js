@@ -6,10 +6,12 @@ import { __ } from '@wordpress/i18n';
  * Secure rendering with proper URL sanitization
  */
 const WebWindowSave = ( { attributes } ) => {
-	const { src, scaleToFit } = attributes;
+	// Use actual saved attributes, not defaults
+	const src = attributes?.src || '';
+	const scaleToFit = attributes?.scaleToFit !== undefined ? attributes.scaleToFit : true;
 
 	// Sanitize URL for security - only allow http/https
-	const sanitizedSrc = src && ( src.startsWith( 'http://' ) || src.startsWith( 'https://' ) )
+	const sanitizedSrc = src && typeof src === 'string' && ( src.startsWith( 'http://' ) || src.startsWith( 'https://' ) )
 		? src
 		: '';
 
@@ -53,7 +55,8 @@ const WebWindowSave = ( { attributes } ) => {
 								minHeight: 400,
 								border: '1px solid #ccc',
 							} }
-							sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+							sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation allow-orientation-lock allow-modals"
+							allow="autoplay; encrypted-media; fullscreen; clipboard-write; accelerometer; gyroscope; web-share"
 							loading="lazy"
 							referrerPolicy="no-referrer-when-downgrade"
 						/>
