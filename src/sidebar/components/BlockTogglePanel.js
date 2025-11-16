@@ -9,7 +9,7 @@ import {
 	Flex,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { starEmpty, starFilled, update } from '@wordpress/icons';
+import { update } from '@wordpress/icons';
 import { useState } from '@wordpress/element';
 
 const BlockTogglePanel = ( {
@@ -21,8 +21,6 @@ const BlockTogglePanel = ( {
 	blockDefinitions = {},
 	onToggle,
 	onToggleAll = null,
-	onToggleFavorite = null,
-	favoriteBlocks = new Set(),
 	togglingBlocks = new Set(),
 	hasMore = false,
 	onLoadMore = () => {},
@@ -41,12 +39,8 @@ const BlockTogglePanel = ( {
 
 	const searchTerm = searchValue?.toLowerCase?.() ?? '';
 
-	// Sort: favorites first, then alphabetically.
+	// Sort alphabetically.
 	const sortedEntries = [ ...entries ].sort( ( [ a ], [ b ] ) => {
-		const aFavorite = favoriteBlocks.has( a );
-		const bFavorite = favoriteBlocks.has( b );
-		if ( aFavorite && ! bFavorite ) return -1;
-		if ( ! aFavorite && bFavorite ) return 1;
 		const aLabel = blockDefinitions[ a ]?.title || a;
 		const bLabel = blockDefinitions[ b ]?.title || b;
 		return aLabel.localeCompare( bLabel );
@@ -169,43 +163,21 @@ const BlockTogglePanel = ( {
 					const label = blockDefinitions[ name ]?.title || name;
 					const description = blockDefinitions[ name ]?.description;
 					const isToggling = togglingBlocks.has( name );
-					const isFavorite = favoriteBlocks.has( name );
 					
 					return (
 						<Flex key={ name } align="flex-start" gap={ 2 } style={ { position: 'relative' } }>
 							<Flex direction="column" gap={ 0 } style={ { flex: 1, minWidth: 0 } }>
-								<Flex align="center" justify="space-between" gap={ 2 }>
-									<ToggleControl
-										label={ label }
-										checked={ Boolean( isEnabled ) }
-										onChange={ () => onToggle( name ) }
-										help={ description }
-										__nextHasNoMarginBottom
-										disabled={ disabled || isToggling }
-										aria-describedby={ `yokoi-block-${ name }-description` }
-										aria-invalid={ validationErrors[ name ] ? 'true' : undefined }
-										aria-errormessage={ validationErrors[ name ] ? `yokoi-error-${ name }` : undefined }
-									/>
-									{ onToggleFavorite && (
-										<Button
-											icon={ isFavorite ? starFilled : starEmpty }
-											onClick={ () => onToggleFavorite( name ) }
-											variant="tertiary"
-											size="small"
-											style={ { 
-												minWidth: '24px', 
-												width: '24px',
-												height: '24px',
-												padding: 0,
-												flexShrink: 0,
-												display: 'flex',
-												alignItems: 'center',
-												justifyContent: 'center'
-											} }
-											aria-label={ isFavorite ? __( 'Remove from favorites', 'yokoi' ) : __( 'Add to favorites', 'yokoi' ) }
-										/>
-									) }
-								</Flex>
+								<ToggleControl
+									label={ label }
+									checked={ Boolean( isEnabled ) }
+									onChange={ () => onToggle( name ) }
+									help={ description }
+									__nextHasNoMarginBottom
+									disabled={ disabled || isToggling }
+									aria-describedby={ `yokoi-block-${ name }-description` }
+									aria-invalid={ validationErrors[ name ] ? 'true' : undefined }
+									aria-errormessage={ validationErrors[ name ] ? `yokoi-error-${ name }` : undefined }
+								/>
 								{ validationErrors[ name ] && (
 									<span
 										id={ `yokoi-error-${ name }` }

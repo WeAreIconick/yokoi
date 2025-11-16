@@ -203,7 +203,6 @@ const YokoiSidebar = () => {
 		search: '',
 	} );
 	const [ togglingBlocks, setTogglingBlocks ] = useState( new Set() );
-	const [ favoriteBlocks, setFavoriteBlocks ] = useState( new Set() );
 	const [ searchHistory, setSearchHistory ] = useState( [] );
 	const [ settingsHistory, setSettingsHistory ] = useState( [] );
 	const [ historyIndex, setHistoryIndex ] = useState( -1 );
@@ -248,28 +247,6 @@ const YokoiSidebar = () => {
 			controller.abort();
 		};
 	}, [ searchTerm ] );
-
-
-	// Load favorites from localStorage.
-	useEffect( () => {
-		try {
-			const stored = localStorage.getItem( 'yokoi_favorites' );
-			if ( stored ) {
-				setFavoriteBlocks( new Set( JSON.parse( stored ) ) );
-			}
-		} catch ( e ) {
-			// Ignore errors.
-		}
-	}, [] );
-
-	// Save favorites to localStorage.
-	useEffect( () => {
-		try {
-			localStorage.setItem( 'yokoi_favorites', JSON.stringify( Array.from( favoriteBlocks ) ) );
-		} catch ( e ) {
-			// Ignore errors.
-		}
-	}, [ favoriteBlocks ] );
 
 	// Keyboard shortcuts.
 	useEffect( () => {
@@ -1030,17 +1007,6 @@ const YokoiSidebar = () => {
 		[ localBlocksEnabled, baseBlocksEnabled ]
 	);
 
-	const toggleFavorite = useCallback( ( blockName ) => {
-		setFavoriteBlocks( ( prev ) => {
-			const next = new Set( prev );
-			if ( next.has( blockName ) ) {
-				next.delete( blockName );
-			} else {
-				next.add( blockName );
-			}
-			return next;
-		} );
-	}, [] );
 
 	const toggleAllBlocks = useCallback(
 		( enable ) => {
@@ -1175,15 +1141,8 @@ const YokoiSidebar = () => {
 			toggleAllBlocks( true );
 		} else if ( preset === 'none' ) {
 			toggleAllBlocks( false );
-		} else if ( preset === 'favorites' ) {
-			const favoriteNames = Array.from( favoriteBlocks );
-			favoriteNames.forEach( ( blockName ) => {
-				if ( ! blocksEnabled[ blockName ] ) {
-					toggleBlock( blockName );
-				}
-			} );
 		}
-	}, [ toggleAllBlocks, toggleBlock, favoriteBlocks, blocksEnabled ] );
+	}, [ toggleAllBlocks, toggleBlock ] );
 
 	const handleRefreshInserter = useCallback( async () => {
 		setIsRefreshingInserter( true );
@@ -1346,8 +1305,6 @@ const YokoiSidebar = () => {
 									blockDefinitions={ blockDefinitions }
 									onToggle={ toggleBlock }
 									onToggleAll={ toggleAllBlocks }
-									onToggleFavorite={ toggleFavorite }
-									favoriteBlocks={ favoriteBlocks }
 									togglingBlocks={ togglingBlocks }
 									validationErrors={ validationErrors }
 									disabled={ ! canToggle || isBusy || isRefreshingInserter }
