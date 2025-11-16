@@ -40,11 +40,18 @@ class Service {
 	/**
 	 * Register block type via metadata.
 	 * Always register the block - filtering happens via allowed_block_types_all filter.
+	 * Note: Block_Registry will also try to register this block, so we check first.
 	 */
 	public function on_init(): void {
 		$registry = WP_Block_Type_Registry::get_instance();
 
+		// Check if already registered (e.g., by Block_Registry)
 		if ( $registry->is_registered( 'yokoi/navygator' ) ) {
+			// Ensure render callback is set even if registered elsewhere
+			$block_type = $registry->get_registered( 'yokoi/navygator' );
+			if ( $block_type && ! $block_type->render_callback ) {
+				$block_type->render_callback = array( Block_Renderer::class, 'render' );
+			}
 			return;
 		}
 
@@ -52,6 +59,12 @@ class Service {
 
 		if ( ! file_exists( $block_dir . '/block.json' ) ) {
 			return;
+		}
+
+		// Load Block_Renderer if not already loaded
+		$renderer_file = YOKOI_PLUGIN_DIR . 'includes/Navygator/Block_Renderer.php';
+		if ( file_exists( $renderer_file ) && ! class_exists( 'Yokoi\\Navygator\\Block_Renderer' ) ) {
+			require_once $renderer_file;
 		}
 
 		// Always register the block - filtering happens via allowed_block_types_all filter

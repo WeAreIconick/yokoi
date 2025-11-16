@@ -110,11 +110,24 @@ class Block_Registry {
 					continue;
 				}
 
-				// Skip if already registered (e.g., by a block-specific service)
+				// Skip registration if already registered (e.g., by a block-specific service)
+				// But still ensure render callback is set if needed
+				$already_registered = false;
 				try {
 					if ( $registry->is_registered( $name ) ) {
+						$already_registered = true;
+						// For blocks like Navygator that register early, ensure render callback is set
+						if ( 'yokoi/navygator' === $name ) {
+							$block_type = $registry->get_registered( $name );
+							if ( $block_type && ! $block_type->render_callback ) {
+								$args = $this->get_block_registration_args( $name, $definition );
+								if ( ! empty( $args['render_callback'] ) ) {
+									$block_type->render_callback = $args['render_callback'];
+								}
+							}
+						}
 						if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-							error_log( "Yokoi: Block {$name} already registered, skipping" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+							error_log( "Yokoi: Block {$name} already registered, skipping registration" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 						}
 						continue;
 					}

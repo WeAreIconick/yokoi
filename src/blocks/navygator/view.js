@@ -6,6 +6,8 @@
  * - Scroll spy (active section highlighting)
  * - Smooth scrolling
  * - Drawer open/close
+ * 
+ * Scoped, secure, and optimized for performance
  */
 
 ( function() {
@@ -17,6 +19,28 @@
 	}
 	window.navygatorInitialized = true;
 
+	// Debounce function for performance
+	function debounce( func, wait ) {
+		let timeout;
+		return function executedFunction( ...args ) {
+			const later = () => {
+				clearTimeout( timeout );
+				func( ...args );
+			};
+			clearTimeout( timeout );
+			timeout = setTimeout( later, wait );
+		};
+	}
+
+	// Validate and sanitize ID
+	function sanitizeId( id ) {
+		if ( ! id || typeof id !== 'string' ) {
+			return null;
+		}
+		// Only allow alphanumeric, hyphens, and underscores
+		return id.replace( /[^a-zA-Z0-9_-]/g, '' );
+	}
+
 	// Wait for DOM to be ready
 	if ( document.readyState === 'loading' ) {
 		document.addEventListener( 'DOMContentLoaded', init );
@@ -27,7 +51,7 @@
 	function init() {
 		const tocWrapper = document.querySelector( '.navygator-toc-wrapper' );
 		
-		if ( ! tocWrapper ) {
+		if ( ! tocWrapper || ! document.body.contains( tocWrapper ) ) {
 			return;
 		}
 
@@ -41,30 +65,37 @@
 		if ( toggleBtn ) {
 			toggleBtn.addEventListener( 'click', function( e ) {
 				e.preventDefault();
+				e.stopPropagation();
 				if ( window.innerWidth <= 768 ) {
 					openDrawer();
 				} else {
 					toggleDesktopToc();
 				}
-			});
+			}, { passive: false } );
 		}
 
 		if ( closeBtn ) {
-			closeBtn.addEventListener( 'click', function() {
+			closeBtn.addEventListener( 'click', function( e ) {
+				e.preventDefault();
+				e.stopPropagation();
 				if ( window.innerWidth <= 768 ) {
 					closeDrawer();
 				} else {
 					closeDesktopToc();
 				}
-			});
+			}, { passive: false } );
 		}
 
 		if ( backdrop ) {
-			backdrop.addEventListener( 'click', closeDrawer );
+			backdrop.addEventListener( 'click', function( e ) {
+				e.preventDefault();
+				e.stopPropagation();
+				closeDrawer();
+			}, { passive: false } );
 		}
 
-		// Close on escape key
-		document.addEventListener( 'keydown', function( e ) {
+		// Close on escape key - debounced for performance
+		const handleEscape = debounce( function( e ) {
 			if ( e.key === 'Escape' && toc && toc.classList.contains( 'is-open' ) ) {
 				if ( window.innerWidth <= 768 ) {
 					closeDrawer();
@@ -72,26 +103,40 @@
 					closeDesktopToc();
 				}
 			}
-		} );
+		}, 100 );
+		
+		document.addEventListener( 'keydown', handleEscape, { passive: true } );
 
 		// Smooth scroll and close on link click
 		tocLinks.forEach( function( link ) {
 			link.addEventListener( 'click', function( e ) {
 				e.preventDefault();
 				
-				const targetId = this.getAttribute( 'href' ).substring( 1 );
+				const href = this.getAttribute( 'href' );
+				if ( ! href || ! href.startsWith( '#' ) ) {
+					return;
+				}
+				
+				const targetId = sanitizeId( href.substring( 1 ) );
+				if ( ! targetId ) {
+					return;
+				}
+				
 				const targetElement = document.getElementById( targetId );
+				if ( ! targetElement || ! document.body.contains( targetElement ) ) {
+					return;
+				}
 
-				if ( targetElement ) {
-					// Close TOC on mobile
-					if ( window.innerWidth <= 768 ) {
-						closeDrawer();
-					} else {
-						// On desktop, close TOC after clicking a link
-						closeDesktopToc();
-					}
+				// Close TOC on mobile
+				if ( window.innerWidth <= 768 ) {
+					closeDrawer();
+				} else {
+					// On desktop, close TOC after clicking a link
+					closeDesktopToc();
+				}
 
-					// Smooth scroll to target
+				// Smooth scroll to target using requestAnimationFrame for better performance
+				requestAnimationFrame( () => {
 					const yOffset = -20; // Offset for fixed headers
 					const y = targetElement.getBoundingClientRect().top + window.pageYOffset + yOffset;
 
@@ -104,8 +149,8 @@
 					if ( history.pushState ) {
 						history.pushState( null, null, '#' + targetId );
 					}
-				}
-			} );
+				} );
+			}, { passive: true } );
 		} );
 
 		// Scroll spy - highlight active section
@@ -185,15 +230,24 @@
 	 * Set up scroll spy using Intersection Observer
 	 */
 	function setupScrollSpy( tocLinks ) {
-		// Get all heading IDs from TOC links
-		const headingIds = Array.from( tocLinks ).map( function( link ) {
-			return link.getAttribute( 'href' ).substring( 1 );
-		} );
+		// Get all heading IDs from TOC links - sanitized
+		const headingIds = Array.from( tocLinks )
+			.map( function( link ) {
+				const href = link.getAttribute( 'href' );
+				if ( ! href || ! href.startsWith( '#' ) ) {
+					return null;
+				}
+				return sanitizeId( href.substring( 1 ) );
+			} )
+			.filter( function( id ) {
+				return id !== null;
+			} );
 
-		// Get all heading elements
+		// Get all heading elements - validate they exist in DOM
 		const headings = headingIds
 			.map( function( id ) {
-				return document.getElementById( id );
+				const el = document.getElementById( id );
+				return el && document.body.contains( el ) ? el : null;
 			} )
 			.filter( function( el ) {
 				return el !== null;
@@ -203,41 +257,76 @@
 			return;
 		}
 
-		// Create Intersection Observer
+		// Create Intersection Observer with performance optimizations
 		const observerOptions = {
 			rootMargin: '-20% 0px -35% 0px',
 			threshold: 0
 		};
 
 		let activeHeading = null;
+		let rafId = null;
 
 		const observer = new IntersectionObserver( function( entries ) {
-			entries.forEach( function( entry ) {
-				if ( entry.isIntersecting ) {
-					activeHeading = entry.target;
-					updateActiveLink( entry.target.id, tocLinks );
-					scrollTocToActiveLink( entry.target.id, tocLinks );
-				}
+			// Use requestAnimationFrame to batch updates
+			if ( rafId ) {
+				cancelAnimationFrame( rafId );
+			}
+			
+			rafId = requestAnimationFrame( function() {
+				entries.forEach( function( entry ) {
+					if ( entry.isIntersecting ) {
+						activeHeading = entry.target;
+						const headingId = sanitizeId( entry.target.id );
+						if ( headingId ) {
+							updateActiveLink( headingId, tocLinks );
+							scrollTocToActiveLink( headingId, tocLinks );
+						}
+					}
+				} );
 			} );
 		}, observerOptions );
 
 		// Observe all headings
 		headings.forEach( function( heading ) {
-			observer.observe( heading );
+			if ( document.body.contains( heading ) ) {
+				observer.observe( heading );
+			}
 		} );
 
 		// Initial active state based on scroll position
 		const initialActiveId = getActiveHeadingId( headings );
-		updateActiveLink( initialActiveId, tocLinks );
-		scrollTocToActiveLink( initialActiveId, tocLinks );
+		if ( initialActiveId ) {
+			updateActiveLink( initialActiveId, tocLinks );
+			scrollTocToActiveLink( initialActiveId, tocLinks );
+		}
+
+		// Cleanup on page unload
+		window.addEventListener( 'beforeunload', function() {
+			if ( rafId ) {
+				cancelAnimationFrame( rafId );
+			}
+			observer.disconnect();
+		}, { passive: true } );
 	}
 
 	/**
 	 * Update active link in TOC
 	 */
 	function updateActiveLink( activeId, tocLinks ) {
+		if ( ! activeId ) {
+			return;
+		}
+		
 		tocLinks.forEach( function( link ) {
-			const linkId = link.getAttribute( 'href' ).substring( 1 );
+			const href = link.getAttribute( 'href' );
+			if ( ! href || ! href.startsWith( '#' ) ) {
+				return;
+			}
+			
+			const linkId = sanitizeId( href.substring( 1 ) );
+			if ( ! linkId ) {
+				return;
+			}
 			
 			if ( linkId === activeId ) {
 				link.classList.add( 'is-active' );
@@ -251,60 +340,75 @@
 	 * Scroll TOC content to keep active link visible
 	 */
 	function scrollTocToActiveLink( activeId, tocLinks ) {
+		if ( ! activeId ) {
+			return;
+		}
+		
 		const activeLink = Array.from( tocLinks ).find( function( link ) {
-			return link.getAttribute( 'href' ).substring( 1 ) === activeId;
+			const href = link.getAttribute( 'href' );
+			if ( ! href || ! href.startsWith( '#' ) ) {
+				return false;
+			}
+			const linkId = sanitizeId( href.substring( 1 ) );
+			return linkId === activeId;
 		} );
 
-		if ( ! activeLink ) {
+		if ( ! activeLink || ! document.body.contains( activeLink ) ) {
 			return;
 		}
 
 		const toc = document.querySelector( '.navygator-toc' );
-		if ( ! toc ) {
+		if ( ! toc || ! document.body.contains( toc ) ) {
 			return;
 		}
 
-		// Get the position of the active link relative to the TOC container
-		const tocRect = toc.getBoundingClientRect();
-		const linkRect = activeLink.getBoundingClientRect();
-		
-		// Calculate if the link is visible within the TOC container
-		const linkTop = linkRect.top - tocRect.top;
-		const linkBottom = linkRect.bottom - tocRect.top;
-		const tocHeight = tocRect.height;
-		
-		// If the link is not fully visible, scroll to center it
-		if ( linkTop < 0 || linkBottom > tocHeight ) {
-			const scrollTop = toc.scrollTop;
-			const linkOffset = activeLink.offsetTop;
-			const tocCenter = tocHeight / 2;
-			const linkHeight = linkRect.height;
+		// Use requestAnimationFrame for smooth scrolling
+		requestAnimationFrame( function() {
+			// Get the position of the active link relative to the TOC container
+			const tocRect = toc.getBoundingClientRect();
+			const linkRect = activeLink.getBoundingClientRect();
 			
-			// Calculate the ideal scroll position to center the link
-			const targetScrollTop = linkOffset - tocCenter + ( linkHeight / 2 );
+			// Calculate if the link is visible within the TOC container
+			const linkTop = linkRect.top - tocRect.top;
+			const linkBottom = linkRect.bottom - tocRect.top;
+			const tocHeight = tocRect.height;
 			
-			// Smooth scroll to the target position
-			toc.scrollTo( {
-				top: Math.max( 0, targetScrollTop ),
-				behavior: 'smooth'
-			} );
-		}
+			// If the link is not fully visible, scroll to center it
+			if ( linkTop < 0 || linkBottom > tocHeight ) {
+				const linkOffset = activeLink.offsetTop;
+				const tocCenter = tocHeight / 2;
+				const linkHeight = linkRect.height;
+				
+				// Calculate the ideal scroll position to center the link
+				const targetScrollTop = linkOffset - tocCenter + ( linkHeight / 2 );
+				
+				// Smooth scroll to the target position
+				toc.scrollTo( {
+					top: Math.max( 0, targetScrollTop ),
+					behavior: 'smooth'
+				} );
+			}
+		} );
 	}
 
 	/**
 	 * Get the currently active heading ID based on scroll position
 	 */
 	function getActiveHeadingId( headings ) {
+		if ( ! headings || headings.length === 0 ) {
+			return null;
+		}
+		
 		const scrollPosition = window.scrollY + 100;
 
 		for ( let i = headings.length - 1; i >= 0; i-- ) {
 			const heading = headings[ i ];
-			if ( heading.offsetTop <= scrollPosition ) {
-				return heading.id;
+			if ( heading && document.body.contains( heading ) && heading.offsetTop <= scrollPosition ) {
+				return sanitizeId( heading.id );
 			}
 		}
 
-		return headings[ 0 ] ? headings[ 0 ].id : null;
+		return headings[ 0 ] && document.body.contains( headings[ 0 ] ) ? sanitizeId( headings[ 0 ].id ) : null;
 	}
 
 } )();

@@ -1,47 +1,60 @@
 /**
  * NavyGator Table of Contents - Editor Styles
+ * Scoped to prevent conflicts
  */
 
-.navygator-toc-editor-preview {
+.wp-block-yokoi-navygator {
 	margin: 20px 0;
+	isolation: isolate;
 }
 
-.navygator-toc-preview {
-	max-width: 400px;
+.wp-block-yokoi-navygator__preview {
+	display: flex;
+	justify-content: center;
+	padding: 20px 0;
+}
+
+.wp-block-yokoi-navygator__preview-box {
+	max-width: 420px;
+	width: 100%;
 	padding: 24px;
 	border-radius: 12px;
-	border: 2px dashed #ccc;
-	background: rgba(255, 255, 255, 0.95);
-	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+	border: 2px solid rgba(0, 0, 0, 0.1);
+	background: rgba(255, 255, 255, 0.98);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+	transition: all 0.2s ease;
 }
 
-.navygator-toc-title {
-	font-size: 18px;
-	font-weight: 700;
-	margin: 0 0 16px 0;
+.wp-block-yokoi-navygator__preview-title {
+	font-size: 20px;
+	font-weight: 600;
+	margin: 0 0 20px 0;
 	padding-bottom: 12px;
-	border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+	border-bottom: 2px solid rgba(0, 0, 0, 0.08);
+	color: #111827;
 }
 
-.navygator-toc-preview-content {
-	p {
-		margin: 12px 0;
-		font-size: 14px;
-	}
+.wp-block-yokoi-navygator__preview-content {
+	font-size: 14px;
+	line-height: 1.6;
 }
 
-.navygator-toc-info {
-	color: #666;
+.wp-block-yokoi-navygator__preview-info {
+	color: #64748b;
 	font-style: italic;
+	margin-bottom: 16px;
+	font-size: 13px;
 }
 
-.navygator-toc-list-preview {
+.wp-block-yokoi-navygator__preview-list {
 	margin: 16px 0;
 	padding-left: 24px;
+	list-style-position: outside;
 	
 	li {
-		margin: 8px 0;
+		margin: 10px 0;
 		line-height: 1.6;
+		color: #334155;
 	}
 
 	ol, ul {
@@ -50,24 +63,25 @@
 	}
 }
 
-.navygator-toc-note {
-	margin-top: 16px;
-	padding: 12px;
-	background: #f0f6fc;
-	border-left: 3px solid #0073aa;
-	border-radius: 4px;
-	font-size: 13px;
+.wp-block-yokoi-navygator__preview-note {
+	margin-top: 20px;
+	padding: 14px 16px;
+	background: #f1f5f9;
+	border-left: 3px solid #3b82f6;
+	border-radius: 6px;
+	font-size: 12px;
 	line-height: 1.6;
-	color: #1e4e6e;
+	color: #475569;
 }
 
-.navygator-toc-empty {
-	padding: 16px;
+.wp-block-yokoi-navygator__preview-empty {
+	padding: 20px;
 	text-align: center;
-	color: #d63638;
-	background: #fcf0f1;
-	border-radius: 4px;
+	color: #dc2626;
+	background: #fef2f2;
+	border-radius: 8px;
 	font-size: 14px;
+	border: 1px solid #fecaca;
 }
 
 /* Inspector Controls Styling */

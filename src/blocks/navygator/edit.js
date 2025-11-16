@@ -18,7 +18,7 @@ export default function Edit( { attributes, setAttributes } ) {
 	const { headingLevels, showNumbers, title, backgroundColor, textColor } = attributes;
 
 	const blockProps = useBlockProps( {
-		className: 'navygator-toc-editor-preview',
+		className: 'wp-block-yokoi-navygator',
 	} );
 
 	// Helper function to check if a heading level is selected
@@ -93,57 +93,62 @@ export default function Edit( { attributes, setAttributes } ) {
 			</InspectorControls>
 
 			<div { ...blockProps }>
-				<div 
-					className="navygator-toc-preview"
-					style={ {
-						backgroundColor: backgroundColor || 'rgba(255, 255, 255, 0.95)',
-						color: textColor || '#333',
-					} }
-				>
-					{ title && (
-						<div className="navygator-toc-title">{ title }</div>
-					) }
-					
-					<div className="navygator-toc-preview-content">
-						{ headingLevels.length === 0 ? (
-							<p className="navygator-toc-empty">
-								{ __( 'Please select at least one heading level in the block settings.', 'yokoi' ) }
-							</p>
-						) : (
-							<>
-								<p className="navygator-toc-info">
-									{ __( 'Table of contents will be generated from your page headings:', 'yokoi' ) }
-								</p>
-								{ showNumbers ? (
-									<ol className="navygator-toc-list-preview">
-										<li>{ __( 'Sample Heading 1', 'yokoi' ) }</li>
-										<li>{ __( 'Sample Heading 2', 'yokoi' ) }</li>
-										<li>
-											{ __( 'Sample Heading 3', 'yokoi' ) }
-											<ol>
-												<li>{ __( 'Nested Heading', 'yokoi' ) }</li>
-											</ol>
-										</li>
-									</ol>
-								) : (
-									<ul className="navygator-toc-list-preview">
-										<li>{ __( 'Sample Heading 1', 'yokoi' ) }</li>
-										<li>{ __( 'Sample Heading 2', 'yokoi' ) }</li>
-										<li>
-											{ __( 'Sample Heading 3', 'yokoi' ) }
-											<ul>
-												<li>{ __( 'Nested Heading', 'yokoi' ) }</li>
-											</ul>
-										</li>
-									</ul>
-								) }
-								<p className="navygator-toc-note">
-									{ __( '💡 Desktop: Floats on the right side', 'yokoi' ) }
-									<br />
-									{ __( '📱 Mobile: Toggle button with slide-up drawer', 'yokoi' ) }
-								</p>
-							</>
+				<div className="wp-block-yokoi-navygator__preview">
+					<div 
+						className="wp-block-yokoi-navygator__preview-box"
+						style={ {
+							backgroundColor: backgroundColor || 'rgba(255, 255, 255, 0.98)',
+							color: textColor || '#1e293b',
+							borderColor: backgroundColor || 'rgba(0, 0, 0, 0.1)',
+						} }
+					>
+						{ title && (
+							<div className="wp-block-yokoi-navygator__preview-title">{ title }</div>
 						) }
+						
+						<div className="wp-block-yokoi-navygator__preview-content">
+							{ headingLevels.length === 0 ? (
+								<div className="wp-block-yokoi-navygator__preview-empty">
+									{ __( 'Please select at least one heading level in the block settings.', 'yokoi' ) }
+								</div>
+							) : (
+								<>
+									<div className="wp-block-yokoi-navygator__preview-info">
+										{ __( 'Table of contents will be generated from your page headings:', 'yokoi' ) }
+									</div>
+									{ showNumbers ? (
+										<ol className="wp-block-yokoi-navygator__preview-list">
+											<li>{ __( 'Introduction', 'yokoi' ) }</li>
+											<li>{ __( 'Getting Started', 'yokoi' ) }</li>
+											<li>
+												{ __( 'Advanced Features', 'yokoi' ) }
+												<ol>
+													<li>{ __( 'Customization Options', 'yokoi' ) }</li>
+												</ol>
+											</li>
+											<li>{ __( 'Conclusion', 'yokoi' ) }</li>
+										</ol>
+									) : (
+										<ul className="wp-block-yokoi-navygator__preview-list">
+											<li>{ __( 'Introduction', 'yokoi' ) }</li>
+											<li>{ __( 'Getting Started', 'yokoi' ) }</li>
+											<li>
+												{ __( 'Advanced Features', 'yokoi' ) }
+												<ul>
+													<li>{ __( 'Customization Options', 'yokoi' ) }</li>
+												</ul>
+											</li>
+											<li>{ __( 'Conclusion', 'yokoi' ) }</li>
+										</ul>
+									) }
+									<div className="wp-block-yokoi-navygator__preview-note">
+										{ __( 'Desktop: Floating sidebar on the right', 'yokoi' ) }
+										<br />
+										{ __( 'Mobile: Toggle button with slide-up drawer', 'yokoi' ) }
+									</div>
+								</>
+							) }
+						</div>
 					</div>
 				</div>
 			</div>
