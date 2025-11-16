@@ -207,7 +207,6 @@ const YokoiSidebar = () => {
 	const [ searchHistory, setSearchHistory ] = useState( [] );
 	const [ settingsHistory, setSettingsHistory ] = useState( [] );
 	const [ historyIndex, setHistoryIndex ] = useState( -1 );
-	const [ blockStatistics, setBlockStatistics ] = useState( {} );
 	const [ validationErrors, setValidationErrors ] = useState( {} );
 	const [ localBlocksEnabled, setLocalBlocksEnabled ] = useState( null );
 	const [ isRefreshingInserter, setIsRefreshingInserter ] = useState( false );
@@ -271,35 +270,6 @@ const YokoiSidebar = () => {
 			// Ignore errors.
 		}
 	}, [ favoriteBlocks ] );
-
-	// Fetch block statistics.
-	useEffect( () => {
-		if ( ! blocksEndpoint ) {
-			return;
-		}
-
-		const fetchStats = async () => {
-			try {
-				const statsEndpoint = blocksEndpoint.replace( '/blocks', '/blocks/statistics' );
-				const response = await apiFetch( { url: statsEndpoint } );
-				if ( response && response.usage ) {
-					const statsMap = {};
-					Object.keys( response.usage ).forEach( ( blockName ) => {
-						statsMap[ blockName ] = {
-							usage_count: response.usage[ blockName ],
-							last_used: response.last_used[ blockName ],
-							post_count: response.post_count[ blockName ] ? response.post_count[ blockName ].length : 0,
-						};
-					} );
-					setBlockStatistics( statsMap );
-				}
-			} catch ( err ) {
-				// Ignore errors - statistics are optional.
-			}
-		};
-
-		fetchStats();
-	}, [ blocksEndpoint ] );
 
 	// Keyboard shortcuts.
 	useEffect( () => {
@@ -387,7 +357,7 @@ const YokoiSidebar = () => {
 
 			return resolveSelect( 'core', 'getEntityRecord', args ).catch(
 				( error ) => {
-					logDebug( 'Failed to resolve entity config', error );
+					// Silent error handling
 				}
 			);
 		},
@@ -501,17 +471,8 @@ const YokoiSidebar = () => {
 					editEntityRecord( 'root', 'option', optionName, {
 						value,
 					} );
-					logDebug(
-						'Delayed seed succeeded',
-						{ attempt: nextAttempt }
-					);
 					pendingSeedRef.current = null;
 				} catch ( err ) {
-					logDebug(
-						'Delayed seed attempt failed',
-						err,
-						{ attempt: nextAttempt }
-					);
 					if ( nextAttempt < 5 ) {
 						retrySeed( value, nextAttempt );
 					}
@@ -523,17 +484,12 @@ const YokoiSidebar = () => {
 
 	useEffect( () => {
 		if ( ! supportsEntityConfigSelector ) {
-			logDebug(
-				'Entity config selector unavailable; assuming ready state'
-			);
 			return;
 		}
 
 		if ( isEntityConfigReady ) {
 			return;
 		}
-
-		logDebug( 'Resolving entity config for option', optionName );
 
 		if ( addEntities && receiveEntityConfig && ! entityRegisteredRef.current ) {
 			receiveEntityConfig(
@@ -581,21 +537,16 @@ const YokoiSidebar = () => {
 
 		if ( ! settingsFetchRef.current ) {
 			settingsFetchRef.current = true;
-			logDebug( 'Priming WP settings endpoint' );
 			apiFetch( {
 				path: '/wp/v2/settings',
 				method: 'GET',
-			} ).catch( ( error ) => {
-				logDebug( 'Failed to prime settings endpoint', error );
+			} ).catch( () => {
+				// Silent error handling
 			} );
 		}
 
 		const retry = window.setTimeout( () => {
 			if ( ! isEntityConfigReady ) {
-				logDebug(
-					'Retrying entity config resolution for option',
-					optionName
-				);
 				resolveEntityConfig( { invalidate: true } );
 			}
 		}, 1000 );
@@ -623,12 +574,7 @@ const YokoiSidebar = () => {
 					if ( saveEditedEntityRecord ) {
 						saveEditedEntityRecord( 'root', 'option', optionName ).catch( () => {} );
 					}
-					logDebug( 'Pending seed applied after entity ready' );
 				} catch ( err ) {
-					logDebug(
-						'Pending seed failed after entity ready; retrying',
-						err
-					);
 					retrySeed( value );
 				}
 			}
@@ -645,9 +591,7 @@ const YokoiSidebar = () => {
 						if ( saveEditedEntityRecord ) {
 							saveEditedEntityRecord( 'root', 'option', optionName ).catch( () => {} );
 						}
-						logDebug( 'Queued update applied after entity ready' );
 					} catch ( err ) {
-						logDebug( 'Queued update failed, re-queuing', err );
 						pendingUpdatesQueueRef.current.push( value );
 					}
 				} );
@@ -672,10 +616,6 @@ const YokoiSidebar = () => {
 				bootstrap.settings ??
 					buildDefaultSettings( blockDefinitions ),
 				blockDefinitions
-			);
-			logDebug(
-				'Seeding fallback option (no entity selector available)',
-				fallbackValue
 			);
 			hasSeededFallbackRef.current = true;
 			if ( receiveEntityRecords ) {
@@ -703,18 +643,10 @@ const YokoiSidebar = () => {
 	] );
 
 	useEffect( () => {
-		logDebug( 'Option status', {
-			optionValue,
-			persistedOptionValue,
-			hasFetchedOption,
-		} );
+		// Option status tracking (no-op)
 	}, [ optionValue, persistedOptionValue, hasFetchedOption ] );
 
 	useEffect( () => {
-		if ( ! isEntityConfigReady ) {
-			logDebug( 'Entity config not ready; proceeding with fallback seeding' );
-		}
-
 		if (
 			! hasFetchedOption &&
 			! hasSeededFallbackRef.current &&
@@ -726,16 +658,12 @@ const YokoiSidebar = () => {
 				blockDefinitions
 			);
 
-			logDebug( 'Seeding fallback option value', fallbackValue );
 			hasSeededFallbackRef.current = true;
 			if ( isEntityConfigReady ) {
 				editEntityRecord( 'root', 'option', optionName, {
 					value: fallbackValue,
 				} );
 			} else if ( receiveEntityRecords ) {
-				logDebug(
-					'Entity config missing; seeding via receiveEntityRecords'
-				);
 				pendingSeedRef.current = fallbackValue;
 				receiveEntityRecords(
 					'root',
@@ -764,7 +692,6 @@ const YokoiSidebar = () => {
 				blockDefinitions
 			);
 
-			logDebug( 'Seeding edited option with persisted value' );
 			hasSeededFromPersistedRef.current = true;
 			editEntityRecord( 'root', 'option', optionName, {
 				value: sanitizedPersisted,
@@ -777,7 +704,6 @@ const YokoiSidebar = () => {
 			typeof optionValue !== 'undefined' &&
 			! isEqual( optionValue, normalizedOptionValue )
 		) {
-			logDebug( 'Syncing edited option to normalized snapshot' );
 			editEntityRecord( 'root', 'option', optionName, {
 				value: normalizedOptionValue,
 			} );
@@ -837,7 +763,7 @@ const YokoiSidebar = () => {
 					value: nextValue,
 				} );
 			} catch ( error ) {
-				logDebug( 'applySettingsChange: error editing entity record', error );
+				// Silent error handling
 			}
 
 			// Track save request ID to ignore stale responses
@@ -872,7 +798,6 @@ const YokoiSidebar = () => {
 			} ).then( () => {
 				// Only process if this is still the active request
 				if ( activeSaveRequestRef.current === saveRequestId ) {
-					logDebug( 'Settings saved successfully' );
 					activeSaveRequestRef.current = null;
 					
 					// Update block registry and refresh inserter
@@ -885,8 +810,6 @@ const YokoiSidebar = () => {
 					return;
 				}
 				activeSaveRequestRef.current = null;
-				
-				logDebug( 'applySettingsChange: error saving via REST API', error );
 				// Revert local change on error
 				if ( normalizedOptionValue ) {
 					try {
@@ -1426,7 +1349,6 @@ const YokoiSidebar = () => {
 									onToggleFavorite={ toggleFavorite }
 									favoriteBlocks={ favoriteBlocks }
 									togglingBlocks={ togglingBlocks }
-									blockStatistics={ blockStatistics }
 									validationErrors={ validationErrors }
 									disabled={ ! canToggle || isBusy || isRefreshingInserter }
 									onRefreshInserter={ handleRefreshInserter }

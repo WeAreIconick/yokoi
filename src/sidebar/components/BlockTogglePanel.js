@@ -27,7 +27,6 @@ const BlockTogglePanel = ( {
 	hasMore = false,
 	onLoadMore = () => {},
 	onRetry = null,
-	blockStatistics = {},
 	validationErrors = {},
 	disabled = false,
 	onRefreshInserter = null,
@@ -74,78 +73,66 @@ const BlockTogglePanel = ( {
 		<Card>
 			<CardBody>
 				<Flex direction="column" gap={ 4 }>
-					<Notice
-						status="info"
-						isDismissible={ false }
-						className="yokoi-block-toggle-notice"
-					>
-						{ __( 'Changes are saved immediately. If a block doesn\'t appear or disappear in the inserter right away, click "Refresh Inserter" below or close and reopen the block inserter.', 'yokoi' ) }
-					</Notice>
-
-					<Button
-						variant="secondary"
-						size="small"
-						icon={ update }
-						onClick={ onRefreshInserter || ( () => {} ) }
-						disabled={ disabled || ! onRefreshInserter }
-					>
-						{ __( 'Refresh Block Inserter', 'yokoi' ) }
-					</Button>
-
-			<Flex direction="column" gap={ 2 }>
-				<SearchControl
-					value={ searchValue }
-					onChange={ onSearchChange }
-					placeholder={ __( 'Search blocks… (⌘K)', 'yokoi' ) }
-					disabled={ disabled }
-					__nextHasNoMarginBottom
-					aria-label={ __( 'Search blocks', 'yokoi' ) }
-					aria-describedby="yokoi-search-description"
-				/>
-				<span id="yokoi-search-description" className="screen-reader-text">
-					{ __( 'Search for blocks by name or description. Use arrow keys to navigate results.', 'yokoi' ) }
-				</span>
-				{ searchHistory.length > 0 && ! searchValue && (
-					<Flex gap={ 1 } wrap>
-						{ searchHistory.slice( 0, 5 ).map( ( term ) => (
-							<Button
-								key={ term }
-								variant="tertiary"
-								size="small"
-								onClick={ () => onSearchChange( term ) }
-							>
-								{ term }
-							</Button>
-						) ) }
-					</Flex>
-				) }
-			</Flex>
-
-			{ onToggleAll && totalCount > 0 && (
-				<Flex gap={ 2 }>
-					<Button
-						variant="secondary"
-						size="small"
-						onClick={ () => onToggleAll( true ) }
-						disabled={ disabled || allEnabled }
-					>
-						{ __( 'Enable All', 'yokoi' ) }
-					</Button>
-					<Button
-						variant="secondary"
-						size="small"
-						onClick={ () => onToggleAll( false ) }
-						disabled={ disabled || allDisabled }
-					>
-						{ __( 'Disable All', 'yokoi' ) }
-					</Button>
-					{ totalCount > 0 && (
-						<span style={ { marginLeft: 'auto', fontSize: '12px', color: '#757575' } }>
-							{ enabledCount } / { totalCount } { __( 'enabled', 'yokoi' ) }
+					<Flex direction="column" gap={ 2 }>
+						<SearchControl
+							value={ searchValue }
+							onChange={ onSearchChange }
+							placeholder={ __( 'Search blocks… (⌘K)', 'yokoi' ) }
+							disabled={ disabled }
+							__nextHasNoMarginBottom
+							aria-label={ __( 'Search blocks', 'yokoi' ) }
+							aria-describedby="yokoi-search-description"
+						/>
+						<span id="yokoi-search-description" className="screen-reader-text">
+							{ __( 'Search for blocks by name or description. Use arrow keys to navigate results.', 'yokoi' ) }
 						</span>
+						{ searchHistory.length > 0 && ! searchValue && (
+							<Flex gap={ 1 } wrap>
+								{ searchHistory.slice( 0, 5 ).map( ( term ) => (
+									<Button
+										key={ term }
+										variant="tertiary"
+										size="small"
+										onClick={ () => onSearchChange( term ) }
+									>
+										{ term }
+									</Button>
+								) ) }
+							</Flex>
+						) }
+					</Flex>
+
+					{ onToggleAll && totalCount > 0 && (
+						<Flex gap={ 2 }>
+							<Button
+								variant="secondary"
+								size="small"
+								onClick={ () => onToggleAll( true ) }
+								disabled={ disabled || allEnabled }
+							>
+								{ __( 'Enable All', 'yokoi' ) }
+							</Button>
+							<Button
+								variant="secondary"
+								size="small"
+								onClick={ () => onToggleAll( false ) }
+								disabled={ disabled || allDisabled }
+							>
+								{ __( 'Disable All', 'yokoi' ) }
+							</Button>
+							{ onRefreshInserter && (
+								<Button
+									variant="secondary"
+									size="small"
+									icon={ update }
+									onClick={ onRefreshInserter }
+									disabled={ disabled }
+								>
+									{ __( 'Refresh', 'yokoi' ) }
+								</Button>
+							) }
+						</Flex>
 					) }
-				</Flex>
-			) }
 
 			{ error && (
 				<Notice
@@ -183,9 +170,6 @@ const BlockTogglePanel = ( {
 					const description = blockDefinitions[ name ]?.description;
 					const isToggling = togglingBlocks.has( name );
 					const isFavorite = favoriteBlocks.has( name );
-					const stats = blockStatistics[ name ] || {};
-					const usageCount = stats.usage_count || 0;
-					const postCount = stats.post_count || 0;
 					
 					return (
 						<Flex key={ name } align="flex-start" gap={ 2 } style={ { position: 'relative' } }>
@@ -231,18 +215,6 @@ const BlockTogglePanel = ( {
 										{ validationErrors[ name ] }
 									</span>
 								) }
-								<Flex gap={ 2 } style={ { marginTop: '-8px', marginLeft: '48px', fontSize: '11px', color: '#757575' } }>
-									{ usageCount > 0 && (
-										<span id={ `yokoi-block-${ name }-stats` } aria-label={ __( 'Usage statistics', 'yokoi' ) }>
-											{ usageCount } { __( 'uses', 'yokoi' ) }
-										</span>
-									) }
-									{ postCount > 0 && (
-										<span aria-label={ __( 'Post count', 'yokoi' ) }>
-											{ postCount } { __( 'posts', 'yokoi' ) }
-										</span>
-									) }
-								</Flex>
 							</Flex>
 							{ isToggling && <Spinner size={ 16 } aria-label={ __( 'Saving…', 'yokoi' ) } /> }
 						</Flex>
