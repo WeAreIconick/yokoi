@@ -264,7 +264,7 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 					/>
 				</PanelBody>
 				<PanelBody
-					title={ __( 'Colors', 'yokoi' ) }
+					title={ __( 'Style', 'yokoi' ) }
 					initialOpen={ false }
 				>
 					<BaseControl label={ __( 'Primary Color', 'yokoi' ) } __nextHasNoMarginBottom={ true }>

@@ -3,7 +3,7 @@
  * Plugin Name: Yokoi
  * Plugin URI: https://iconick.io/yokoi
  * Description: Yokoi is packed with all the WordPress blocks I desperately wanted but couldn't find anywhere else. Responsive browser embeds? Check. Slick accordions? Got 'em. This is my personal collection of 'why doesn't this exist yet?' turned into 'oh hell yeah, now it does.'
- * Version: 0.1.0
+ * Version: 1.0.0
  * Requires at least: 6.2
  * Requires PHP: 7.4
  * Author: Iconick
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! defined( 'YOKOI_VERSION' ) ) {
-	define( 'YOKOI_VERSION', '0.1.0' );
+	define( 'YOKOI_VERSION', '1.0.0' );
 }
 
 if ( ! defined( 'YOKOI_PLUGIN_FILE' ) ) {
