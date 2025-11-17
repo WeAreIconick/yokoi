@@ -286,8 +286,9 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 							<Flex justify="flex-end" align="center">
 								<FlexItem>
 									<Button
+										variant="link"
 										isDestructive
-										variant="tertiary"
+										size="small"
 										onClick={ () => removeItem( index ) }
 										disabled={ items.length === 1 }
 										aria-label={
