@@ -230,5 +230,26 @@
 			color: #fff !important;
 		}
 	}
+
+	// Editor-only styles (scoped to block editor)
+	.block-editor-page & {
+		.squeeze-box-panel {
+			background: #fff;
+			border: 1px solid #dcdcde;
+			border-radius: 6px;
+			padding: 24px 32px 24px 24px !important;
+			margin-bottom: 16px;
+			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+			overflow: visible;
+		}
+
+		.squeeze-box-panel__header {
+			margin-bottom: 12px;
+		}
+
+		.squeeze-box-panel__body > .components-base-control {
+			margin-bottom: 12px;
+		}
+	}
 }
 

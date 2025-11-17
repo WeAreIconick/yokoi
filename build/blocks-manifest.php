@@ -689,7 +689,7 @@ return array(
 		),
 		'textdomain' => 'yokoi',
 		'editorScript' => 'file:./index.js',
-		'editorStyle' => 'file:./editor.css',
+		'editorStyle' => 'file:./index.css',
 		'style' => 'file:./style-index.css',
 		'viewScript' => 'file:./view.js'
 	),

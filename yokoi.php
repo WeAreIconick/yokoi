@@ -2,11 +2,11 @@
 /**
  * Plugin Name: Yokoi
  * Plugin URI: https://iconick.io/yokoi
- * Description: Modular block suite with PluginSidebar settings for WordPress.
+ * Description: Yokoi is packed with all the WordPress blocks I desperately wanted but couldn't find anywhere else. Responsive browser embeds? Check. Slick accordions? Got 'em. This is my personal collection of 'why doesn't this exist yet?' turned into 'oh hell yeah, now it does.'
  * Version: 0.1.0
  * Requires at least: 6.2
  * Requires PHP: 7.4
- * Author: Yokoi Team
+ * Author: Iconick
  * Author URI: https://iconick.io
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html

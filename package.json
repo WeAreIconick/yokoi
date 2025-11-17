@@ -30,7 +30,7 @@
     "sidebar",
     "plugin"
   ],
-  "author": "Yokoi Team",
+  "author": "Iconick",
   "license": "GPL-2.0-or-later",
   "devDependencies": {
     "@wordpress/icons": "^11.1.0",
