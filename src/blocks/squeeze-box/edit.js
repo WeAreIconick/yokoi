@@ -15,7 +15,6 @@ import {
 	TextControl,
 	ToolbarButton,
 	ToolbarGroup,
-	ExternalLink,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { plus } from '@wordpress/icons';
@@ -278,32 +277,13 @@ const Edit = ( { attributes, setAttributes, clientId } ) => {
 						/>
 					</BaseControl>
 				</PanelBody>
-				<PanelBody
-					title={ __( 'Powered by Telex', 'yokoi' ) }
-					initialOpen={ false }
-				>
-					<p style={ { marginBottom: '12px' } }>
-						{ __(
-							'Telex is basically the J.A.R.V.I.S of WordPress development - an AI that builds blocks so you don’t have to.',
-							'yokoi'
-						) }
-					</p>
-					<ExternalLink href="https://telex.automattic.ai">
-						{ __( 'Learn more about Telex', 'yokoi' ) }
-					</ExternalLink>
-				</PanelBody>
 			</InspectorControls>
 
 			<div { ...blockProps }>
 				{ items.map( ( item, index ) => (
 					<div className="squeeze-box-panel" key={ `panel-${ index }` }>
 						<div className="squeeze-box-panel__header">
-							<Flex justify="space-between" align="center">
-								<FlexItem>
-									<span className="squeeze-box-panel-number">
-										{ getNumberWord( index ).toUpperCase() }
-									</span>
-								</FlexItem>
+							<Flex justify="flex-end" align="center">
 								<FlexItem>
 									<Button
 										isDestructive

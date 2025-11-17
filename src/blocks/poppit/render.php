@@ -196,10 +196,10 @@ if ( ! function_exists( 'yokoi_render_poppit_block' ) ) :
 }
 endif;
 
-$result = yokoi_render_poppit_block( $attributes ?? array(), $content ?? '', $block ?? null );
+$yokoi_result = yokoi_render_poppit_block( $attributes ?? array(), $content ?? '', $block ?? null );
 
 if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-	error_log( sprintf( 'Yokoi: Poppit render.php final return (length: %d chars)', strlen( $result ) ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	error_log( sprintf( 'Yokoi: Poppit render.php final return (length: %d chars)', strlen( $yokoi_result ) ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 }
 
-return $result;
+return $yokoi_result;
