@@ -28,6 +28,7 @@ import {
 	ToolbarGroup,
 	ToolbarButton,
 } from '@wordpress/components';
+import { seen, cog } from '@wordpress/icons';
 
 import { useState, useEffect } from '@wordpress/element';
 
@@ -194,9 +195,9 @@ export default function Edit( { attributes, setAttributes } ) {
 	const renderEditorView = () => {
 		return (
 			<div className="poppit-editor">
-				<div className="poppit-header">
-					<h4>{ __( 'Poppit', 'yokoi' ) }</h4>
-					<div className="poppit-meta">
+				<div className="poppit-preview-container">
+					{ renderPopupPreview() }
+					<div className="poppit-meta-overlay">
 						<span className="popup-type-badge">
 							{ popupType.toUpperCase() }
 						</span>
@@ -227,10 +228,6 @@ export default function Edit( { attributes, setAttributes } ) {
 						) }
 					</div>
 				</div>
-
-				<div className="poppit-preview-container">
-					{ renderPopupPreview() }
-				</div>
 			</div>
 		);
 	};
@@ -248,7 +245,7 @@ export default function Edit( { attributes, setAttributes } ) {
 						onClick={ () => setPreviewMode( ! previewMode ) }
 						isPressed={ previewMode }
 					>
-						{ previewMode ? '⚙️' : '👁️' }
+						{ previewMode ? cog : seen }
 					</ToolbarButton>
 				</ToolbarGroup>
 			</BlockControls>

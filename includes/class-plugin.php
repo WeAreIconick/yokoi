@@ -716,9 +716,13 @@ class Plugin {
 
 		$is_enabled = $this->is_block_enabled( $block_name );
 		
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && 'yokoi/navygator' === $block_name ) {
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			$post_id = get_the_ID();
-			error_log( sprintf( 'Yokoi: Navygator block output check - Post: %d, Enabled: %s', $post_id, $is_enabled ? 'yes' : 'no' ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			if ( 'yokoi/poppit' === $block_name ) {
+				error_log( sprintf( 'Yokoi: Poppit filter - Post: %d, Enabled: %s, Content length: %d, Content preview: %s', $post_id, $is_enabled ? 'yes' : 'no', strlen( $content ), substr( $content, 0, 100 ) ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			} elseif ( 'yokoi/navygator' === $block_name ) {
+				error_log( sprintf( 'Yokoi: Navygator block output check - Post: %d, Enabled: %s, Content length: %d', $post_id, $is_enabled ? 'yes' : 'no', strlen( $content ) ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
 		}
 
 		if ( $is_enabled ) {
@@ -729,6 +733,11 @@ class Plugin {
 					$this->block_statistics->track_post_blocks( $post_id, get_post( $post_id ) );
 				}
 			}
+			
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && 'yokoi/poppit' === $block_name ) {
+				error_log( sprintf( 'Yokoi: Poppit filter - RETURNING content (length: %d chars)', strlen( $content ) ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+			
 			return $content;
 		}
 

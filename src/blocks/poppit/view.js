@@ -39,11 +39,33 @@ class Poppit {
 		setTimeout( () => {
 			this.processPopups();
 		}, 100 );
+		
+		// Also try to find popups after a longer delay in case blocks load late
+		setTimeout( () => {
+			if ( this.popups.length === 0 ) {
+				this.findPopups();
+				this.processPopups();
+			}
+		}, 500 );
 	}
 
 	findPopups() {
 		try {
 			const popupBlocks = document.querySelectorAll( '[data-popup-id]' );
+
+			if ( popupBlocks.length === 0 ) {
+				// Try alternative selector in case block wrapper class is different
+				const altBlocks = document.querySelectorAll( '.poppit-block[data-popup-id]' );
+				if ( altBlocks.length > 0 ) {
+					altBlocks.forEach( ( block ) => {
+						const popupData = this.extractPopupData( block );
+						if ( popupData && this.shouldShowPopup( popupData ) ) {
+							this.popups.push( popupData );
+						}
+					} );
+					return;
+				}
+			}
 
 			popupBlocks.forEach( ( block ) => {
 				const popupData = this.extractPopupData( block );
@@ -58,6 +80,11 @@ class Poppit {
 
 	extractPopupData( block ) {
 		try {
+			// Check if block has required data attribute
+			if ( ! block || ! block.dataset || ! block.dataset.popupId ) {
+				return null;
+			}
+
 			const data = {
 				id: this.sanitizeString( block.dataset.popupId || '' ),
 				type: this.sanitizeString( block.dataset.popupType || 'modal' ),

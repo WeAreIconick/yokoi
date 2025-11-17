@@ -26,6 +26,10 @@ if ( ! function_exists( 'yokoi_render_poppit_block' ) ) :
 	 * @return string
 	 */
 	function yokoi_render_poppit_block( array $attributes, string $content, $block ): string { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Yokoi: Poppit render callback called with attributes: ' . wp_json_encode( $attributes ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+		
 		$yokoi_popup_id = ! empty( $attributes['popupId'] ) ? sanitize_key( $attributes['popupId'] ) : 'popup-' . wp_generate_uuid4();
 		$yokoi_popup_type = ! empty( $attributes['popupType'] ) ? sanitize_key( $attributes['popupType'] ) : 'modal';
 		$yokoi_title = ! empty( $attributes['title'] ) ? wp_kses_post( $attributes['title'] ) : '';
@@ -182,8 +186,20 @@ if ( ! function_exists( 'yokoi_render_poppit_block' ) ) :
 		</div>
 
 		<?php
-	return ob_get_clean();
+	$output = ob_get_clean();
+	
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( sprintf( 'Yokoi: Poppit render returning HTML (length: %d chars, popup ID: %s)', strlen( $output ), $yokoi_popup_id ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	}
+	
+	return $output;
 }
 endif;
 
-return yokoi_render_poppit_block( $attributes ?? array(), $content ?? '', $block ?? null );
+$result = yokoi_render_poppit_block( $attributes ?? array(), $content ?? '', $block ?? null );
+
+if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+	error_log( sprintf( 'Yokoi: Poppit render.php final return (length: %d chars)', strlen( $result ) ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+}
+
+return $result;

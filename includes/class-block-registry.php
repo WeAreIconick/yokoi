@@ -252,6 +252,25 @@ class Block_Registry {
 			}
 		}
 
+		// Ensure Poppit render callback is explicitly set
+		if ( 'yokoi/poppit' === $name ) {
+			$render_file = $definition['path'] . '/render.php';
+			if ( file_exists( $render_file ) ) {
+				// Explicitly set render callback to ensure it works
+				// The render.php file defines functions and returns the output
+				$args['render_callback'] = function( $attributes, $content, $block ) use ( $render_file ) {
+					// Include the render file - WordPress passes $attributes, $content, $block as variables
+					// The file will return the rendered output
+					$result = include $render_file;
+					// Ensure we return a string
+					if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+						error_log( sprintf( 'Yokoi: Poppit explicit render callback - result length: %d', strlen( is_string( $result ) ? $result : '' ) ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					}
+					return is_string( $result ) ? $result : '';
+				};
+			}
+		}
+
 		return $args;
 	}
 

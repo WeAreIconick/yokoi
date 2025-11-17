@@ -1,104 +1,72 @@
 /**
- * Editor styles for the Advanced Pop-up Maker block
+ * Editor styles for Poppit block
+ * Scoped, optimized, and secure
  */
 
-.wp-block-telex-block-poppit {
-	border: 2px dashed #ccc;
-	border-radius: 8px;
-	padding: 0;
-	margin: 20px 0;
-	min-height: 200px;
-	background: #f9f9f9;
-
-	&:hover {
-		border-color: #0073aa;
-	}
-
-	&.is-selected {
-		border-color: #0073aa;
-		border-style: solid;
-		box-shadow: 0 0 0 2px rgba(0, 115, 170, 0.3);
-	}
+.wp-block-yokoi-poppit {
+	isolation: isolate;
+	contain: layout style paint;
 }
 
-// Editor preview styles
-.poppit-editor {
+// Editor preview styles - scoped
+.wp-block-yokoi-poppit .poppit-editor {
 	padding: 20px;
-
-	.poppit-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 20px;
-		padding-bottom: 15px;
-		border-bottom: 1px solid #e0e0e0;
-
-		h4 {
-			margin: 0;
-			font-size: 18px;
-			color: #1e1e1e;
-		}
-
-		.poppit-meta {
-			display: flex;
-			gap: 10px;
-		}
-
-		.popup-type-badge,
-		.trigger-type-badge,
-		.reset-badge {
-			padding: 4px 8px;
-			border-radius: 4px;
-			font-size: 11px;
-			font-weight: 600;
-			text-transform: uppercase;
-			letter-spacing: 0.5px;
-		}
-
-		.popup-type-badge {
-			background: #0073aa;
-			color: #fff;
-		}
-
-		.trigger-type-badge {
-			background: #00a32a;
-			color: #fff;
-		}
-
-		.reset-badge {
-			background: #d63638;
-			color: #fff;
-		}
-	}
-
-	.poppit-preview-container {
-		background: #fff;
-		border: 1px solid #e0e0e0;
-		border-radius: 6px;
-		padding: 20px;
-		margin-bottom: 20px;
-		position: relative;
-		overflow: hidden;
-	}
-
-	.poppit-info {
-		padding: 15px;
-		background: #f0f6fc;
-		border: 1px solid #c3e4f7;
-		border-radius: 6px;
-		font-size: 14px;
-		line-height: 1.5;
-		color: #0c4a6e;
-
-		p {
-			margin: 0;
-		}
-	}
+	position: relative;
 }
 
-// Preview mode styles
-.poppit-preview {
+.wp-block-yokoi-poppit .poppit-preview-container {
+	background: #fff;
+	border: 1px solid #e0e0e0;
+	border-radius: 6px;
+	padding: 20px;
+	position: relative;
+	overflow: hidden;
+}
 
+// Meta overlay - positioned over preview
+.wp-block-yokoi-poppit .poppit-meta-overlay {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+	z-index: 10;
+	pointer-events: none;
+}
+
+.wp-block-yokoi-poppit .popup-type-badge,
+.wp-block-yokoi-poppit .trigger-type-badge,
+.wp-block-yokoi-poppit .reset-badge {
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	pointer-events: auto;
+}
+
+.wp-block-yokoi-poppit .popup-type-badge {
+	background: #0073aa;
+	color: #fff;
+}
+
+.wp-block-yokoi-poppit .trigger-type-badge {
+	background: #00a32a;
+	color: #fff;
+}
+
+.wp-block-yokoi-poppit .reset-badge {
+	background: #d63638;
+	color: #fff;
+}
+
+// Inspector controls stay in sidebar (WordPress default behavior)
+// No custom overlay needed - InspectorControls renders in sidebar automatically
+
+// Preview mode styles - scoped
+.wp-block-yokoi-poppit .poppit-preview {
 	.popup-overlay {
 		position: relative;
 		background: rgba(0, 0, 0, 0.1);
@@ -266,38 +234,9 @@
 	}
 }
 
-// Inspector panel custom styles
-.poppit-inspector {
-
-	.components-panel__body-toggle {
-		font-weight: 600;
-	}
-
-	.components-base-control__help {
-		font-size: 12px;
-		font-style: italic;
-		color: #757575;
-		margin-top: 8px;
-	}
-}
-
-// Block toolbar styles
-.block-editor-block-toolbar .poppit-toolbar {
-
-	.components-toolbar-button {
-
-		&.is-pressed {
-			background: #0073aa;
-			color: #fff;
-		}
-	}
-}
-
-// Responsive preview
+// Responsive
 @media (max-width: 768px) {
-
-	.poppit-preview {
-
+	.wp-block-yokoi-poppit .poppit-preview {
 		.popup-container {
 			max-width: 300px;
 			margin: 10px;
@@ -313,45 +252,8 @@
 		}
 	}
 
-	.poppit-editor {
-
-		.poppit-header {
-			flex-direction: column;
-			align-items: flex-start;
-			gap: 10px;
-
-			.poppit-meta {
-				align-self: stretch;
-				justify-content: flex-start;
-			}
-		}
-	}
-}
-
-// Dark mode support
-.is-dark-theme {
-
-	.poppit-editor {
-		background: #1e1e1e;
-		color: #fff;
-
-		.poppit-header {
-			border-bottom-color: #3c3c3c;
-
-			h4 {
-				color: #fff;
-			}
-		}
-
-		.poppit-preview-container {
-			background: #2c2c2c;
-			border-color: #3c3c3c;
-		}
-
-		.poppit-info {
-			background: #2c2c2c;
-			border-color: #3c3c3c;
-			color: #e0e0e0;
-		}
+	.wp-block-yokoi-poppit .poppit-inspector-overlay {
+		width: 100%;
+		max-width: 320px;
 	}
 }
