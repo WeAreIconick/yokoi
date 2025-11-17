@@ -52,12 +52,18 @@ class Service {
 			if ( $block_type && ! $block_type->render_callback ) {
 				$block_type->render_callback = array( Block_Renderer::class, 'render' );
 			}
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Navygator block already registered, ensuring render callback' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
 			return;
 		}
 
 		$block_dir = YOKOI_PLUGIN_DIR . 'build/blocks/navygator';
 
 		if ( ! file_exists( $block_dir . '/block.json' ) ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Navygator block.json not found at ' . $block_dir . '/block.json' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
 			return;
 		}
 
@@ -67,34 +73,77 @@ class Service {
 			require_once $renderer_file;
 		}
 
+		if ( ! class_exists( 'Yokoi\\Navygator\\Block_Renderer' ) ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Block_Renderer class not found for Navygator' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+			return;
+		}
+
 		// Always register the block - filtering happens via allowed_block_types_all filter
-		register_block_type(
+		$result = register_block_type(
 			$block_dir,
 			array(
 				'render_callback' => array( Block_Renderer::class, 'render' ),
 			)
 		);
+
+		if ( ! $result ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Failed to register Navygator block' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+		} elseif ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Yokoi: Navygator block registered successfully' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 	}
 
 	/**
 	 * Enqueue front-end assets conditionally when block is present.
 	 */
 	public function enqueue_frontend(): void {
-		if ( ! is_singular() || ! has_block( 'yokoi/navygator' ) ) {
+		// Skip in admin or REST API requests
+		if ( is_admin() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
 			return;
 		}
 
-		$view_asset_file = YOKOI_PLUGIN_DIR . 'build/blocks/navygator/view.asset.php';
-		if ( file_exists( $view_asset_file ) ) {
-			$view_asset = require $view_asset_file;
+		// Check if block is present in the post content
+		// has_block() only works on singular posts/pages, so this effectively checks is_singular()
+		$has_block = has_block( 'yokoi/navygator' );
+		if ( ! $has_block ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				$post_id = get_the_ID();
+				$is_singular = is_singular();
+				error_log( sprintf( 'Yokoi: Navygator enqueue_frontend skipped - block not found (Post: %s, is_singular: %s)', $post_id ? $post_id : 'none', $is_singular ? 'yes' : 'no' ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+			return;
+		}
 
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			$post_id = get_the_ID();
+			error_log( 'Yokoi: Navygator enqueue_frontend - block found in post ' . $post_id ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+
+		$view_asset_file = YOKOI_PLUGIN_DIR . 'build/blocks/navygator/view.asset.php';
+		if ( ! file_exists( $view_asset_file ) ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Navygator view.asset.php not found at ' . $view_asset_file ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+			return;
+		}
+
+		$view_asset = require $view_asset_file;
+
+		$view_script_path = YOKOI_PLUGIN_DIR . 'build/blocks/navygator/view.js';
+		if ( file_exists( $view_script_path ) ) {
 			wp_enqueue_script(
 				'yokoi-navygator-view',
 				YOKOI_PLUGIN_URL . 'build/blocks/navygator/view.js',
-				$view_asset['dependencies'],
-				$view_asset['version'],
+				$view_asset['dependencies'] ?? array(),
+				$view_asset['version'] ?? YOKOI_VERSION,
 				true
 			);
+		} elseif ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Yokoi: Navygator view.js not found at ' . $view_script_path ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		}
 
 		$style_css_path = YOKOI_PLUGIN_DIR . 'build/blocks/navygator/style-index.css';
@@ -105,6 +154,8 @@ class Service {
 				array(),
 				$view_asset['version'] ?? YOKOI_VERSION
 			);
+		} elseif ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Yokoi: Navygator style-index.css not found at ' . $style_css_path ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		}
 	}
 

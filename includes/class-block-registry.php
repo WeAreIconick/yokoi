@@ -126,9 +126,7 @@ class Block_Registry {
 								}
 							}
 						}
-						if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-							error_log( "Yokoi: Block {$name} already registered, skipping registration" ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-						}
+						// Block already registered by a block-specific service - this is expected behavior
 						continue;
 					}
 				} catch ( \Throwable $e ) {

@@ -34,7 +34,14 @@ class Block_Renderer {
 	public static function render( array $attributes, string $content, $block ): string {
 		global $post;
 
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'Yokoi: Navygator render callback called' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+
 		if ( ! $post ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Navygator render - no post object' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
 			return '<div class="navygator-toc-empty">' . esc_html__( 'No content available.', 'yokoi' ) . '</div>';
 		}
 
@@ -46,7 +53,14 @@ class Block_Renderer {
 
 		$headings = self::extract_headings( $post->post_content, $heading_levels );
 
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Yokoi: Navygator render - Post ID: %d, Headings found: %d', $post->ID ?? 0, count( $headings ) ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+
 		if ( empty( $headings ) ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Navygator render - no headings found, returning empty message' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
 			return '<div class="navygator-toc-empty">' . esc_html__( 'No headings found in this content.', 'yokoi' ) . '</div>';
 		}
 
@@ -63,9 +77,10 @@ class Block_Renderer {
 		$toc_html  = '<div class="navygator-toc-wrapper">';
 
 		$toc_html .= '<button class="navygator-toc-toggle" aria-label="' . esc_attr__( 'Toggle Table of Contents', 'yokoi' ) . '">';
-		$toc_html .= 'Contents';
-		$toc_html .= '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">';
-		$toc_html .= '<path d="m18 15-6-6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+		$toc_html .= '<span class="navygator-toc-toggle-text">Contents</span>';
+		$toc_html .= '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="navygator-toc-toggle-icon">';
+		// List icon (three horizontal lines) - more appropriate for TOC
+		$toc_html .= '<path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
 		$toc_html .= '</svg>';
 		$toc_html .= '</button>';
 
@@ -86,50 +101,121 @@ class Block_Renderer {
 		$toc_html .= '<div class="navygator-toc-backdrop"></div>';
 		$toc_html .= '</div>';
 
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( 'Yokoi: Navygator render - returning HTML (length: %d chars)', strlen( $toc_html ) ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+
 		return $toc_html;
 	}
 
 	/**
 	 * Extract headings from content.
 	 *
-	 * @param string $content       Post content.
+	 * @param string $content       Post content (can be block markup or HTML).
 	 * @param array  $heading_levels Heading levels to include.
 	 * @return array
 	 */
 	private static function extract_headings( string $content, array $heading_levels ): array {
 		$headings = array();
-		$dom      = new \DOMDocument();
-		libxml_use_internal_errors( true );
-		$dom->loadHTML( '<?xml encoding="utf-8" ?>' . $content, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD );
-		libxml_clear_errors();
 
-		$heading_tags = array();
-		foreach ( $heading_levels as $level ) {
-			$heading_tags[] = 'h' . $level;
+		// First, try to extract from block markup if content contains blocks
+		if ( function_exists( 'parse_blocks' ) && has_blocks( $content ) ) {
+			$blocks = parse_blocks( $content );
+			$headings = array_merge( $headings, self::extract_headings_from_blocks( $blocks, $heading_levels ) );
 		}
 
-		foreach ( $heading_tags as $tag ) {
-			$elements = $dom->getElementsByTagName( $tag );
+		// Also try to extract from HTML (for rendered content or HTML posts)
+		if ( ! empty( $content ) ) {
+			$dom = new \DOMDocument();
+			libxml_use_internal_errors( true );
+			$dom->loadHTML( '<?xml encoding="utf-8" ?>' . $content, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD );
+			libxml_clear_errors();
 
-			foreach ( $elements as $element ) {
-				$text = trim( $element->textContent );
+			$heading_tags = array();
+			foreach ( $heading_levels as $level ) {
+				$heading_tags[] = 'h' . $level;
+			}
 
-				if ( empty( $text ) ) {
-					continue;
+			foreach ( $heading_tags as $tag ) {
+				$elements = $dom->getElementsByTagName( $tag );
+
+				foreach ( $elements as $element ) {
+					$text = trim( $element->textContent );
+
+					if ( empty( $text ) ) {
+						continue;
+					}
+
+					$id = $element->getAttribute( 'id' );
+					if ( empty( $id ) ) {
+						$id = self::generate_heading_id( $text );
+					}
+
+					$level = (int) substr( $tag, 1 );
+
+					// Check if we already have this heading (avoid duplicates)
+					$exists = false;
+					foreach ( $headings as $existing ) {
+						if ( $existing['text'] === $text && $existing['level'] === $level ) {
+							$exists = true;
+							break;
+						}
+					}
+
+					if ( ! $exists ) {
+						$headings[] = array(
+							'level' => $level,
+							'text'  => $text,
+							'id'    => $id,
+						);
+					}
 				}
+			}
+		}
 
-				$id = $element->getAttribute( 'id' );
-				if ( empty( $id ) ) {
-					$id = self::generate_heading_id( $text );
+		return $headings;
+	}
+
+	/**
+	 * Extract headings from parsed blocks.
+	 *
+	 * @param array $blocks        Parsed blocks.
+	 * @param array $heading_levels Heading levels to include.
+	 * @return array
+	 */
+	private static function extract_headings_from_blocks( array $blocks, array $heading_levels ): array {
+		$headings = array();
+
+		foreach ( $blocks as $block ) {
+			// Check if this is a heading block
+			if ( isset( $block['blockName'] ) && 'core/heading' === $block['blockName'] ) {
+				$level = isset( $block['attrs']['level'] ) ? (int) $block['attrs']['level'] : 2;
+				
+				if ( in_array( $level, $heading_levels, true ) ) {
+					$text = '';
+					if ( isset( $block['innerHTML'] ) ) {
+						// Extract text from innerHTML
+						$text = wp_strip_all_tags( $block['innerHTML'] );
+					} elseif ( isset( $block['innerContent'][0] ) ) {
+						$text = wp_strip_all_tags( $block['innerContent'][0] );
+					}
+
+					$text = trim( $text );
+					if ( ! empty( $text ) ) {
+						$id = self::generate_heading_id( $text );
+						
+						$headings[] = array(
+							'level' => $level,
+							'text'  => $text,
+							'id'    => $id,
+						);
+					}
 				}
+			}
 
-				$level = (int) substr( $tag, 1 );
-
-				$headings[] = array(
-					'level' => $level,
-					'text'  => $text,
-					'id'    => $id,
-				);
+			// Recursively check inner blocks
+			if ( ! empty( $block['innerBlocks'] ) ) {
+				$headings = array_merge( $headings, self::extract_headings_from_blocks( $block['innerBlocks'], $heading_levels ) );
 			}
 		}
 

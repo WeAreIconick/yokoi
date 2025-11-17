@@ -202,8 +202,11 @@ class Plugin {
 		}
 
 		try {
-			if ( Dependency_Checker::class_exists( __NAMESPACE__ . '\\Navygator\\Service' ) ) {
+			// Files are already included in bootstrap.php, so class should be available
+			if ( class_exists( __NAMESPACE__ . '\\Navygator\\Service' ) ) {
 				$this->navygator_service = new Navygator_Service();
+			} elseif ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'Yokoi: Navygator\\Service class not found after bootstrap' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			}
 		} catch ( \Throwable $e ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
@@ -711,7 +714,14 @@ class Plugin {
 			return $content;
 		}
 
-		if ( $this->is_block_enabled( $block_name ) ) {
+		$is_enabled = $this->is_block_enabled( $block_name );
+		
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && 'yokoi/navygator' === $block_name ) {
+			$post_id = get_the_ID();
+			error_log( sprintf( 'Yokoi: Navygator block output check - Post: %d, Enabled: %s', $post_id, $is_enabled ? 'yes' : 'no' ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+
+		if ( $is_enabled ) {
 			// Track block usage.
 			if ( $this->block_statistics instanceof Block_Statistics ) {
 				$post_id = get_the_ID();

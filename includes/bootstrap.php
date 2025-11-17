@@ -19,3 +19,7 @@ require_once YOKOI_PLUGIN_DIR . 'includes/Date_Now/Google_Calendar_API.php';
 require_once YOKOI_PLUGIN_DIR . 'includes/Date_Now/Block_Renderer.php';
 require_once YOKOI_PLUGIN_DIR . 'includes/Date_Now/Service.php';
 
+require_once YOKOI_PLUGIN_DIR . 'includes/Navygator/Block_Renderer.php';
+require_once YOKOI_PLUGIN_DIR . 'includes/Navygator/Service.php';
+
+

@@ -121,16 +121,15 @@ class Block_Isolation {
 				);
 			}
 
-			// Check for duplicate namespaces.
-			$namespace = $this->extract_namespace( $block_name );
-			if ( isset( $this->registered_namespaces[ $namespace ] ) ) {
+			// Check for duplicate block names (not namespaces - all Yokoi blocks share "yokoi" namespace).
+			if ( isset( $this->registered_namespaces[ $block_name ] ) ) {
 				$errors[] = sprintf(
-					/* translators: %s: Namespace */
-					esc_html__( 'Duplicate namespace detected: "%s".', 'yokoi' ),
-					esc_html( $namespace )
+					/* translators: %s: Block name */
+					esc_html__( 'Duplicate block name detected: "%s".', 'yokoi' ),
+					esc_html( $block_name )
 				);
 			} else {
-				$this->registered_namespaces[ $namespace ] = $block_name;
+				$this->registered_namespaces[ $block_name ] = true;
 			}
 		}
 

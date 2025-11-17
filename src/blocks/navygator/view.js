@@ -1,12 +1,6 @@
 /**
  * NavyGator Table of Contents - Frontend JavaScript
  * 
- * Handles:
- * - Mobile toggle functionality
- * - Scroll spy (active section highlighting)
- * - Smooth scrolling
- * - Drawer open/close
- * 
  * Scoped, secure, and optimized for performance
  */
 
@@ -19,26 +13,39 @@
 	}
 	window.navygatorInitialized = true;
 
-	// Debounce function for performance
-	function debounce( func, wait ) {
-		let timeout;
-		return function executedFunction( ...args ) {
-			const later = () => {
-				clearTimeout( timeout );
-				func( ...args );
-			};
-			clearTimeout( timeout );
-			timeout = setTimeout( later, wait );
+	// Cache mobile breakpoint
+	const MOBILE_BREAKPOINT = 768;
+
+	// Throttle function for performance
+	function throttle( func, limit ) {
+		let inThrottle;
+		return function( ...args ) {
+			if ( ! inThrottle ) {
+				func.apply( this, args );
+				inThrottle = true;
+				setTimeout( () => inThrottle = false, limit );
+			}
 		};
 	}
 
-	// Validate and sanitize ID
+	// Validate and sanitize ID - security critical
 	function sanitizeId( id ) {
 		if ( ! id || typeof id !== 'string' ) {
 			return null;
 		}
-		// Only allow alphanumeric, hyphens, and underscores
-		return id.replace( /[^a-zA-Z0-9_-]/g, '' );
+		// Only allow alphanumeric, hyphens, and underscores - prevent XSS
+		const sanitized = id.replace( /[^a-zA-Z0-9_-]/g, '' );
+		// Additional check: ensure it's not empty and not too long
+		return sanitized && sanitized.length <= 100 ? sanitized : null;
+	}
+
+	// Check if element is in viewport - optimized
+	function isInViewport( element ) {
+		if ( ! element || ! document.body.contains( element ) ) {
+			return false;
+		}
+		const rect = element.getBoundingClientRect();
+		return rect.top >= 0 && rect.left >= 0 && rect.bottom <= window.innerHeight && rect.right <= window.innerWidth;
 	}
 
 	// Wait for DOM to be ready
@@ -49,24 +56,37 @@
 	}
 
 	function init() {
-		const tocWrapper = document.querySelector( '.navygator-toc-wrapper' );
-		
+		// Scope selector to block wrapper for security
+		const blockWrapper = document.querySelector( '.wp-block-yokoi-navygator' );
+		if ( ! blockWrapper || ! document.body.contains( blockWrapper ) ) {
+			return;
+		}
+
+		const tocWrapper = blockWrapper.querySelector( '.navygator-toc-wrapper' );
 		if ( ! tocWrapper || ! document.body.contains( tocWrapper ) ) {
 			return;
 		}
 
+		// Cache all elements for performance
 		const toc = tocWrapper.querySelector( '.navygator-toc' );
 		const toggleBtn = tocWrapper.querySelector( '.navygator-toc-toggle' );
 		const closeBtn = tocWrapper.querySelector( '.navygator-toc-close' );
 		const backdrop = tocWrapper.querySelector( '.navygator-toc-backdrop' );
-		const tocLinks = tocWrapper.querySelectorAll( '.navygator-toc-link' );
+		const tocLinks = Array.from( tocWrapper.querySelectorAll( '.navygator-toc-link' ) );
 
-		// Toggle functionality for both mobile and desktop
+		// Cache window width to avoid repeated reads
+		let isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
+		const updateMobileState = throttle( () => {
+			isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
+		}, 150 );
+		window.addEventListener( 'resize', updateMobileState, { passive: true } );
+
+		// Toggle functionality
 		if ( toggleBtn ) {
 			toggleBtn.addEventListener( 'click', function( e ) {
 				e.preventDefault();
 				e.stopPropagation();
-				if ( window.innerWidth <= 768 ) {
+				if ( isMobile ) {
 					openDrawer();
 				} else {
 					toggleDesktopToc();
@@ -78,7 +98,7 @@
 			closeBtn.addEventListener( 'click', function( e ) {
 				e.preventDefault();
 				e.stopPropagation();
-				if ( window.innerWidth <= 768 ) {
+				if ( isMobile ) {
 					closeDrawer();
 				} else {
 					closeDesktopToc();
@@ -94,20 +114,19 @@
 			}, { passive: false } );
 		}
 
-		// Close on escape key - debounced for performance
-		const handleEscape = debounce( function( e ) {
+		// Close on escape key
+		const handleEscape = ( e ) => {
 			if ( e.key === 'Escape' && toc && toc.classList.contains( 'is-open' ) ) {
-				if ( window.innerWidth <= 768 ) {
+				if ( isMobile ) {
 					closeDrawer();
 				} else {
 					closeDesktopToc();
 				}
 			}
-		}, 100 );
-		
+		};
 		document.addEventListener( 'keydown', handleEscape, { passive: true } );
 
-		// Smooth scroll and close on link click
+		// Smooth scroll on link click - optimized
 		tocLinks.forEach( function( link ) {
 			link.addEventListener( 'click', function( e ) {
 				e.preventDefault();
@@ -123,38 +142,44 @@
 				}
 				
 				const targetElement = document.getElementById( targetId );
+				// Security: verify element exists and is in the document
 				if ( ! targetElement || ! document.body.contains( targetElement ) ) {
 					return;
 				}
 
-				// Close TOC on mobile
-				if ( window.innerWidth <= 768 ) {
+				// Close TOC
+				if ( isMobile ) {
 					closeDrawer();
 				} else {
-					// On desktop, close TOC after clicking a link
 					closeDesktopToc();
 				}
 
-				// Smooth scroll to target using requestAnimationFrame for better performance
+				// Smooth scroll - use requestAnimationFrame for performance
 				requestAnimationFrame( () => {
-					const yOffset = -20; // Offset for fixed headers
+					const yOffset = -20;
 					const y = targetElement.getBoundingClientRect().top + window.pageYOffset + yOffset;
 
 					window.scrollTo( {
-						top: y,
+						top: Math.max( 0, y ),
 						behavior: 'smooth'
 					} );
 
-					// Update URL hash without jumping
-					if ( history.pushState ) {
-						history.pushState( null, null, '#' + targetId );
+					// Update URL hash securely
+					if ( history && history.pushState ) {
+						try {
+							history.pushState( null, '', '#' + encodeURIComponent( targetId ) );
+						} catch ( err ) {
+							// Silently fail if pushState fails
+						}
 					}
 				} );
 			}, { passive: true } );
 		} );
 
-		// Scroll spy - highlight active section
-		setupScrollSpy( tocLinks );
+		// Scroll spy - only if links exist
+		if ( tocLinks.length > 0 ) {
+			setupScrollSpy( tocLinks, tocWrapper );
+		}
 
 		function openDrawer() {
 			if ( toc ) {
@@ -190,48 +215,22 @@
 		function openDesktopToc() {
 			if ( toc ) {
 				toc.classList.add( 'is-open' );
-				
-				// Smooth animation using CSS transitions
-				toc.style.setProperty('opacity', '1', 'important');
-				toc.style.setProperty('visibility', 'visible', 'important');
-				toc.style.setProperty('transform', 'translateY(0) scale(1)', 'important');
-				toc.style.setProperty('transition', 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 'important');
-				
-				// Add backdrop with fade-in animation
-				if ( backdrop ) {
-					backdrop.style.setProperty('opacity', '1', 'important');
-					backdrop.style.setProperty('visibility', 'visible', 'important');
-					backdrop.style.setProperty('transition', 'all 0.3s ease', 'important');
-				}
 			}
 		}
 
 		function closeDesktopToc() {
 			if ( toc ) {
 				toc.classList.remove( 'is-open' );
-				
-				// Smooth animation using CSS transitions
-				toc.style.setProperty('opacity', '0', 'important');
-				toc.style.setProperty('visibility', 'hidden', 'important');
-				toc.style.setProperty('transform', 'translateY(-10px) scale(0.95)', 'important');
-				toc.style.setProperty('transition', 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 'important');
-				
-				// Hide backdrop with fade-out animation
-				if ( backdrop ) {
-					backdrop.style.setProperty('opacity', '0', 'important');
-					backdrop.style.setProperty('visibility', 'hidden', 'important');
-					backdrop.style.setProperty('transition', 'all 0.3s ease', 'important');
-				}
 			}
 		}
 	}
 
 	/**
-	 * Set up scroll spy using Intersection Observer
+	 * Set up scroll spy using Intersection Observer - optimized
 	 */
-	function setupScrollSpy( tocLinks ) {
-		// Get all heading IDs from TOC links - sanitized
-		const headingIds = Array.from( tocLinks )
+	function setupScrollSpy( tocLinks, tocWrapper ) {
+		// Get all heading IDs - sanitized
+		const headingIds = tocLinks
 			.map( function( link ) {
 				const href = link.getAttribute( 'href' );
 				if ( ! href || ! href.startsWith( '#' ) ) {
@@ -243,10 +242,15 @@
 				return id !== null;
 			} );
 
+		if ( headingIds.length === 0 ) {
+			return;
+		}
+
 		// Get all heading elements - validate they exist in DOM
 		const headings = headingIds
 			.map( function( id ) {
 				const el = document.getElementById( id );
+				// Security: verify element is in document
 				return el && document.body.contains( el ) ? el : null;
 			} )
 			.filter( function( el ) {
@@ -257,17 +261,16 @@
 			return;
 		}
 
-		// Create Intersection Observer with performance optimizations
+		// Create Intersection Observer
 		const observerOptions = {
 			rootMargin: '-20% 0px -35% 0px',
 			threshold: 0
 		};
 
-		let activeHeading = null;
 		let rafId = null;
 
 		const observer = new IntersectionObserver( function( entries ) {
-			// Use requestAnimationFrame to batch updates
+			// Batch updates with requestAnimationFrame
 			if ( rafId ) {
 				cancelAnimationFrame( rafId );
 			}
@@ -275,11 +278,10 @@
 			rafId = requestAnimationFrame( function() {
 				entries.forEach( function( entry ) {
 					if ( entry.isIntersecting ) {
-						activeHeading = entry.target;
 						const headingId = sanitizeId( entry.target.id );
 						if ( headingId ) {
 							updateActiveLink( headingId, tocLinks );
-							scrollTocToActiveLink( headingId, tocLinks );
+							scrollTocToActiveLink( headingId, tocLinks, tocWrapper );
 						}
 					}
 				} );
@@ -293,11 +295,11 @@
 			}
 		} );
 
-		// Initial active state based on scroll position
+		// Initial active state
 		const initialActiveId = getActiveHeadingId( headings );
 		if ( initialActiveId ) {
 			updateActiveLink( initialActiveId, tocLinks );
-			scrollTocToActiveLink( initialActiveId, tocLinks );
+			scrollTocToActiveLink( initialActiveId, tocLinks, tocWrapper );
 		}
 
 		// Cleanup on page unload
@@ -337,14 +339,14 @@
 	}
 
 	/**
-	 * Scroll TOC content to keep active link visible
+	 * Scroll TOC content to keep active link visible - optimized
 	 */
-	function scrollTocToActiveLink( activeId, tocLinks ) {
-		if ( ! activeId ) {
+	function scrollTocToActiveLink( activeId, tocLinks, tocWrapper ) {
+		if ( ! activeId || ! tocWrapper ) {
 			return;
 		}
 		
-		const activeLink = Array.from( tocLinks ).find( function( link ) {
+		const activeLink = tocLinks.find( function( link ) {
 			const href = link.getAttribute( 'href' );
 			if ( ! href || ! href.startsWith( '#' ) ) {
 				return false;
@@ -357,32 +359,27 @@
 			return;
 		}
 
-		const toc = document.querySelector( '.navygator-toc' );
+		const toc = tocWrapper.querySelector( '.navygator-toc' );
 		if ( ! toc || ! document.body.contains( toc ) ) {
 			return;
 		}
 
 		// Use requestAnimationFrame for smooth scrolling
 		requestAnimationFrame( function() {
-			// Get the position of the active link relative to the TOC container
 			const tocRect = toc.getBoundingClientRect();
 			const linkRect = activeLink.getBoundingClientRect();
 			
-			// Calculate if the link is visible within the TOC container
 			const linkTop = linkRect.top - tocRect.top;
 			const linkBottom = linkRect.bottom - tocRect.top;
 			const tocHeight = tocRect.height;
 			
-			// If the link is not fully visible, scroll to center it
+			// Only scroll if link is not visible
 			if ( linkTop < 0 || linkBottom > tocHeight ) {
 				const linkOffset = activeLink.offsetTop;
 				const tocCenter = tocHeight / 2;
 				const linkHeight = linkRect.height;
-				
-				// Calculate the ideal scroll position to center the link
 				const targetScrollTop = linkOffset - tocCenter + ( linkHeight / 2 );
 				
-				// Smooth scroll to the target position
 				toc.scrollTo( {
 					top: Math.max( 0, targetScrollTop ),
 					behavior: 'smooth'
@@ -412,4 +409,3 @@
 	}
 
 } )();
-
