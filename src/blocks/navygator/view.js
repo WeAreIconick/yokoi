@@ -56,13 +56,17 @@
 	}
 
 	function init() {
-		// Scope selector to block wrapper for security
+		// Find TOC wrapper - scoped to block if possible, but fallback to direct search
+		let tocWrapper = null;
 		const blockWrapper = document.querySelector( '.wp-block-yokoi-navygator' );
-		if ( ! blockWrapper || ! document.body.contains( blockWrapper ) ) {
-			return;
+		
+		if ( blockWrapper && document.body.contains( blockWrapper ) ) {
+			tocWrapper = blockWrapper.querySelector( '.navygator-toc-wrapper' );
+		} else {
+			// Fallback: search for wrapper directly (still scoped by class name)
+			tocWrapper = document.querySelector( '.navygator-toc-wrapper' );
 		}
-
-		const tocWrapper = blockWrapper.querySelector( '.navygator-toc-wrapper' );
+		
 		if ( ! tocWrapper || ! document.body.contains( tocWrapper ) ) {
 			return;
 		}
@@ -173,7 +177,7 @@
 						}
 					}
 				} );
-			}, { passive: true } );
+			}, { passive: false } );
 		} );
 
 		// Scroll spy - only if links exist

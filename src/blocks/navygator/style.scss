@@ -3,11 +3,14 @@
  * All styles scoped to prevent conflicts
  */
 
+/* Base block wrapper - WordPress automatically adds this */
 .wp-block-yokoi-navygator {
 	isolation: isolate;
 	contain: layout style paint;
 }
 
+/* Scoped wrapper - works with or without block wrapper */
+.navygator-toc-wrapper,
 .wp-block-yokoi-navygator .navygator-toc-wrapper {
 	position: relative;
 	z-index: 1000;
@@ -16,6 +19,7 @@
 
 /* Desktop Styles */
 @media (min-width: 769px) {
+	.navygator-toc-wrapper .navygator-toc,
 	.wp-block-yokoi-navygator .navygator-toc-wrapper .navygator-toc {
 		position: fixed;
 		top: 100px;
@@ -39,6 +43,7 @@
 		}
 	}
 
+	.navygator-toc-wrapper .navygator-toc-toggle,
 	.wp-block-yokoi-navygator .navygator-toc-wrapper .navygator-toc-toggle {
 		position: fixed;
 		top: 100px;
@@ -69,6 +74,7 @@
 		}
 	}
 
+	.navygator-toc-wrapper .navygator-toc-close,
 	.wp-block-yokoi-navygator .navygator-toc-wrapper .navygator-toc-close {
 		position: absolute;
 		top: 12px;
@@ -94,6 +100,7 @@
 		}
 	}
 
+	.navygator-toc-wrapper .navygator-toc-backdrop,
 	.wp-block-yokoi-navygator .navygator-toc-wrapper .navygator-toc-backdrop {
 		display: none;
 	}
@@ -101,6 +108,7 @@
 
 /* Mobile Styles */
 @media (max-width: 768px) {
+	.navygator-toc-wrapper .navygator-toc,
 	.wp-block-yokoi-navygator .navygator-toc-wrapper .navygator-toc {
 		position: fixed;
 		bottom: 0;
@@ -121,6 +129,7 @@
 		}
 	}
 
+	.navygator-toc-wrapper .navygator-toc-toggle,
 	.wp-block-yokoi-navygator .navygator-toc-wrapper .navygator-toc-toggle {
 		position: fixed;
 		bottom: 24px;
@@ -154,6 +163,7 @@
 		}
 	}
 
+	.navygator-toc-wrapper .navygator-toc-close,
 	.wp-block-yokoi-navygator .navygator-toc-wrapper .navygator-toc-close {
 		position: absolute;
 		top: 12px;
@@ -179,6 +189,7 @@
 		}
 	}
 
+	.navygator-toc-wrapper .navygator-toc-backdrop,
 	.wp-block-yokoi-navygator .navygator-toc-wrapper .navygator-toc-backdrop {
 		position: fixed;
 		top: 0;
@@ -199,6 +210,7 @@
 }
 
 /* Common Styles */
+.navygator-toc-wrapper .navygator-toc-title,
 .wp-block-yokoi-navygator .navygator-toc-wrapper .navygator-toc-title {
 	font-size: 16px;
 	font-weight: 600;
@@ -206,16 +218,19 @@
 	color: #111827;
 }
 
+.navygator-toc-wrapper .navygator-toc-list,
 .wp-block-yokoi-navygator .navygator-toc-wrapper .navygator-toc-list {
 	list-style: none;
 	margin: 0;
 	padding: 0;
 }
 
+.navygator-toc-wrapper .navygator-toc-item,
 .wp-block-yokoi-navygator .navygator-toc-wrapper .navygator-toc-item {
 	margin: 4px 0;
 }
 
+.navygator-toc-wrapper .navygator-toc-link,
 .wp-block-yokoi-navygator .navygator-toc-wrapper .navygator-toc-link {
 	color: #374151;
 	text-decoration: none;
@@ -236,6 +251,7 @@
 	}
 }
 
+.navygator-toc-wrapper .navygator-toc-empty,
 .wp-block-yokoi-navygator .navygator-toc-wrapper .navygator-toc-empty {
 	padding: 16px;
 	text-align: center;
@@ -249,6 +265,9 @@ body.navygator-toc-open {
 }
 
 /* Focus styles - scoped */
+.navygator-toc-wrapper .navygator-toc-link:focus,
+.navygator-toc-wrapper .navygator-toc-toggle:focus,
+.navygator-toc-wrapper .navygator-toc-close:focus,
 .wp-block-yokoi-navygator .navygator-toc-wrapper .navygator-toc-link:focus,
 .wp-block-yokoi-navygator .navygator-toc-wrapper .navygator-toc-toggle:focus,
 .wp-block-yokoi-navygator .navygator-toc-wrapper .navygator-toc-close:focus {
@@ -258,6 +277,7 @@ body.navygator-toc-open {
 
 /* Print styles */
 @media print {
+	.navygator-toc-wrapper,
 	.wp-block-yokoi-navygator .navygator-toc-wrapper {
 		display: none;
 	}
