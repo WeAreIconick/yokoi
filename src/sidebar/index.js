@@ -35,6 +35,19 @@ const shouldAutoOpenSidebar = () => {
 	}
 };
 
+const getInitialTabName = () => {
+	try {
+		const params = new URLSearchParams( window.location.search );
+		const tab = params.get( 'yokoi_tab' );
+		if ( tab === 'settings' || tab === 'catalog' ) {
+			return tab;
+		}
+	} catch ( error ) {
+		// Silent error handling
+	}
+	return 'catalog';
+};
+
 const openSidebar = () => {
 	const data = window?.wp?.data;
 
@@ -1223,7 +1236,7 @@ const YokoiSidebar = () => {
 				name="yokoi-settings-sidebar"
 			>
 				<TabPanel
-						initialTabName="catalog"
+						initialTabName={ getInitialTabName() }
 						tabs={ [
 							{
 								name: 'catalog',
